@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content" id="vp">
+<title>键盘二分v2-页面级</title>
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font:14px/1.5 sans-serif;background:#faf9f7;color:#222}
+#log{position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(0,0,0,.85);color:#4f4;font:11px/1.45 monospace;padding:4px 6px;max-height:34vh;overflow:auto;white-space:pre-wrap;pointer-events:none}
+.stage{padding-top:130px}
+.shell{display:flex;flex-direction:column;height:100vh}
+#chat{flex:1;overflow-y:auto;padding:14px}
+.mline{background:#fff;border:1px solid #eee;border-radius:10px;padding:8px 10px;margin-bottom:8px;max-width:80%}
+.composer{padding:10px 12px;background:#f2f1ef}
+.composer input{display:block;width:100%;font-size:17px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fff;outline:0}
+.fx{position:fixed;left:0;right:0;bottom:0;background:#f2f1ef;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.fx input{display:block;width:100%;font-size:17px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fff;outline:0}
+.pill{background:rgba(255,255,255,.92);border:1px solid #ddd;border-radius:22px;box-shadow:0 2px 10px rgba(0,0,0,.08);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);padding:10px 14px}
+.tag{position:fixed;right:8px;bottom:6px;z-index:100000;color:#999;font:10px monospace;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="log">boot…</div>
+<div class="tag" id="tag"></div>
+<div id="app"></div>
+<script>
+var box=document.getElementById('log');
+function log(m){var d=new Date();var ts=String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0')+'.'+String(d.getMilliseconds()).padStart(3,'0');box.textContent+=ts+' '+m+'\n';box.scrollTop=box.scrollHeight}
+var Q=(location.search.match(/[?&]p=(P\d)/)||[])[1]||'P0';
+document.getElementById('tag').textContent='variant='+Q;
+var vv=window.visualViewport;
+log('boot '+Q+' innerH='+window.innerHeight+(vv?' vv='+Math.round(vv.height):' novv'));
+log('meta='+document.getElementById('vp').content);
+if(vv){vv.addEventListener('resize',function(){log('vvresize innerH='+window.innerHeight+' vv='+Math.round(vv.height)+' active='+(document.activeElement&&document.activeElement.id||'?'))})}
+document.addEventListener('focusout',function(e){log('focusout '+(e.target&&e.target.id||'?'))});
+
+var app=document.getElementById('app');
+function el(t,c,css,txt){var e=document.createElement(t);if(c)e.className=c;if(css)e.setAttribute('style',css);if(txt!=null)e.textContent=txt;return e}
+function mlines(n){var f=document.createDocumentFragment();for(var i=0;i<n;i++)f.appendChild(el('div','mline',null,'消息 '+(i+1)+'：模拟聊天消息，用来撑起滚动区。'));return f}
+var input=null;
+function mkInput(id,ph,ta){var i=el(ta?'textarea':'input');i.id=id;i.placeholder=ph;i.autocomplete='off';if(ta){i.rows=1;i.style.cssText='width:100%;border:0;background:none;outline:0;font-size:17px;line-height:1.35;resize:none;white-space:pre-wrap;max-height:144px'}else{i.style.cssText='display:block;width:100%;font-size:17px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fff;outline:0'}return i}
+function flexShell(){var sh=el('div','shell');var c=el('div');c.id='chat';c.appendChild(mlines(30));return[sh,c]}
+var builders={
+ P0:function(){var s=el('div','stage');input=mkInput('P0','P0 普通流内input·对照');s.appendChild(input);app.appendChild(s)},
+ P1:function(){var r=flexShell();var f=el('div','composer');input=mkInput('P1','P1 flex壳·流内composer·无fixed');f.appendChild(input);r[0].appendChild(r[1]);r[0].appendChild(f);app.appendChild(r[0])},
+ P2:function(){var r=flexShell();var f=el('div','fx');input=mkInput('P2','P2 固定定位composer');f.appendChild(input);r[0].appendChild(r[1]);r[0].appendChild(f);app.appendChild(r[0])},
+ P3:function(){var r=flexShell();var f=el('div','fx');input=mkInput('P3','P3 fixed+resize时滚动到底');f.appendChild(input);r[0].appendChild(r[1]);r[0].appendChild(f);app.appendChild(r[0]);window.addEventListener('resize',function(){var c=document.getElementById('chat');if(c)c.scrollTop=c.scrollHeight})},
+ P4:function(){var r=flexShell();var f=el('div','fx');input=mkInput('P4','P4 fixed+150ms轮询日志');f.appendChild(input);r[0].appendChild(r[1]);r[0].appendChild(f);app.appendChild(r[0])},
+ P5:function(){var r=flexShell();var f=el('div','fx');var w=el('div',null,'pointer-events:none;max-width:560px;margin:0 auto');var p=el('div','pill','pointer-events:auto');input=mkInput('P5','P5 完整药丸克隆(fixed)',true);input.setAttribute('enterkeyhint','enter');p.appendChild(input);w.appendChild(p);f.appendChild(w);r[0].appendChild(r[1]);r[0].appendChild(f);app.appendChild(r[0])},
+ P6:function(){var sh=el('div',null,'position:fixed;inset:0;display:flex;flex-direction:column;background:#faf9f7');var c=el('div');c.id='chat';c.appendChild(mlines(30));var f=el('div','fx');input=mkInput('P6','P6 fixed壳(inset0)+fixed composer');f.appendChild(input);sh.appendChild(c);sh.appendChild(f);app.appendChild(sh)}
+};
+builders[Q]();
+
+var judging=false;
+function judge(id){
+  if(judging)return;judging=true;
+  var h0=window.innerHeight,v0=vv?Math.round(vv.height):window.innerHeight;
+  var t0=Date.now(),opens=0,closes=0,firstClose=-1,wasOpen=false;
+  log('judge '+id+' base innerH='+h0+' vv='+v0);
+  var tick=null;
+  if(Q==='P4')tick=setInterval(function(){log('tick innerH='+window.innerHeight+' vv='+Math.round(vv.height))},150);
+  var iv=setInterval(function(){
+    var h=window.innerHeight,v=vv?Math.round(vv.height):h;
+    var open=(h<h0-80)||(v<v0-80);
+    if(open&&!wasOpen){opens++;log('OPEN t='+Math.round(Date.now()-t0)+' innerH='+h+' vv='+v)}
+    if(!open&&wasOpen){closes++;if(firstClose<0)firstClose=Math.round(Date.now()-t0);log('CLOSE t='+Math.round(Date.now()-t0)+' innerH='+h+' vv='+v)}
+    wasOpen=open;
+  },50);
+  setTimeout(function(){
+    clearInterval(iv);if(tick)clearInterval(tick);
+    var v2;
+    if(opens===0)v2='NOKEYBOARD 从未弹出';
+    else if(wasOpen&&closes===0)v2='PASS 键盘保持';
+    else v2='CLOSED 收回'+closes+'次 首收'+firstClose+'ms';
+    log('RESULT '+id+' -> '+v2+' (open'+opens+')');
+    judging=false;
+  },6000);
+}
+document.addEventListener('focusin',function(e){if(input&&e.target===input){log('focusin '+e.target.id);judge(e.target.id)}});
+</script>
+</body>
+</html>
