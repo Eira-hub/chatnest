@@ -695,37 +695,92 @@ async function send(){
   loadSessions();
 }
 
-/* ───────── 语音输入 ───────── */
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+/* ───────── 语音输入（录音→后端识别，国内可用） ───────── */
 function micUI(on){ $('btnMic').classList.toggle('mic-on', on); $('micHint').classList.toggle('on', on); }
-function stopRec(){ if(state.rec){ try{ state.rec.onend=null; state.rec.stop(); }catch(e){} } state.rec=null; state.recActive=false; micUI(false); }
-$('btnMic').addEventListener('click', ()=>{
-  if(state.recActive){ stopRec(); return; }
-  if(!SR){ toast('这个浏览器不支持语音识别，试试 Chrome / Via / Edge'); return; }
-  const rec = new SR();
-  state.rec = rec; state.recFinal = ''; state.recBase = $('input').value;
-  rec.lang = 'zh-CN';
-  rec.continuous = true;
-  rec.interimResults = true;
-  rec.onresult = e=>{
-    let interim = '';
-    for(let i = e.resultIndex; i < e.results.length; i++){
-      const r = e.results[i];
-      if(r.isFinal) state.recFinal += r[0].transcript;
-      else interim += r[0].transcript;
+function stopRec(){
+  state.recActive = false; micUI(false);
+  try{ state.recProc && state.recProc.disconnect(); }catch(e){}
+  try{ state.recStream && state.recStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ state.recCtx && state.recCtx.close(); }catch(e){}
+  state.recProc = null; state.recStream = null; state.recCtx = null; state.recChunks = null;
+}
+function pcmToWav(pcm, rate){
+  const buf = new ArrayBuffer(44 + pcm.length*2);
+  const v = new DataView(buf);
+  const ws=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4, 36+pcm.length*2, true); ws(8,'WAVE');
+  ws(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,pcm.length*2,true);
+  new Int16Array(buf,44).set(pcm);
+  return buf;
+}
+function bufB64(buf){
+  const u = new Uint8Array(buf); let s='';
+  for(let i=0;i<u.length;i+=0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i+0x8000));
+  return btoa(s);
+}
+async function finishRec(){
+  state.recActive = false; micUI(false);
+  const chunks = state.recChunks || [];
+  const ctx = state.recCtx;
+  try{ state.recProc && state.recProc.disconnect(); }catch(e){}
+  try{ state.recStream && state.recStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ ctx && ctx.close(); }catch(e){}
+  state.recProc = null; state.recStream = null; state.recCtx = null; state.recChunks = null;
+  const total = chunks.reduce((a,c)=>a+c.length, 0);
+  if(ctx && total < ctx.sampleRate * 0.6){ toast('太短啦，点话筒开始说，说完再点一下', 2200); return; }
+  const raw = new Int16Array(total);
+  let off = 0;
+  for(const c of chunks){
+    for(let i=0;i<c.length;i++){
+      const sv = Math.max(-1, Math.min(1, c[i]));
+      raw[off++] = sv < 0 ? sv*0x8000 : sv*0x7FFF;
     }
-    const txt = (state.recBase ? state.recBase + ' ' : '') + state.recFinal + interim;
-    $('input').value = txt;
-    autoGrow();
-  };
-  rec.onerror = e=>{
-    if(e.error==='not-allowed' || e.error==='service-not-allowed') toast('麦克风权限被拒了，去浏览器设置里允许');
-    else if(e.error==='no-speech') toast('没听到声音，再试一次');
-    stopRec();
-  };
-  rec.onend = ()=>{ if(state.recActive){ micUI(false); state.recActive=false; } };
-  try{ rec.start(); state.recActive = true; micUI(true); toast('开始说吧，说完点一下话筒', 1800); }
-  catch(e){ toast('语音启动失败'); }
+  }
+  let pcm = raw, rate = ctx.sampleRate;
+  if(rate !== 16000){
+    const ratio = rate/16000, outLen = Math.floor(total/ratio);
+    const out = new Int16Array(outLen);
+    for(let i=0;i<outLen;i++){
+      const pos = i*ratio, i0 = Math.floor(pos), fr = pos-i0;
+      out[i] = Math.round(raw[i0]*(1-fr) + raw[Math.min(i0+1, total-1)]*fr);
+    }
+    pcm = out; rate = 16000;
+  }
+  $('micHint').textContent = '识别中…'; $('micHint').classList.add('on');
+  try{
+    const r = await fetch(ENDPOINT+'/api/transcribe', {method:'POST',
+      headers:{'Authorization':'Bearer '+state.token, 'Content-Type':'application/json'},
+      body: JSON.stringify({audio: bufB64(pcmToWav(pcm, rate))})});
+    const d = await r.json();
+    if(d.text){
+      const inp = $('input');
+      inp.value = (inp.value ? inp.value+' ' : '') + d.text;
+      autoGrow();
+      toast('识别好啦，改一改或直接发', 1800);
+    } else {
+      toast(d.detail || '没听清，再试一次？', 2200);
+    }
+  }catch(e){
+    toast('识别开小差了，稍后再试', 2000);
+  }
+}
+$('btnMic').addEventListener('click', async ()=>{
+  if(state.recActive){ finishRec(); return; }
+  let stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1, echoCancellation:true, noiseSuppression:true}}); }
+  catch(e){ toast('麦克风权限被拒了，去浏览器设置里允许'); return; }
+  let ctx;
+  try{ ctx = new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000}); }
+  catch(e){ ctx = new (window.AudioContext||window.webkitAudioContext)(); }
+  const proc = ctx.createScriptProcessor(4096, 1, 1);
+  proc.onaudioprocess = ev=>{ if(state.recActive) state.recChunks.push(new Float32Array(ev.inputBuffer.getChannelData(0))); };
+  ctx.createMediaStreamSource(stream).connect(proc);
+  proc.connect(ctx.destination);
+  state.recCtx = ctx; state.recStream = stream; state.recProc = proc; state.recChunks = [];
+  state.recActive = true; micUI(true);
+  $('micHint').textContent = '录音中…说完点一下话筒';
 });
 
 /* ───────── 模型 sheet ───────── */
