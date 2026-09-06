@@ -605,9 +605,10 @@ async function playBar(bar, text){
     const res = await fetch(ENDPOINT+'/api/tts', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+state.token}, body: JSON.stringify({text:text})});
     if(res.status===401){ logout(); return; }
     if(!res.ok){ let m='语音失败 '+res.status; try{const j=await res.json(); if(j.detail)m=j.detail;}catch(e2){} throw new Error(m); }
-    const j = await res.json();
     if(mySeq!==curSeq) return;
-    const au = new Audio(j.url);
+    const blob = await res.blob();
+    if(mySeq!==curSeq) return;
+    const au = new Audio(URL.createObjectURL(blob));
     curAudio = au;
     au.addEventListener('loadedmetadata', ()=>{ if(curBar===bar&&isFinite(au.duration)) bar.querySelector('.vt').textContent=Math.round(au.duration)+'″'; });
     au.addEventListener('ended', ()=>{ if(curBar===bar){ bar.classList.remove('playing'); bar.querySelector('.vt').textContent='再听'; } });
