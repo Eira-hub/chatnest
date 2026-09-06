@@ -150,8 +150,10 @@ svg{display:block}
   background:radial-gradient(circle at 36% 32%,#F3E7CD,#C7A878 62%,#8F7448);display:flex;align-items:center;justify-content:center}
 .avatar img{width:100%;height:100%;object-fit:cover}
 .avatar svg{width:16px;height:16px;color:rgba(10,14,30,.75)}
-.msg.user .avatar{display:none}
-.bubble{max-width:calc(100% - 42px);padding:10px 15px;border-radius:var(--r-bubble);font-size:15.5px;word-break:break-word;overflow-wrap:anywhere}
+.avatar.me-def{background:linear-gradient(135deg,#8B9CD0,#56679F)}
+.av-edit{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);cursor:pointer}
+.av-edit .avatar{width:54px;height:54px;box-shadow:0 0 0 2px rgba(165,185,220,.35)}
+.bubble{max-width:86%;padding:10px 15px;border-radius:var(--r-bubble);font-size:15.5px;word-break:break-word;overflow-wrap:anywhere}
 .msg.user{margin-left:auto}
 .msg.user .bubble{background:linear-gradient(135deg,var(--user-b1),var(--user-b2));border-top-right-radius:5px;box-shadow:0 2px 10px rgba(0,0,0,.22)}
 .msg.ai .bubble{background:var(--ai-b);border:1px solid var(--line);border-top-left-radius:5px}
@@ -325,6 +327,14 @@ svg{display:block}
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
   <h3>设置</h3>
+  <div class="set-block">
+    <div class="set-label">头像（点一下换图）</div>
+    <div style="display:flex;gap:22px;align-items:center">
+      <div class="av-edit" data-role="me"><div class="avatar me-def" id="avPrevMe"></div><span>我的</span></div>
+      <div class="av-edit" data-role="ai"><div class="avatar" id="avPrevAi"></div><span>哥哥的</span></div>
+    </div>
+    <input type="file" id="avFile" accept="image/*" style="display:none">
+  </div>
   <div class="set-block">
     <div class="set-label">长期记忆（后端自动生成，可手动修改）</div>
     <textarea class="set-area" id="memoryArea" placeholder="还没有记忆摘要"></textarea>
@@ -580,12 +590,17 @@ function bubbleEl(m){
     inner += '<details class="think"><summary>他想了想 ▾</summary><div class="tk-body">'+esc(m.thinking)+'</div></details>';
   }
   inner += '<div class="body">'+md(m.text||'')+'</div>';
-  el.innerHTML = '<div class="avatar">'+avatarSvg()+'</div><div class="bubble">'+inner+'</div>';
+  const role = isUser ? 'me' : 'ai';
+  const avOk = state.avatars && state.avatars[role] && state.avatars[role].url;
+  el.innerHTML = '<div class="avatar'+((role==='me'&&!avOk)?' me-def':'')+'">'+avatarSvg(role)+'</div><div class="bubble">'+inner+'</div>';
   return el;
 }
-function avatarSvg(){
-  if(state.avatars && state.avatars.ai && state.avatars.ai.url){
-    return '<img src="'+state.avatars.ai.url+'" alt="">';
+function avatarSvg(role){
+  role = role || 'ai';
+  const av = state.avatars && state.avatars[role] && state.avatars[role].url;
+  if(av) return '<img src="'+av+'" alt="">';
+  if(role === 'me'){
+    return '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C13 8 16 11 22 12 16 13 13 16 12 22 11 16 8 13 2 12 8 11 11 8 12 2Z"/></svg>';
   }
   return '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>';
 }
@@ -617,6 +632,40 @@ $('input').addEventListener('keydown', e=>{
     e.preventDefault(); send();
   }
 });
+/* ───────── 头像自定义 ───────── */
+function refreshAvPreviews(){
+  const okMe = state.avatars && state.avatars.me && state.avatars.me.url;
+  const okAi = state.avatars && state.avatars.ai && state.avatars.ai.url;
+  $('avPrevMe').innerHTML = avatarSvg('me');
+  $('avPrevMe').classList.toggle('me-def', !okMe);
+  $('avPrevAi').innerHTML = avatarSvg('ai');
+}
+let avRole = '';
+document.querySelectorAll('.av-edit').forEach(el => el.addEventListener('click', ()=>{ avRole = el.dataset.role; $('avFile').click(); }));
+$('avFile').addEventListener('change', e=>{
+  const f = e.target.files[0]; e.target.value = '';
+  if(!f || !avRole) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    const img = new Image();
+    img.onload = async ()=>{
+      const c = document.createElement('canvas'); c.width = c.height = 256;
+      const g = c.getContext('2d');
+      const sz = Math.min(img.width, img.height);
+      g.drawImage(img, (img.width-sz)/2, (img.height-sz)/2, sz, sz, 0, 0, 256, 256);
+      const dataUrl = c.toDataURL('image/jpeg', 0.85);
+      try{
+        await api('/api/avatars', {method:'PUT', body:{role:avRole, dataUrl:dataUrl}});
+        state.avatars[avRole] = {url:dataUrl};
+        refreshAvPreviews();
+        toast('头像换好啦', 1500);
+      }catch(err){ toast(err.message || '没保存上，再试一次', 2000); }
+    };
+    img.src = r.result;
+  };
+  r.readAsDataURL(f);
+});
+
 $('btnSend').addEventListener('click', ()=>{
   if(state.streaming){ if(state.abortCtl) state.abortCtl.abort(); return; }
   send();
@@ -629,7 +678,8 @@ async function send(){
   const inner = $('streamInner');
   const um = document.createElement('div');
   um.className = 'msg user';
-  um.innerHTML = '<div class="bubble"><div class="body">'+md(text)+'</div></div>';
+  const avMeOk = state.avatars && state.avatars.me && state.avatars.me.url;
+  um.innerHTML = '<div class="avatar'+(avMeOk?'':' me-def')+'">'+avatarSvg('me')+'</div><div class="bubble"><div class="body">'+md(text)+'</div></div>';
   inner.appendChild(um);
   $('input').value=''; autoGrow(); scrollToBottom(true);
 
@@ -812,6 +862,7 @@ $('btnModel').addEventListener('click', ()=>{
 $('btnSettings').addEventListener('click', async ()=>{
   closeSidebar();
   $('memoryArea').value = '加载中…';
+  refreshAvPreviews();
   openSheet('settingsSheet');
   try{
     const r = await api('/api/memory-summary');
