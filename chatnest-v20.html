@@ -234,6 +234,9 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .set-btn{width:100%;height:42px;border-radius:12px;background:var(--panel3);border:1px solid rgba(165,185,220,.22);color:var(--accent2);font-size:14px}
 .set-btn:active{transform:scale(.98)}
 .set-btn.warn{color:var(--danger);border-color:rgba(217,122,122,.25);margin-top:12px}
+.set-input{width:100%;height:40px;background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:0 12px;font-size:13px;color:var(--text2);text-align:left;letter-spacing:normal;transition:border-color .2s}
+.set-input:focus{border-color:rgba(165,185,220,.5)}
+.set-input::placeholder{color:var(--text3);letter-spacing:normal}
 
 /* ───────── toast ───────── */
 #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 66px);transform:translate(-50%,-8px);z-index:9;
@@ -386,6 +389,16 @@ body.has-wall .stars{opacity:.75}
     <button class="set-btn" id="btnSavePersona" style="margin-top:10px">保存人设</button>
   </div>
   <div class="set-block">
+    <div class="set-label">接口设置</div>
+    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">换后端/搬家时改这里，页面不用重发。</div>
+    <input class="set-input" id="apiBaseInput" placeholder="API 地址，不填用默认" autocomplete="off" spellcheck="false">
+    <input class="set-input" id="apiTokenInput" type="password" placeholder="访问令牌，不填用现在的" autocomplete="off" style="margin-top:10px">
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button class="set-btn" id="btnSaveApi" style="flex:1.4">保存接口</button>
+      <button class="set-btn" id="btnApiReset" style="flex:1">恢复默认</button>
+    </div>
+  </div>
+  <div class="set-block">
     <div class="set-label">长期记忆（后端自动生成，可手动修改）</div>
     <textarea class="set-area" id="memoryArea" placeholder="还没有记忆摘要"></textarea>
     <button class="set-btn" id="btnSaveMemory" style="margin-top:10px">保存记忆</button>
@@ -427,8 +440,17 @@ body.has-wall .stars{opacity:.75}
 <script>
 'use strict';
 /* ═══════════ ChatNest v13 · 星夜小筑 ═══════════ */
-const ENDPOINT = 'https://chatnest-fgkngqpobv.cn-hangzhou.fcapp.run';
-const LS = {token:'cn_token', model:'cn_model', conv:'cn_conv'};
+const DEFAULT_API_BASE = 'https://chatnest-fgkngqpobv.cn-hangzhou.fcapp.run';
+const LS = {token:'cn_token', model:'cn_model', conv:'cn_conv', apiBase:'chatnest_api_base', apiToken:'chatnest_api_token'};
+/* 后端地址/令牌：优先读接口设置（localStorage），没配置就用焊死的默认值（开箱即用） */
+function getApiBase(){
+  try{ const v = (localStorage.getItem(LS.apiBase) || '').trim(); if(v) return v.replace(/\/+$/, ''); }catch(e){}
+  return DEFAULT_API_BASE;
+}
+function getApiToken(){
+  try{ const v = (localStorage.getItem(LS.apiToken) || '').trim(); if(v) return v; }catch(e){}
+  return state.token || '';
+}
 const $ = id => document.getElementById(id);
 const state = {
   token: localStorage.getItem(LS.token) || '',
@@ -454,14 +476,20 @@ function relTime(iso){
   if(diff < 604800) return Math.floor(diff/86400)+'天';
   return (d.getMonth()+1)+'/'+d.getDate();
 }
-async function api(path, opts){
+/* 统一请求封装：所有后端请求都走这里（地址/token 自动取接口设置或默认值） */
+async function apiFetch(path, opts){
   opts = opts || {};
-  const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
-  if(state.token) headers['Authorization'] = 'Bearer ' + state.token;
-  const res = await fetch(ENDPOINT + path, {
-    method: opts.method||'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined,
-    signal: opts.signal
-  });
+  const headers = Object.assign({}, opts.headers || {});
+  if(!opts.formData && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+  const tok = getApiToken();
+  if(tok) headers['Authorization'] = 'Bearer ' + tok;
+  let body;
+  if(opts.formData) body = opts.formData;
+  else if(opts.body !== undefined) body = (typeof opts.body === 'string') ? opts.body : JSON.stringify(opts.body);
+  return fetch(getApiBase() + path, { method: opts.method || 'GET', headers, body, signal: opts.signal });
+}
+async function api(path, opts){
+  const res = await apiFetch(path, opts);
   if(res.status === 401){ logout(); throw new Error('未登录'); }
   if(!res.ok){
     let msg = '请求失败 '+res.status;
@@ -482,7 +510,7 @@ $('gateForm').addEventListener('submit', async e=>{
   if(!pwd){ err.textContent='输入密码才能进屋'; err.classList.add('on'); return; }
   $('gateBtn').textContent = '…'; $('gateBtn').disabled = true;
   try{
-    const r = await fetch(ENDPOINT+'/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+    const r = await apiFetch('/api/auth',{method:'POST', body:{password:pwd}});
     if(!r.ok){ throw new Error(r.status===401 ? '密码不对，再想想' : '服务打盹了 '+r.status); }
     const j = await r.json();
     state.token = j.token; localStorage.setItem(LS.token, j.token);
@@ -665,7 +693,7 @@ async function playBar(bar, text){
   curBar = bar; bar.classList.add('playing'); bar.querySelector('.vt').textContent='…';
   const mySeq = ++curSeq;
   try{
-    const res = await fetch(ENDPOINT+'/api/tts', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+state.token}, body: JSON.stringify({text:text})});
+    const res = await apiFetch('/api/tts', {method:'POST', body:{text:text}});
     if(res.status===401){ logout(); return; }
     if(!res.ok){ let m='语音失败 '+res.status; try{const j=await res.json(); if(j.detail)m=j.detail;}catch(e2){} throw new Error(m); }
     if(mySeq!==curSeq) return;
@@ -871,10 +899,9 @@ async function send(){
   const bodyEl = ab.querySelector('.body');
   const thinkEl = ()=>{ let d = ab.querySelector('.think'); if(!d){ d=document.createElement('details'); d.className='think'; d.innerHTML='<summary>他想了想 ▾</summary><div class="tk-body"></div>'; ab.querySelector('.bubble').insertBefore(d, bodyEl);} return d; };
   try{
-    const res = await fetch(ENDPOINT+'/api/chat', {
+    const res = await apiFetch('/api/chat', {
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+state.token},
-      body: JSON.stringify({ message: /语音|说给我听|念给我|读给我|想听/.test(text) ? text+VHINT : text, conversation_id: state.convId||null, model: state.model||null, extended:true }),
+      body: { message: /语音|说给我听|念给我|读给我|想听/.test(text) ? text+VHINT : text, conversation_id: state.convId||null, model: state.model||null, extended:true },
       signal: state.abortCtl.signal
     });
     if(res.status===401){ logout(); return; }
@@ -991,9 +1018,7 @@ async function finishRec(){
   }
   $('micHint').textContent = '识别中…'; $('micHint').classList.add('on');
   try{
-    const r = await fetch(ENDPOINT+'/api/transcribe', {method:'POST',
-      headers:{'Authorization':'Bearer '+state.token, 'Content-Type':'application/json'},
-      body: JSON.stringify({audio: bufB64(pcmToWav(pcm, rate))})});
+    const r = await apiFetch('/api/transcribe', {method:'POST', body:{audio: bufB64(pcmToWav(pcm, rate))}});
     const d = await r.json();
     if(d.text){
       const inp = $('input');
@@ -1054,6 +1079,8 @@ $('btnSettings').addEventListener('click', async ()=>{
   closeSidebar();
   $('memoryArea').value = '加载中…';
   $('personaArea').value = '加载中…';
+  $('apiBaseInput').value = (localStorage.getItem(LS.apiBase) || '').trim();
+  $('apiTokenInput').value = (localStorage.getItem(LS.apiToken) || '').trim();
   refreshAvPreviews();
   openSheet('settingsSheet');
   try{
@@ -1077,6 +1104,20 @@ $('btnSavePersona').addEventListener('click', async ()=>{
     toast('人设已更新，下一条生效');
   }catch(e){ toast(e.message); }
   finally{ btn.disabled = false; }
+});
+$('btnSaveApi').addEventListener('click', ()=>{
+  const b = $('apiBaseInput').value.trim();
+  const t = $('apiTokenInput').value.trim();
+  if(b) localStorage.setItem(LS.apiBase, b); else localStorage.removeItem(LS.apiBase);
+  if(t) localStorage.setItem(LS.apiToken, t); else localStorage.removeItem(LS.apiToken);
+  toast('已保存，下一条消息生效');
+});
+$('btnApiReset').addEventListener('click', ()=>{
+  localStorage.removeItem(LS.apiBase);
+  localStorage.removeItem(LS.apiToken);
+  $('apiBaseInput').value = '';
+  $('apiTokenInput').value = '';
+  toast('已恢复默认接口');
 });
 $('btnSaveMemory').addEventListener('click', async ()=>{
   try{
