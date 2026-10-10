@@ -218,7 +218,7 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .msg-err{margin-top:6px;font-size:13px;color:var(--danger)}
 
 /* ───────── composer v21 · 大圆角磨砂玻璃 ───────── */
-.composer{flex-shrink:0;padding:8px 12px calc(env(safe-area-inset-bottom) + 10px);position:relative;z-index:2}
+.composer{flex-shrink:0;padding:8px 20px calc(env(safe-area-inset-bottom) + 10px);position:relative;z-index:2}
 .composer-row{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:8px}
 .glass-input{flex:1;min-width:0;display:flex;align-items:center;gap:2px;
   background:linear-gradient(135deg,rgba(255,255,255,.66),rgba(255,255,255,.34));
@@ -233,7 +233,7 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .glass-input.rec-on::after{opacity:1}
 #input{flex:1;min-width:0;display:block;resize:none;font-size:var(--fs);line-height:1.5;height:1.55em;overflow-y:auto;padding:5px 2px;background:none}
 #input::placeholder{color:var(--text3)}
-.dock{position:relative;width:min(calc(100% - 8px),900px);margin:8px auto 0;display:flex;align-items:center;
+.dock{position:relative;width:calc(100% - 4px);margin:8px auto 0;display:flex;align-items:center;
   background:linear-gradient(135deg,rgba(255,255,255,.38),rgba(255,255,255,.14));
   backdrop-filter:url(#lgLens) blur(1.1px) saturate(1.4);-webkit-backdrop-filter:url(#lgLens) blur(1.1px) saturate(1.4);
   border:1px solid rgba(255,255,255,.55);border-radius:999px;padding:3px;
@@ -255,7 +255,7 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .dock-btn span{line-height:1}
 .dock-btn:active{transform:scale(.93)}
 .dock-btn.on{background:rgba(91,107,250,.15);color:var(--accent2);font-weight:600}
-.orb-float{position:fixed;z-index:9999;width:58px;height:58px;border-radius:50%;right:14px;bottom:150px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
+.orb-float{position:fixed;z-index:9999;width:44px;height:44px;border-radius:50%;right:14px;bottom:150px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
   background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.75) 0%,rgba(255,255,255,.28) 24%,rgba(255,255,255,.03) 50%,rgba(205,215,240,.1) 72%,rgba(255,255,255,.4) 98%);
   backdrop-filter:none;-webkit-backdrop-filter:none;
   border:1px solid rgba(255,255,255,.6);transition:transform .2s var(--ease);
@@ -1415,7 +1415,7 @@ $('scrim').addEventListener('click', ()=>{ closeSheets(); closeSidebar(); });
     if(x==null)x=(window.innerWidth-orb.offsetWidth)/2;
     x=Math.min(Math.max(x,4),window.innerWidth-orb.offsetWidth-4);
     orb.style.left=x+'px';
-    orb.style.top=Math.max(4,d.top-orb.offsetHeight/2)+'px';
+    orb.style.top=Math.max(4,d.top-orb.offsetHeight*0.3)+'px';
   }
   place();
   orb.addEventListener('pointerdown',e=>{active=true;moved=false;sx=e.clientX;sxOrb=parseFloat(orb.style.left)||0;orb.classList.add('dragging');
