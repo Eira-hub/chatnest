@@ -1,0 +1,12 @@
+{
+  "name": "ChatNest · 星夜小筑",
+  "short_name": "ChatNest",
+  "start_url": "chatnest-v23.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#EEF1F7",
+  "theme_color": "#EEF1F7",
+  "icons": [
+    {"src": "sky-snow-icon-180.png", "sizes": "180x180", "type": "image/png"}
+  ]
+}
