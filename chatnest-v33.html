@@ -551,6 +551,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">主页渐变与背景</div>
     <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">渐变色跟背景图都在这，点一下就换。</div>
     <div id="hmGradRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
+          <div class="wall-row" style="margin-top:12px"><span class="wl-lab">文字颜色</span><input type="color" id="hmFgPick" value="#FFFFFF"><button class="set-btn" id="btnHmFgReset" style="padding:5px 12px;font-size:12px">跟随渐变</button></div>
     <div style="display:flex;gap:10px;margin-top:10px">
       <button class="set-btn" id="btnHomeBg" style="flex:1">换背景图</button>
       <button class="set-btn" id="btnHomeBgClear" style="flex:1">清除背景</button>
@@ -1319,6 +1320,20 @@ function hmGradRender(){
   [c1,c2].forEach(c=>{c.style.cssText='width:30px;height:30px;border:0;background:none;padding:0;cursor:pointer';c.oninput=pick;row.appendChild(c);});
 }
 hmGradRender();
+function applyHomeFg(){
+  const sec=document.getElementById('viewHome');if(!sec)return;
+  const fp=document.getElementById('hmFgPick');
+  let v=null;try{v=JSON.parse(localStorage.getItem('cn_home_fg')||'null')}catch(e){}
+  const ok=v&&/^#[0-9a-fA-F]{6}$/.test(v);
+  if(ok)sec.style.setProperty('--hm-fg',v);else sec.style.removeProperty('--hm-fg');
+  if(fp)fp.value=ok?v:'#FFFFFF';
+}
+(function(){
+  const fp=document.getElementById('hmFgPick'),fr=document.getElementById('btnHmFgReset');
+  if(fp)fp.addEventListener('input',()=>{localStorage.setItem('cn_home_fg',JSON.stringify(fp.value));applyHomeFg();});
+  if(fr)fr.addEventListener('click',()=>{localStorage.removeItem('cn_home_fg');applyHomeFg();toast('跟回渐变啦',1200);});
+})();
+applyHomeFg();
 (function(){
   const btnBg=document.getElementById('btnHomeBg');
   if(btnBg&&bgFile)btnBg.addEventListener('click',()=>bgFile.click());
