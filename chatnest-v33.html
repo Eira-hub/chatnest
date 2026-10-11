@@ -354,29 +354,29 @@ body.has-wall .stars{opacity:.75}
 /* ═══ v33 主页 ═══ */
 #viewHome{flex:1;overflow-y:auto;--hm-g1:#2B3A67;--hm-g2:#0F1B3D;--hm-fg:#FFF;--hm-ts:0 1px 10px rgba(0,0,0,.22);color:var(--hm-fg)}
 #viewHome.hm-light{--hm-fg:#2A2E3A;--hm-ts:none}
-#viewHome .hm-hero{background:linear-gradient(180deg,var(--hm-g1) 0%,var(--hm-g2) 62%,transparent 100%);padding:6vh 18px 24px;text-align:center}
-#viewHome .hm-pair{display:flex;align-items:center;justify-content:center;gap:6px}
-#viewHome .hm-col{display:flex;flex-direction:column;align-items:center;gap:8px}
-#viewHome .hm-ball{width:62px;height:62px;border-radius:50%;overflow:hidden;padding:0;border:0;background:rgba(255,255,255,.07);box-shadow:0 0 0 1.5px rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.28);cursor:pointer;display:block}
+#viewHome .hm-hero{background:linear-gradient(180deg,var(--hm-g1) 0%,var(--hm-g2) 62%,transparent 100%);min-height:100%;display:flex;flex-direction:column;justify-content:center;padding:24px 18px 40px;text-align:center}
+#viewHome .hm-pair{display:flex;align-items:flex-start;justify-content:center}
+#viewHome .hm-col{display:flex;flex-direction:column;align-items:center;gap:12px}
+#viewHome .hm-ball{width:clamp(84px,28vw,106px);height:clamp(84px,28vw,106px);border-radius:50%;overflow:hidden;padding:0;border:0;background:rgba(255,255,255,.07);box-shadow:0 0 0 1.5px rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.28);cursor:pointer;display:block}
 #viewHome .hm-ball:active{transform:scale(.96)}
 #viewHome .hm-ball span{display:block;width:100%;height:100%}
 #viewHome .hm-ball img,#viewHome .hm-ball svg{width:100%;height:100%;object-fit:cover;display:block}
-#viewHome .hm-name{font-family:var(--serif);font-size:1.02em;letter-spacing:.14em;color:var(--hm-fg);background:none;border:0;padding:2px 8px;cursor:pointer;text-shadow:var(--hm-ts)}
-#viewHome .hm-link{flex:0 0 auto;color:var(--hm-fg);opacity:.9}
-#viewHome .hm-moon{width:52px;height:auto;display:block;filter:brightness(0) invert(1);opacity:.92;transform:translateX(-4px)}
+#viewHome .hm-name{font-family:var(--serif);font-size:22px;letter-spacing:.12em;color:var(--hm-fg);background:none;border:0;padding:2px 8px;cursor:pointer;text-shadow:var(--hm-ts)}
+#viewHome .hm-mid{display:flex;flex-direction:column;align-items:center;margin-top:clamp(24px,9.5vw,36px)}
+#viewHome .hm-moonrow{display:flex;align-items:center;gap:7px}
+#viewHome .hm-bar{display:block;width:26px;height:1px;background:var(--hm-fg);opacity:.45}
+#viewHome .hm-moon{width:clamp(24px,8vw,30px);height:auto;display:block;filter:brightness(0) invert(1);opacity:.92}
 #viewHome.hm-light .hm-moon{filter:brightness(0);opacity:.8}
-#viewHome .hm-bg-btn{margin-top:12px;opacity:.75}
-#viewHome.hm-bg{--hm-fg:#FFF!important;--hm-ts:0 1px 10px rgba(0,0,0,.45)!important;background-size:cover;background-position:center;background-repeat:no-repeat}
-#viewHome.hm-bg .hm-hero{background:linear-gradient(180deg,rgba(0,0,0,.42) 0%,rgba(0,0,0,.08) 55%,transparent 100%)}
-#viewHome .hm-days{font-family:var(--serif);font-size:.68em;letter-spacing:.18em;color:var(--hm-fg);opacity:.8;background:none;border:0;cursor:pointer;margin-top:8px;text-shadow:var(--hm-ts)}
-#viewHome .hm-slogan{font-family:var(--serif);font-size:.92em;letter-spacing:.34em;text-indent:.34em;color:var(--hm-fg);background:none;border:0;cursor:pointer;margin-top:18px;text-shadow:var(--hm-ts)}
-#viewHome .hm-grad-row{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:20px}
-#viewHome .hm-swatch{width:19px;height:19px;border-radius:50%;border:2px solid rgba(255,255,255,.4);cursor:pointer;padding:0}
-#viewHome.hm-light .hm-swatch{border-color:rgba(0,0,0,.25)}
-#viewHome .hm-swatch.on{border-color:currentColor;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
-#viewHome .hm-cpick{width:19px;height:19px;border-radius:50%;border:2px dashed rgba(255,255,255,.5);background:none;cursor:pointer;padding:0}
-#viewHome.hm-light .hm-cpick{border-color:rgba(0,0,0,.3)}
-#viewHome .hm-more{margin-top:14px;font-size:.78em;opacity:.5;letter-spacing:.22em}
+#viewHome .hm-days{font-family:var(--serif);font-size:11px;letter-spacing:.2em;color:var(--hm-fg);opacity:.75;background:none;border:0;cursor:pointer;margin-top:12px;text-shadow:var(--hm-ts)}
+#viewHome .hm-slogan{font-family:var(--serif);font-size:15px;letter-spacing:.34em;text-indent:.34em;color:var(--hm-fg);background:none;border:0;cursor:pointer;margin-top:40px;text-shadow:var(--hm-ts)}
+#viewHome .hm-set{margin-top:18px;display:flex;justify-content:center}
+#viewHome .hm-bg-btn{width:30px;height:30px;border-radius:50%;border:1px dashed currentColor;background:none;color:var(--hm-fg);cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;opacity:.55}
+#viewHome .hm-bg-btn svg{width:13px;height:13px}
+#viewHome.hm-bg{--hm-fg:#2A2E3A!important;--hm-ts:none!important;background-size:cover;background-position:center;background-repeat:no-repeat}
+#viewHome.hm-bg .hm-hero{background:linear-gradient(180deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.46) 55%,rgba(255,255,255,.4) 100%)}
+#viewHome.hm-bg .hm-moon{filter:brightness(0);opacity:.85}
+#viewHome.hm-bg .hm-bar{background:#2A2E3A;opacity:.5}
+#viewHome.hm-bg .hm-ball{box-shadow:0 0 0 1.5px rgba(42,46,58,.35),0 6px 18px rgba(0,0,0,.15)}
 </style>
 </head>
 <body>
@@ -453,17 +453,17 @@ body.has-wall .stars{opacity:.75}
         <button class="hm-ball" data-role="me" id="hmBallMe" type="button" title="点头像换一张"><span id="hmAvatarMe"></span></button>
         <button class="hm-name" id="hmNameMe" type="button"></button>
       </div>
-      <img class="hm-moon" src="moon.png" alt="月">
+      <div class="hm-mid">
+        <div class="hm-moonrow"><i class="hm-bar"></i><img class="hm-moon" src="moon.png" alt="月"><i class="hm-bar"></i></div>
+        <button class="hm-days" id="hmDays" type="button"></button>
+      </div>
       <div class="hm-col">
         <button class="hm-ball" data-role="ai" id="hmBallAi" type="button" title="点头像换一张"><span id="hmAvatarAi"></span></button>
         <button class="hm-name" id="hmNameAi" type="button"></button>
       </div>
     </div>
-    <button class="hm-days" id="hmDays" type="button"></button>
     <button class="hm-slogan" id="hmSlogan" type="button"></button>
-    <div class="hm-grad-row" id="hmGradRow"></div>
-    <div class="hm-more">— 这里以后放新东西 —</div>
-    <button class="hm-cpick hm-bg-btn" id="hmBgBtn" type="button" aria-label="选背景图"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></button>
+    <div class="hm-set"><button class="hm-bg-btn" id="hmBgBtn" type="button" aria-label="选背景图"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></button></div>
     <input type="file" id="homeBgFile" accept="image/*" hidden>
   </div>
 </section>
@@ -1472,7 +1472,6 @@ $('scrim').addEventListener('click', ()=>{ closeSheets(); closeSidebar(); });
       segF.querySelectorAll('.seg-btn').forEach(x=>x.classList.toggle('on',x===b));});});}
   /* ═══ v33 主页 ═══ */
 const HOME_DEF={since:'2026-07-16',name_me:'Eira',name_ai:'霁',slogan:'星在，我在',grad:['#2B3A67','#0F1B3D']};
-const HOME_GRADS=[['#2B3A67','#0F1B3D'],['#5B4B8A','#241A47'],['#4A6FA5','#1E2F52'],['#2F5D62','#14262B'],['#8A5A83','#3A2447'],['#F1EDE4','#D9D2C2']];
 function homeData(){
   let g=HOME_DEF.grad;
   try{
@@ -1521,35 +1520,6 @@ function renderHome(){
   sec.style.setProperty('--hm-g1',d.grad[0]);
   sec.style.setProperty('--hm-g2',d.grad[1]);
   sec.classList.toggle('hm-light',isLight(d.grad[0])&&isLight(d.grad[1]));
-  const row=document.getElementById('hmGradRow');
-  if(row){
-    if(!row.childElementCount){
-      HOME_GRADS.forEach((gg,i)=>{
-        const b=document.createElement('button');
-        b.className='hm-swatch';b.type='button';
-        b.style.background='linear-gradient(135deg,'+gg[0]+','+gg[1]+')';
-        b.dataset.g=gg.join(',');
-        b.title='配色'+(i+1);
-        b.addEventListener('click',()=>{localStorage.setItem('cn_home_grad',JSON.stringify(gg));renderHome();});
-        row.appendChild(b);
-      });
-      [0,1].forEach(k=>{
-        const c=document.createElement('input');
-        c.type='color';c.className='hm-cpick';c.dataset.k=String(k);c.title=k===0?'自定义上色':'自定义下色';
-        c.addEventListener('input',()=>{
-          const cur=homeData().grad.slice();
-          cur[k]=c.value;
-          localStorage.setItem('cn_home_grad',JSON.stringify(cur));
-          renderHome();
-        });
-        row.appendChild(c);
-      });
-    }
-    row.querySelectorAll('.hm-swatch').forEach(b=>b.classList.toggle('on',b.dataset.g===d.grad.join(',')));
-    const c0=row.querySelector('.hm-cpick[data-k="0"]'),c1=row.querySelector('.hm-cpick[data-k="1"]');
-    if(c0)c0.value=d.grad[0];
-    if(c1)c1.value=d.grad[1];
-  }
 }
 window.renderHome=renderHome;
 let homeShown=false;
