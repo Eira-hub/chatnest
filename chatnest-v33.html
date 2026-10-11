@@ -354,24 +354,29 @@ body.has-wall .stars{opacity:.75}
 /* ═══ v33 主页 ═══ */
 #viewHome{flex:1;overflow-y:auto;--hm-g1:#2B3A67;--hm-g2:#0F1B3D;--hm-fg:#FFF;--hm-ts:0 1px 10px rgba(0,0,0,.22);color:var(--hm-fg)}
 #viewHome.hm-light{--hm-fg:#2A2E3A;--hm-ts:none}
-#viewHome .hm-hero{background:linear-gradient(180deg,var(--hm-g1) 0%,var(--hm-g2) 62%,transparent 100%);min-height:100%;padding:12vh 18px 40px;text-align:center}
-#viewHome .hm-pair{display:flex;align-items:center;justify-content:center;gap:8px}
-#viewHome .hm-col{display:flex;flex-direction:column;align-items:center;gap:12px}
-#viewHome .hm-ball{width:104px;height:104px;border-radius:50%;overflow:hidden;padding:0;border:0;background:rgba(255,255,255,.07);box-shadow:0 0 0 1.5px rgba(255,255,255,.25),0 8px 28px rgba(0,0,0,.28);cursor:pointer;display:block}
+#viewHome .hm-hero{background:linear-gradient(180deg,var(--hm-g1) 0%,var(--hm-g2) 62%,transparent 100%);padding:6vh 18px 24px;text-align:center}
+#viewHome .hm-pair{display:flex;align-items:center;justify-content:center;gap:6px}
+#viewHome .hm-col{display:flex;flex-direction:column;align-items:center;gap:8px}
+#viewHome .hm-ball{width:62px;height:62px;border-radius:50%;overflow:hidden;padding:0;border:0;background:rgba(255,255,255,.07);box-shadow:0 0 0 1.5px rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.28);cursor:pointer;display:block}
 #viewHome .hm-ball:active{transform:scale(.96)}
 #viewHome .hm-ball span{display:block;width:100%;height:100%}
 #viewHome .hm-ball img,#viewHome .hm-ball svg{width:100%;height:100%;object-fit:cover;display:block}
-#viewHome .hm-name{font-family:var(--serif);font-size:1.5em;letter-spacing:.14em;color:var(--hm-fg);background:none;border:0;padding:2px 8px;cursor:pointer;text-shadow:var(--hm-ts)}
+#viewHome .hm-name{font-family:var(--serif);font-size:1.02em;letter-spacing:.14em;color:var(--hm-fg);background:none;border:0;padding:2px 8px;cursor:pointer;text-shadow:var(--hm-ts)}
 #viewHome .hm-link{flex:0 0 auto;color:var(--hm-fg);opacity:.9}
-#viewHome .hm-days{font-family:var(--serif);font-size:.98em;letter-spacing:.16em;color:var(--hm-fg);opacity:.88;background:none;border:0;cursor:pointer;margin-top:16px;text-shadow:var(--hm-ts)}
-#viewHome .hm-slogan{font-family:var(--serif);font-size:1.35em;letter-spacing:.34em;text-indent:.34em;color:var(--hm-fg);background:none;border:0;cursor:pointer;margin-top:40px;text-shadow:var(--hm-ts)}
-#viewHome .hm-grad-row{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:46px}
-#viewHome .hm-swatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.4);cursor:pointer;padding:0}
+#viewHome .hm-moon{width:52px;height:auto;display:block;filter:brightness(0) invert(1);opacity:.92;transform:translateX(-4px)}
+#viewHome.hm-light .hm-moon{filter:brightness(0);opacity:.8}
+#viewHome .hm-bg-btn{margin-top:12px;opacity:.75}
+#viewHome.hm-bg{--hm-fg:#FFF!important;--hm-ts:0 1px 10px rgba(0,0,0,.45)!important;background-size:cover;background-position:center;background-repeat:no-repeat}
+#viewHome.hm-bg .hm-hero{background:linear-gradient(180deg,rgba(0,0,0,.42) 0%,rgba(0,0,0,.08) 55%,transparent 100%)}
+#viewHome .hm-days{font-family:var(--serif);font-size:.68em;letter-spacing:.18em;color:var(--hm-fg);opacity:.8;background:none;border:0;cursor:pointer;margin-top:8px;text-shadow:var(--hm-ts)}
+#viewHome .hm-slogan{font-family:var(--serif);font-size:.92em;letter-spacing:.34em;text-indent:.34em;color:var(--hm-fg);background:none;border:0;cursor:pointer;margin-top:18px;text-shadow:var(--hm-ts)}
+#viewHome .hm-grad-row{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:20px}
+#viewHome .hm-swatch{width:19px;height:19px;border-radius:50%;border:2px solid rgba(255,255,255,.4);cursor:pointer;padding:0}
 #viewHome.hm-light .hm-swatch{border-color:rgba(0,0,0,.25)}
 #viewHome .hm-swatch.on{border-color:currentColor;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
-#viewHome .hm-cpick{width:26px;height:26px;border-radius:50%;border:2px dashed rgba(255,255,255,.5);background:none;cursor:pointer;padding:0}
+#viewHome .hm-cpick{width:19px;height:19px;border-radius:50%;border:2px dashed rgba(255,255,255,.5);background:none;cursor:pointer;padding:0}
 #viewHome.hm-light .hm-cpick{border-color:rgba(0,0,0,.3)}
-#viewHome .hm-more{margin-top:30px;font-size:.78em;opacity:.5;letter-spacing:.22em}
+#viewHome .hm-more{margin-top:14px;font-size:.78em;opacity:.5;letter-spacing:.22em}
 </style>
 </head>
 <body>
@@ -448,15 +453,7 @@ body.has-wall .stars{opacity:.75}
         <button class="hm-ball" data-role="me" id="hmBallMe" type="button" title="点头像换一张"><span id="hmAvatarMe"></span></button>
         <button class="hm-name" id="hmNameMe" type="button"></button>
       </div>
-      <svg class="hm-link" viewBox="0 0 130 44" width="130" height="44" aria-hidden="true">
-        <line x1="2" y1="22" x2="42" y2="22" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
-        <line x1="88" y1="22" x2="128" y2="22" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
-        <path d="M65 6a12 12 0 1 0 8 21 10.5 10.5 0 0 1-8-21z" fill="currentColor" opacity=".92"/>
-        <circle cx="45" cy="11" r="1.6" fill="currentColor" opacity=".8"/>
-        <circle cx="50" cy="31" r="1.1" fill="currentColor" opacity=".7"/>
-        <circle cx="85" cy="9" r="1.2" fill="currentColor" opacity=".7"/>
-        <circle cx="90" cy="33" r="1" fill="currentColor" opacity=".6"/>
-      </svg>
+      <img class="hm-moon" src="moon.png" alt="月">
       <div class="hm-col">
         <button class="hm-ball" data-role="ai" id="hmBallAi" type="button" title="点头像换一张"><span id="hmAvatarAi"></span></button>
         <button class="hm-name" id="hmNameAi" type="button"></button>
@@ -466,6 +463,8 @@ body.has-wall .stars{opacity:.75}
     <button class="hm-slogan" id="hmSlogan" type="button"></button>
     <div class="hm-grad-row" id="hmGradRow"></div>
     <div class="hm-more">— 这里以后放新东西 —</div>
+    <button class="hm-cpick hm-bg-btn" id="hmBgBtn" type="button" aria-label="选背景图"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></button>
+    <input type="file" id="homeBgFile" accept="image/*" hidden>
   </div>
 </section>
         <div class="composer">
@@ -1077,6 +1076,42 @@ $('avFile').addEventListener('change', e=>{
   };
   r.readAsDataURL(f);
 });
+
+const bgBtn=document.getElementById('hmBgBtn');
+const bgFile=document.getElementById('homeBgFile');
+function applyHomeBg(){
+  const secH=document.getElementById('viewHome');
+  if(!secH)return;
+  const im=localStorage.getItem('cn_home_bgimg')||'';
+  secH.classList.toggle('hm-bg',!!im);
+  secH.style.backgroundImage=im?('url('+im+')'):'';
+}
+if(bgBtn&&bgFile){
+  bgBtn.addEventListener('click',()=>bgFile.click());
+  bgFile.addEventListener('change',()=>{
+    const f=bgFile.files&&bgFile.files[0];if(!f)return;
+    const fr=new FileReader();
+    fr.onload=()=>{
+      const im=new Image();
+      im.onload=()=>{
+        try{
+          const W=Math.min(1080,im.width||1080),sc=W/(im.width||W);
+          const cv=document.createElement('canvas');
+          cv.width=W;cv.height=Math.max(1,Math.round((im.height||W)*sc));
+          cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+          const du=cv.toDataURL('image/jpeg',.85);
+          try{localStorage.setItem('cn_home_bgimg',du);}catch(e){}
+        }catch(e){}
+        applyHomeBg();
+        bgFile.value='';
+        toast('背景换好啦',1500);
+      };
+      im.src=fr.result;
+    };
+    fr.readAsDataURL(f);
+  });
+}
+applyHomeBg();
 
 $('btnSend').addEventListener('click', ()=>{
   if(state.streaming){ if(state.abortCtl) state.abortCtl.abort(); return; }
