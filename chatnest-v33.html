@@ -369,11 +369,10 @@ body.has-wall .stars{opacity:.75}
 #viewHome.hm-light .hm-moon{filter:brightness(0);opacity:.8}
 #viewHome .hm-days{font-family:var(--serif);font-size:11px;letter-spacing:.2em;color:var(--hm-fg);opacity:.75;background:none;border:0;cursor:pointer;margin-top:12px;text-shadow:var(--hm-ts)}
 #viewHome .hm-slogan{font-family:var(--serif);font-size:15px;letter-spacing:.34em;text-indent:.34em;color:var(--hm-fg);background:none;border:0;cursor:pointer;margin-top:40px;text-shadow:var(--hm-ts)}
-#viewHome .hm-set{margin-top:18px;display:flex;justify-content:center}
-#viewHome .hm-bg-btn{width:30px;height:30px;border-radius:50%;border:1px dashed currentColor;background:none;color:var(--hm-fg);cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;opacity:.55}
-#viewHome .hm-bg-btn svg{width:13px;height:13px}
+#hmGradRow .g-sw{width:36px;height:24px;border-radius:8px;border:1.5px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
+#hmGradRow .g-sw.on{border-color:#8FA0FF;box-shadow:0 0 0 1.5px rgba(143,160,255,.35)}
 #viewHome.hm-bg{position:relative;background:none!important}
-#viewHome.hm-bg::before{content:'';position:absolute;left:0;right:0;top:0;height:33%;background-image:var(--hm-bgimg);background-size:cover;background-position:center;background-repeat:no-repeat;-webkit-mask-image:linear-gradient(180deg,#000 45%,transparent 100%);mask-image:linear-gradient(180deg,#000 45%,transparent 100%);pointer-events:none}
+#viewHome.hm-bg::before{content:'';position:absolute;left:0;right:0;top:0;height:33%;background-image:var(--hm-bgimg);background-size:cover;background-position:center;background-repeat:no-repeat;-webkit-mask-image:linear-gradient(180deg,#000 35%,transparent 100%);mask-image:linear-gradient(180deg,#000 35%,transparent 100%);pointer-events:none}
 </style>
 </head>
 <body>
@@ -460,7 +459,6 @@ body.has-wall .stars{opacity:.75}
       </div>
     </div>
     <button class="hm-slogan" id="hmSlogan" type="button"></button>
-    <div class="hm-set"><button class="hm-bg-btn" id="hmBgBtn" type="button" aria-label="选背景图"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></button></div>
     <input type="file" id="homeBgFile" accept="image/*" hidden>
   </div>
 </section>
@@ -548,6 +546,15 @@ body.has-wall .stars{opacity:.75}
       </div>
     </div>
     <button class="set-btn" id="btnFullscreen" style="margin-top:10px">进入全屏（Edge建议“添加到主屏幕”当App用，就是完整全屏）</button>
+  </div>
+  <div class="set-block">
+    <div class="set-label">主页主题</div>
+    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">渐变色跟背景图都在这，点一下就换。</div>
+    <div id="hmGradRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button class="set-btn" id="btnHomeBg" style="flex:1">换背景图</button>
+      <button class="set-btn" id="btnHomeBgClear" style="flex:1">清除背景</button>
+    </div>
   </div>
   <div class="set-block">
     <div class="set-label">接口设置</div>
@@ -1074,7 +1081,6 @@ $('avFile').addEventListener('change', e=>{
   r.readAsDataURL(f);
 });
 
-const bgBtn=document.getElementById('hmBgBtn');
 const bgFile=document.getElementById('homeBgFile');
 function applyHomeBg(){
   const secH=document.getElementById('viewHome');
@@ -1083,8 +1089,7 @@ function applyHomeBg(){
   secH.classList.toggle('hm-bg',!!im);
   secH.style.setProperty('--hm-bgimg',im?('url('+im+')'):'none');
 }
-if(bgBtn&&bgFile){
-  bgBtn.addEventListener('click',()=>bgFile.click());
+if(bgFile){
   bgFile.addEventListener('change',()=>{
     const f=bgFile.files&&bgFile.files[0];if(!f)return;
     const fr=new FileReader();
@@ -1286,6 +1291,39 @@ $('btnSavePersona').addEventListener('click', async ()=>{
   }catch(e){ toast(e.message); }
   finally{ btn.disabled = false; }
 });
+/* ── 主页主题：渐变色板 + 背景图 ── */
+const HM_GRADS=[['星夜','#2B3A67','#0F1B3D'],['雾紫','#8B7BB8','#3A2E55'],['暮粉','#C9A7C7','#7E5A8E'],['暖橘','#E8A87C','#7C4A3A'],['薄荷','#7FC8A9','#2F5B4E'],['天青','#7FA8D9','#2B4A77']];
+function applyHomeGrad(){
+  let g=null;try{g=JSON.parse(localStorage.getItem('cn_home_grad')||'null')}catch(e){}
+  const sec=document.getElementById('viewHome');if(!sec)return;
+  sec.style.setProperty('--hm-g1',(Array.isArray(g)&&g[0])||HOME_DEF.grad[0]);
+  sec.style.setProperty('--hm-g2',(Array.isArray(g)&&g[1])||HOME_DEF.grad[1]);
+}
+function hmGradRender(){
+  const row=document.getElementById('hmGradRow');if(!row)return;
+  let cur=null;try{cur=JSON.parse(localStorage.getItem('cn_home_grad')||'null')}catch(e){}
+  row.innerHTML='';
+  const eq=(a,b)=>Array.isArray(a)&&!!a[0]&&a[0].toLowerCase()===b[0].toLowerCase()&&a[1].toLowerCase()===b[1].toLowerCase();
+  HM_GRADS.forEach(g=>{
+    const b=document.createElement('button');
+    b.type='button';b.className='g-sw'+(eq(cur,[g[1],g[2]])?' on':'');
+    b.style.background='linear-gradient(135deg,'+g[1]+','+g[2]+')';
+    b.title=g[0];
+    b.onclick=()=>{localStorage.setItem('cn_home_grad',JSON.stringify([g[1],g[2]]));hmGradRender();applyHomeGrad();toast('渐变换好啦',1200);};
+    row.appendChild(b);
+  });
+  const c1=document.createElement('input');c1.type='color';c1.value=(Array.isArray(cur)&&cur[0])||'#2B3A67';
+  const c2=document.createElement('input');c2.type='color';c2.value=(Array.isArray(cur)&&cur[1])||'#0F1B3D';
+  const pick=()=>{localStorage.setItem('cn_home_grad',JSON.stringify([c1.value,c2.value]));applyHomeGrad();};
+  [c1,c2].forEach(c=>{c.style.cssText='width:30px;height:30px;border:0;background:none;padding:0;cursor:pointer';c.oninput=pick;row.appendChild(c);});
+}
+hmGradRender();
+(function(){
+  const btnBg=document.getElementById('btnHomeBg');
+  if(btnBg&&bgFile)btnBg.addEventListener('click',()=>bgFile.click());
+  const btnClr=document.getElementById('btnHomeBgClear');
+  if(btnClr)btnClr.addEventListener('click',()=>{localStorage.removeItem('cn_home_bgimg');applyHomeBg();toast('背景清掉啦',1200);});
+})();
 $('btnSaveApi').addEventListener('click', ()=>{
   const b = $('apiBaseInput').value.trim();
   const t = $('apiTokenInput').value.trim();
