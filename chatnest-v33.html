@@ -357,12 +357,12 @@ body.has-wall .stars{opacity:.75}
 #viewHome .hm-hero{background:linear-gradient(180deg,var(--hm-g1) 0%,var(--hm-g2) 62%,transparent 100%);min-height:100%;display:flex;flex-direction:column;justify-content:center;padding:24px 18px 40px;text-align:center}
 #viewHome .hm-pair{display:flex;align-items:flex-start;justify-content:center}
 #viewHome .hm-col{display:flex;flex-direction:column;align-items:center;gap:12px}
-#viewHome .hm-ball{width:clamp(72px,24vw,88px);height:clamp(72px,24vw,88px);border-radius:50%;overflow:hidden;padding:0;border:0;background:rgba(255,255,255,.07);box-shadow:0 0 0 1.5px rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.28);cursor:pointer;display:block}
+#viewHome .hm-ball{width:clamp(64px,21vw,78px);height:clamp(64px,21vw,78px);border-radius:50%;overflow:hidden;padding:0;border:0;background:rgba(255,255,255,.07);box-shadow:0 0 0 1.5px rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.28);cursor:pointer;display:block}
 #viewHome .hm-ball:active{transform:scale(.96)}
 #viewHome .hm-ball span{display:block;width:100%;height:100%}
 #viewHome .hm-ball img,#viewHome .hm-ball svg{width:100%;height:100%;object-fit:cover;display:block}
 #viewHome .hm-name{font-family:var(--serif);font-size:22px;letter-spacing:.12em;color:var(--hm-fg);background:none;border:0;padding:2px 8px;cursor:pointer;text-shadow:var(--hm-ts)}
-#viewHome .hm-mid{display:flex;flex-direction:column;align-items:center;margin-top:clamp(18px,7.4vw,28px)}
+#viewHome .hm-mid{display:flex;flex-direction:column;align-items:center;margin-top:clamp(14px,5.9vw,22px)}
 #viewHome .hm-moonrow{display:flex;align-items:center;gap:7px}
 #viewHome .hm-bar{display:block;width:26px;height:1px;background:var(--hm-fg);opacity:.45}
 #viewHome .hm-moon{width:clamp(24px,8vw,30px);height:auto;display:block;filter:brightness(0) invert(1);opacity:.92}
@@ -372,8 +372,8 @@ body.has-wall .stars{opacity:.75}
 #viewHome .hm-set{margin-top:18px;display:flex;justify-content:center}
 #viewHome .hm-bg-btn{width:30px;height:30px;border-radius:50%;border:1px dashed currentColor;background:none;color:var(--hm-fg);cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;opacity:.55}
 #viewHome .hm-bg-btn svg{width:13px;height:13px}
-#viewHome.hm-bg{background-size:cover;background-position:center;background-repeat:no-repeat}
-#viewHome.hm-bg .hm-hero{background:linear-gradient(180deg,rgba(43,58,103,.85) 0%,rgba(15,27,61,.62) 62%,transparent 100%);background:linear-gradient(180deg,color-mix(in srgb,var(--hm-g1) 85%,transparent) 0%,color-mix(in srgb,var(--hm-g2) 62%,transparent) 62%,transparent 100%)}
+#viewHome.hm-bg{position:relative;background:none!important}
+#viewHome.hm-bg::before{content:'';position:absolute;left:0;right:0;top:0;height:33%;background-image:var(--hm-bgimg);background-size:cover;background-position:center;background-repeat:no-repeat;-webkit-mask-image:linear-gradient(180deg,#000 45%,transparent 100%);mask-image:linear-gradient(180deg,#000 45%,transparent 100%);pointer-events:none}
 </style>
 </head>
 <body>
@@ -1081,7 +1081,7 @@ function applyHomeBg(){
   if(!secH)return;
   const im=localStorage.getItem('cn_home_bgimg')||'';
   secH.classList.toggle('hm-bg',!!im);
-  secH.style.backgroundImage=im?('url('+im+')'):'';
+  secH.style.setProperty('--hm-bgimg',im?('url('+im+')'):'none');
 }
 if(bgBtn&&bgFile){
   bgBtn.addEventListener('click',()=>bgFile.click());
