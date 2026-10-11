@@ -548,13 +548,27 @@ body.has-wall .stars{opacity:.75}
     <button class="set-btn" id="btnFullscreen" style="margin-top:10px">进入全屏（Edge建议“添加到主屏幕”当App用，就是完整全屏）</button>
   </div>
   <div class="set-block">
-    <div class="set-label">主页主题</div>
+    <div class="set-label">主页渐变与背景</div>
     <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">渐变色跟背景图都在这，点一下就换。</div>
     <div id="hmGradRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
     <div style="display:flex;gap:10px;margin-top:10px">
       <button class="set-btn" id="btnHomeBg" style="flex:1">换背景图</button>
       <button class="set-btn" id="btnHomeBgClear" style="flex:1">清除背景</button>
     </div>
+  </div>
+  <div class="set-block">
+    <div class="set-label">主题颜色</div>
+    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">顶栏、对话列表、设置页就是这里的颜色。</div>
+    <div class="wall-row"><span class="wl-lab">面板</span><input type="color" id="bubPanel" value="#111731"></div>
+    <div class="sub-lab">气泡</div>
+    <div class="wall-row"><span class="wl-lab">我的气泡</span><input type="color" id="bubSelf" value="#F2EDE7"></div>
+    <div class="wall-row"><span class="wl-lab">对方气泡</span><input type="color" id="bubPeer" value="#0C0D12"></div>
+    <div class="sub-lab">聊天壁纸颜色</div>
+    <div class="palette" id="wallPalette"></div>
+    <div class="wall-row"><span class="wl-lab">上色</span><input type="color" id="wallC1" value="#A5B9DC"></div>
+    <div class="wall-row"><span class="wl-lab">下色</span><input type="color" id="wallC2" value="#0A0F22"></div>
+    <button class="set-btn" id="btnTintReset" style="margin-top:12px">颜色恢复默认</button>
+    <div class="wall-row" style="margin-top:14px"><span class="wl-lab">他想了想</span><button class="set-btn" id="btnThink" style="padding:5px 14px;font-size:12px">显示中</button></div>
   </div>
   <div class="set-block">
     <div class="set-label">接口设置</div>
@@ -581,19 +595,6 @@ body.has-wall .stars{opacity:.75}
       <button class="set-btn" id="btnWallReset" style="flex:1">恢复默认</button>
     </div>
     <input type="file" id="wallFile" accept="image/*" style="display:none">
-  </div>
-  <div class="set-block">
-    <div class="set-label">调色盘</div>
-    <div class="sub-lab">壁纸颜色</div>
-    <div class="palette" id="wallPalette"></div>
-    <div class="wall-row"><span class="wl-lab">上色</span><input type="color" id="wallC1" value="#A5B9DC"></div>
-    <div class="wall-row"><span class="wl-lab">下色</span><input type="color" id="wallC2" value="#0A0F22"></div>
-    <div class="sub-lab">颜色</div>
-    <div class="wall-row"><span class="wl-lab">我的气泡</span><input type="color" id="bubSelf" value="#F2EDE7"></div>
-    <div class="wall-row"><span class="wl-lab">对方气泡</span><input type="color" id="bubPeer" value="#0C0D12"></div>
-    <div class="wall-row"><span class="wl-lab">面板键盘</span><input type="color" id="bubPanel" value="#111731"></div>
-    <button class="set-btn" id="btnTintReset" style="margin-top:12px">颜色恢复默认</button>
-    <div class="wall-row" style="margin-top:14px"><span class="wl-lab">他想了想</span><button class="set-btn" id="btnThink" style="padding:5px 14px;font-size:12px">显示中</button></div>
   </div>
   <div class="set-block">
     <div class="set-label">关于</div>
