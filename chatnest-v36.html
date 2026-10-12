@@ -249,7 +249,8 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .dock-btn{flex:1;height:46px;border-radius:999px;font-family:var(--serif);font-size:.68em;letter-spacing:.04em;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   color:var(--text2);transition:background .2s,color .2s,transform .15s var(--ease);
-  -webkit-user-drag:none}
+  -webkit-user-drag:none;touch-action:none}
+.dock-btn img,.dock-btn span{touch-action:none;-webkit-user-drag:none}
 .dock-btn img{width:19px;height:19px;object-fit:contain;display:block;transition:opacity .2s,transform .2s,filter .25s}
 [data-theme="dark"] .dock-btn img{filter:invert(1) brightness(1.55)}
 .dock-btn span{line-height:1;transition:opacity .2s}
@@ -1843,11 +1844,17 @@ if(dock){
     }
     dock.addEventListener('pointerdown',e=>{
       const b=e.target.closest('.dock-btn'); if(!b) return;
-      e.preventDefault();   /* 阻止 iOS 原生手势接管（滚动/选择），拖动必需 */
+      e.preventDefault();   /* 阻止兼容鼠标事件（滚动/选择），拖动必需 */
       downIdx=btns.indexOf(b); longFired=false; dragging=false; startPX=e.clientX; ptrId=e.pointerId;
       pressTimer=setTimeout(()=>{ longFired=true; ball.classList.add('long');
         if(navigator.vibrate) try{navigator.vibrate(12)}catch(err){} },HOLD_MS);
     });
+    /* iOS Safari 兜底：手势接管看的是 touchstart，pointerdown 的 preventDefault 拦不住它。
+       这里直接取消触摸默认行为（滚动/长按呼出），指针移动序列就不会被 pointercancel 打断。 */
+    dock.addEventListener('touchstart',e=>{
+      if(e.target.closest('.dock-btn')) e.preventDefault();
+    },{passive:false});
+    try{console.log('[ChatNest] Dock v36.3 · touch-fix')}catch(err){}
     dock.addEventListener('pointermove',onMove);
     dock.addEventListener('pointerup',onUp);
     dock.addEventListener('pointercancel',onCancel);
