@@ -88,9 +88,9 @@
                0 1px 3px rgba(60,80,160,.15);
     border-color:rgba(255,255,255,.9);
   }
-  .ball.moving{--bs:1.32}                 /* 滑动到位：对当前页放大包裹 */
+  .ball.moving{--bs:1.24}                 /* 滑动到位：对当前页放大包裹 */
   .ball.drag{                             /* 拖动：仅位置层关过渡跟手；缩放层保持平滑 */
-    --bs:1.6;transition:none;
+    --bs:1.45;transition:none;
   }
   .ball.drag .bs{                         /* 拖动：放大到明显溢出边框 + 阴影提起 */
     border-color:rgba(255,255,255,.6);
@@ -107,7 +107,7 @@
                0 14px 30px rgba(90,120,230,.36),
                0 3px 10px rgba(60,80,160,.18);
   }
-  .ball.long{--bs:1.5}                    /* 长按：膨胀明显，溢出边框 */
+  .ball.long{--bs:1.38}                   /* 长按：膨胀明显，溢出边框 */
 
   /* ───────── tab 项（全程不动；图标在球到达时果冻变形 + 变色）───────── */
   .tabs{position:relative;z-index:1;display:flex}
