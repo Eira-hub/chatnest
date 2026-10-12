@@ -133,11 +133,18 @@
   }
   body.light .bgToggle{border-color:rgba(60,80,140,.25);background:rgba(255,255,255,.5)}
   .bgToggle:active{transform:scale(.94)}
+  /* 取色块：可见、可点，浏览器原生弹出调色板 */
+  #onColor{
+    width:20px;height:20px;border:1px solid rgba(255,255,255,.45);border-radius:50%;
+    padding:0;background:none;cursor:pointer;vertical-align:-4px;margin-left:4px;
+    -webkit-appearance:none;appearance:none;
+  }
+  #onColor::-webkit-color-swatch-wrapper{padding:0}
+  #onColor::-webkit-color-swatch{border:none;border-radius:50%}
 </style>
 </head>
 <body>
-  <button class="bgToggle" id="colorBtn" style="right:130px">选中色 <span id="onDot" style="display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;background:#AFCBFF;box-shadow:0 0 6px rgba(255,255,255,.5)"></span></button>
-  <input type="color" id="onColor" value="#afcbff" style="position:fixed;left:-100px;top:-100px;opacity:0;pointer-events:none" aria-hidden="true">
+  <label class="bgToggle" id="colorBtn" style="right:130px;user-select:none">选中色 <input type="color" id="onColor" value="#afcbff" title="自定义选中颜色"></label>
   <button class="bgToggle" id="bgToggle">切换浅色</button>
   <div class="stage">
     <div class="title">LIQUID GLASS TAB BAR</div>
@@ -200,7 +207,7 @@
   }
 
   /* ── 实时变色：球移动到哪里，哪个 tab 就变色（rAF 读取球的实时位置）── */
-  let liveIdx = idx;
+  let liveIdx = -1;   /* -1 强制首帧应用初始高亮 */
   (function trackLoop(){
     try{
       const m = new DOMMatrixReadOnly(getComputedStyle(ball).transform);
@@ -289,22 +296,19 @@
 
   /* ── 自定义选中颜色（用户自选，存 localStorage）── */
   const onColor = document.getElementById('onColor');
-  const onDot   = document.getElementById('onDot');
-  const colorBtn = document.getElementById('colorBtn');
   let savedColor = null;
   try{ savedColor = localStorage.getItem('ltb-on-color'); }catch(err){}
   if(savedColor && /^#[0-9a-fA-F]{6}$/.test(savedColor)){
     onColor.value = savedColor;
     pill.style.setProperty('--on', savedColor);
-    onDot.style.background = savedColor;
   }
-  colorBtn.addEventListener('click', ()=>onColor.click());
-  onColor.addEventListener('input', ()=>{
+  function applyColor(){
     const c = onColor.value;
     pill.style.setProperty('--on', c);
-    onDot.style.background = c;
     try{ localStorage.setItem('ltb-on-color', c); }catch(err){}
-  });
+  }
+  onColor.addEventListener('input', applyColor);
+  onColor.addEventListener('change', applyColor);
 })();
 </script>
 </body>
