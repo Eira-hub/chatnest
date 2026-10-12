@@ -237,7 +237,8 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 #input{flex:1;min-width:0;display:block;resize:none;font-size:var(--fs);line-height:1.5;height:1.55em;max-height:132px;overflow-y:auto;padding:5px 2px;background:none}
 #input::placeholder{color:var(--text3)}
 .dock{width:min(calc(100% - 10px),790px);margin:8px auto 0;display:flex;align-items:center;
-  border-radius:999px;padding:4px;position:relative;isolation:isolate}
+  border-radius:999px;padding:4px;position:relative;isolation:isolate;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
 .dock::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;
   background:linear-gradient(145deg,rgba(255,255,255,.46),rgba(255,255,255,.18) 58%,rgba(255,255,255,.34));
   border:1px solid rgba(255,255,255,.44);
@@ -247,7 +248,8 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
   box-shadow:0 0 0 1px rgba(130,150,210,.18),0 10px 30px rgba(0,0,0,.40),inset 0 1px 0 rgba(255,255,255,.13)}
 .dock-btn{flex:1;height:36px;border-radius:999px;font-family:var(--serif);font-size:.68em;letter-spacing:.04em;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
-  color:var(--text2);transition:background .2s,color .2s,transform .15s var(--ease)}
+  color:var(--text2);transition:background .2s,color .2s,transform .15s var(--ease);
+  -webkit-user-drag:none}
 .dock-btn img{width:19px;height:19px;object-fit:contain;display:block;transition:opacity .2s,transform .2s,filter .25s}
 [data-theme="dark"] .dock-btn img{filter:invert(1) brightness(1.55)}
 .dock-btn span{line-height:1;transition:opacity .2s}
@@ -1829,6 +1831,11 @@ if(dock){
       }else if(longFired) setBallAt(curIdx,false);
       downIdx=-1; dragging=false; longFired=false;
     }
+    function onCancel(){
+      clearTimeout(pressTimer);
+      if(dragging||longFired) setBallAt(curIdx,false);   /* 手势被系统接管：直接收回常态，不切页 */
+      downIdx=-1; dragging=false; longFired=false; ptrId=null;
+    }
     dock.addEventListener('pointerdown',e=>{
       const b=e.target.closest('.dock-btn'); if(!b) return;
       downIdx=btns.indexOf(b); longFired=false; dragging=false; startPX=e.clientX; ptrId=e.pointerId;
@@ -1837,7 +1844,8 @@ if(dock){
     });
     dock.addEventListener('pointermove',onMove);
     dock.addEventListener('pointerup',onUp);
-    dock.addEventListener('pointercancel',onUp);
+    dock.addEventListener('pointercancel',onCancel);
+    dock.addEventListener('lostpointercapture',onCancel);
     dock.addEventListener('click',e=>{ if(suppressClick){ e.stopPropagation(); e.preventDefault(); } },true);
     function buildLens(){
       lensTrack.innerHTML='';
@@ -1861,16 +1869,18 @@ if(dock){
 
     /* 实时渲染循环：透镜折射 + 吞图标 + 透镜高亮跟随球心 */
     (function loop(){
-      if(iw){
-        const m=new DOMMatrixReadOnly(getComputedStyle(ball).transform);
-        const c=m.e+iw/2;   /* 球心(dock 坐标) */
-        lensTrack.style.transform='translate('+(iw/2-LENS_S*(c-PAD))+'px,0) scale('+LENS_S+')';
-        btns.forEach((b,i)=>{ const bc=tabC(i);
-          b.classList.toggle('swallow',Math.abs(bc-c)<iw*0.55); });
-        let k=0,bd=1e9;
-        btns.forEach((b,i)=>{ const d=Math.abs(tabC(i)-c); if(d<bd){bd=d;k=i;} });
-        if(k!==liveIdx){ liveIdx=k; lensBtns.forEach((t,i)=>t.classList.toggle('on',i===k)); }
-      }
+      try{
+        if(iw){
+          const m=new DOMMatrixReadOnly(getComputedStyle(ball).transform);
+          const c=m.e+iw/2;   /* 球心(dock 坐标) */
+          lensTrack.style.transform='translate('+(iw/2-LENS_S*(c-PAD))+'px,0) scale('+LENS_S+')';
+          btns.forEach((b,i)=>{ const bc=tabC(i);
+            b.classList.toggle('swallow',Math.abs(bc-c)<iw*0.55); });
+          let k=0,bd=1e9;
+          btns.forEach((b,i)=>{ const d=Math.abs(tabC(i)-c); if(d<bd){bd=d;k=i;} });
+          if(k!==liveIdx){ liveIdx=k; lensBtns.forEach((t,i)=>t.classList.toggle('on',i===k)); }
+        }
+      }catch(err){}
       requestAnimationFrame(loop);
     })();
 
