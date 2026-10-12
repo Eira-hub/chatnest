@@ -40,7 +40,6 @@
                inset 0 1.5px 0 rgba(255,255,255,.34),
                inset 0 -1px 0 rgba(255,255,255,.06);
     isolation:isolate;
-    transition:transform .34s cubic-bezier(.3,1.4,.5,1);
   }
   body.light .pill{
     background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34));
@@ -50,7 +49,6 @@
                inset 0 1.5px 0 rgba(255,255,255,.95),
                inset 0 -1px 0 rgba(255,255,255,.35);
   }
-  .pill.pressing{transform:scale(.965)}
   /* 顶部弧面反光，让玻璃更“厚” */
   .pill::before{
     content:'';position:absolute;left:22px;right:22px;top:2px;height:34%;
@@ -58,12 +56,12 @@
     background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,0));
   }
 
-  /* ───────── 悬浮玻璃球 ───────── */
+  /* ───────── 悬浮玻璃球（唯一动的元素）───────── */
   .ball{
-    position:absolute;top:7px;bottom:7px;left:0;width:var(--iw);z-index:0;
+    position:absolute;top:6px;bottom:6px;left:0;width:var(--iw);z-index:0;
     border-radius:999px;pointer-events:none;
     transform:translateX(var(--x)) scale(var(--bs,1));
-    transition:transform .58s cubic-bezier(.3,1.5,.5,1);   /* 弹性滑动 */
+    transition:transform .58s cubic-bezier(.3,1.5,.5,1);   /* 弹性只属于球 */
     background:
       radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.62) 0%,rgba(255,255,255,.16) 42%,rgba(255,255,255,.05) 100%),
       linear-gradient(180deg,rgba(140,170,255,.34),rgba(120,140,255,.14));
@@ -72,6 +70,7 @@
                0 6px 18px rgba(96,132,255,.30),
                0 1px 4px rgba(20,40,120,.18);
     border:1px solid rgba(255,255,255,.34);
+    will-change:transform;
   }
   body.light .ball{
     background:
@@ -82,34 +81,42 @@
                0 1px 3px rgba(60,80,160,.15);
     border-color:rgba(255,255,255,.9);
   }
-  .ball.stretch{transition:transform .30s cubic-bezier(.3,1.2,.5,1)}
-  .ball.drag{transition:none}
-  .ball.press{--bs:1.14}
-  .ball.long{--bs:1.26}
+  .ball.moving{--bs:1.12}                 /* 滑动到位：对当前页轻微放大包裹 */
+  .ball.drag{                             /* 拖动：关过渡跟手 + 放大到溢出边框 + 阴影提起 */
+    --bs:1.30;transition:none;
+    border-color:rgba(255,255,255,.6);
+    background:
+      radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.78) 0%,rgba(255,255,255,.26) 42%,rgba(255,255,255,.08) 100%),
+      linear-gradient(180deg,rgba(150,178,255,.44),rgba(120,140,255,.18));
+    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),
+               inset 0 -2px 6px rgba(255,255,255,.16),
+               0 14px 34px rgba(60,90,220,.42),
+               0 3px 10px rgba(20,40,120,.22);
+  }
+  body.light .ball.drag{
+    box-shadow:inset 0 1.5px 0 #fff,
+               0 14px 30px rgba(90,120,230,.36),
+               0 3px 10px rgba(60,80,160,.18);
+  }
+  .ball.long{--bs:1.34}                   /* 长按：膨胀更明显 */
 
-  /* ───────── tab 项 ───────── */
+  /* ───────── tab 项（全程不动，只变色）───────── */
   .tabs{position:relative;z-index:1;display:flex}
   .tab{
-    width:var(--iw);height:56px;border:none;background:none;color:inherit;
+    width:var(--iw);height:58px;border:none;background:none;color:inherit;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     cursor:pointer;position:relative;
     -webkit-user-drag:none;touch-action:none;
   }
-  .tab .ic{display:flex;transition:transform .42s cubic-bezier(.3,1.7,.55,1)}
+  .tab .ic{display:flex}
   .tab .ic svg{width:23px;height:23px}
-  .tab .lb{font-size:10.5px;letter-spacing:.05em;opacity:.55;transition:opacity .3s,color .3s}
+  .tab .lb{font-size:10.5px;letter-spacing:.05em;opacity:.55;transition:color .32s,opacity .32s}
   .tab{color:rgba(235,240,255,.78)}
   body.light .tab{color:rgba(40,52,84,.82)}
-  .tab.on{color:#fff}
-  body.light .tab.on{color:#1d2b6b}
+  /* 选中：只变色（iOS 系统蓝的柔和版），不改图标、不放大 */
+  .tab.on{color:#AFCBFF}
+  body.light .tab.on{color:#2F51D8}
   .tab.on .lb{opacity:1;font-weight:600}
-  .tab .ic{transform:scale(1)}
-  .tab.on .ic{transform:scale(1.14)}
-  .tab.hover .ic{transform:scale(1.2)}
-  .tab.hover.on .ic{transform:scale(1.28)}
-  /* 图标 pop 一下 */
-  @keyframes pop{0%{transform:scale(1)}38%{transform:scale(1.34)}70%{transform:scale(.94)}100%{transform:scale(1.14)}}
-  .tab.pop .ic{animation:pop .5s cubic-bezier(.3,1.4,.5,1)}
 
   .bgToggle{
     position:fixed;top:22px;right:22px;border:1px solid rgba(255,255,255,.22);
@@ -125,7 +132,7 @@
   <div class="stage">
     <div class="title">LIQUID GLASS TAB BAR</div>
     <div class="hint">
-      <b>点按</b> 弹性滑动切换 · <b>长按</b> 悬浮球膨胀 · <b>按住左右拖</b> 实时跟手松手吸附
+      <b>点按</b> 悬浮球弹性滑到位 · <b>长按</b> 悬浮球膨胀 · <b>按住左右拖</b> 球放大溢出边框跟手，松手弹回吸附
     </div>
     <div class="pill" id="pill">
       <div class="ball" id="ball"></div>
@@ -167,19 +174,19 @@
     iw = tabs[0].getBoundingClientRect().width;   /* 首次为 CSS 默认 64px */
     if(!iw || iw < 40) iw = 64;
     pill.style.setProperty('--iw', iw+'px');      /* 挂在胶囊上，.tab 与 .ball 共享 */
-    setBall(idx, false);
+    setBall(idx);
   }
   function ballX(i){ return pad + i*iw; }
-  function setBall(i, elastic){
-    ball.classList.remove('drag');
+  let mvT=null;
+  function setBall(i){
+    ball.classList.remove('drag','long');
+    ball.classList.add('moving');                 /* 滑动途中球轻微放大包裹当前页 */
     ball.style.setProperty('--x', ballX(i)+'px');
+    clearTimeout(mvT);
+    mvT=setTimeout(()=>ball.classList.remove('moving'), 620);
   }
-  function setActive(i, pop){
-    tabs.forEach((t,k)=>t.classList.toggle('on', k===i));
-    if(pop){
-      const t=tabs[i], ic=t.querySelector('.ic');
-      t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
-    }
+  function setActive(i){
+    tabs.forEach((t,k)=>t.classList.toggle('on', k===i));   /* 只变色 */
     idx = i;
   }
 
@@ -192,9 +199,7 @@
     e.preventDefault();
     curI = +tab.dataset.i;
     longFired = false; dragging = false;
-    startPX = (e.touches?e.touches[0].clientX:e.clientX);
-    pill.classList.add('pressing');
-    tabs[curI].classList.add('hover');
+    startPX = e.clientX;
     pressTimer = setTimeout(()=>{
       longFired = true;
       ball.classList.add('long');            /* 长按：悬浮球膨胀 */
@@ -204,13 +209,12 @@
   }
   function onMove(e){
     if(curI<0) return;
-    const px = (e.touches?e.touches[0].clientX:e.clientX);
-    const dx = px - startPX;
+    const dx = e.clientX - startPX;
     if(!dragging && Math.abs(dx)>7){          /* 超过阈值 → 进入拖动 */
       dragging = true;
       clearTimeout(pressTimer);
-      ball.classList.remove('long','stretch');
-      ball.classList.add('drag');             /* 跟手时关闭过渡 */
+      ball.classList.remove('moving');
+      ball.classList.add('drag');             /* 跟手 + 放大溢出边框 */
     }
     if(dragging){
       let x = ballX(curI) + dx;
@@ -222,41 +226,23 @@
   function onUp(e){
     if(curI<0) return;
     clearTimeout(pressTimer);
-    pill.classList.remove('pressing');
-    tabs[curI].classList.remove('hover');
-    ball.classList.remove('long');
     if(dragging){
-      /* 松手吸附最近项 */
+      /* 松手：球弹回原尺寸并吸附最近项 */
       const rect = pill.getBoundingClientRect();
-      const center = (e.changedTouches?e.changedTouches[0].clientX:e.clientX) - rect.left;
+      const center = e.clientX - rect.left;
       let best = 0, bd = 1e9;
       for(let k=0;k<N;k++){ const d=Math.abs(pad+k*iw+iw/2-center); if(d<bd){bd=d;best=k;} }
-      ball.classList.add('stretch');
-      setBall(best, true);
-      if(best!==idx) setActive(best, true);
+      setBall(best);
+      if(best!==idx) setActive(best);
     }else{
-      if(longFired){
-        ball.classList.add('stretch');       /* 长按松手：球回弹并收下这次选择 */
-        setBall(curI, true);
-        if(curI!==idx) setActive(curI, true);
-        setTimeout(()=>ball.classList.remove('stretch'), 320);
-      }else{
-        setBall(curI, true);                 /* 普通点按：弹性滑动 */
-        if(curI!==idx) setActive(curI, true);
-        else{
-          const t=tabs[curI];
-          t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
-        }
-      }
+      setBall(curI);                          /* 点按/长按松手：球弹性滑到位 */
+      setActive(curI);
     }
     curI = -1; dragging = false; longFired = false;
   }
   function onCancel(){
     clearTimeout(pressTimer);
-    pill.classList.remove('pressing');
-    if(curI>=0) tabs[curI].classList.remove('hover');
-    ball.classList.remove('long');
-    setBall(idx, true);
+    setBall(idx);
     curI=-1; dragging=false; longFired=false;
   }
 
@@ -274,8 +260,8 @@
 
   window.addEventListener('resize', measure);
   measure();
-  setActive(0, false);
-  setBall(0, false);
+  setActive(0);
+  setBall(0);
 })();
 </script>
 </body>
