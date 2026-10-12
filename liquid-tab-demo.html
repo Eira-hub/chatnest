@@ -68,7 +68,7 @@
   .ball .bs{
     position:absolute;inset:0;border-radius:999px;
     transform:scale(var(--bs,1));
-    transition:transform .34s cubic-bezier(.35,1.25,.4,1);  /* 大小：稍短、平滑、微果冻 */
+    transition:transform .34s cubic-bezier(.3,1,.35,1);  /* 大小：稍短、纯平滑收敛（无过冲，恢复不顿挫） */
     background:
       radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.62) 0%,rgba(255,255,255,.16) 42%,rgba(255,255,255,.05) 100%),
       linear-gradient(180deg,rgba(140,170,255,.34),rgba(120,140,255,.14));
