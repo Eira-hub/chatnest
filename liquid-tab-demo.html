@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Liquid Glass Tab Bar · 液态玻璃胶囊演示</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Segoe UI",sans-serif;
+    background:radial-gradient(1200px 700px at 20% -10%,#2b3a67 0%,transparent 60%),
+               radial-gradient(900px 600px at 85% 110%,#4a2b53 0%,transparent 55%),
+               linear-gradient(160deg,#0b0e1d 0%,#131a33 55%,#0d1122 100%);
+    color:#eef1fa;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:34px;overflow:hidden;user-select:none;-webkit-user-select:none;
+    transition:background .8s;
+  }
+  body.light{
+    background:radial-gradient(1100px 700px at 18% -10%,#dfe9ff 0%,transparent 60%),
+               radial-gradient(900px 600px at 85% 110%,#ffe3ef 0%,transparent 55%),
+               linear-gradient(160deg,#eef2fb 0%,#dfe6f5 100%);
+    color:#1c2337;
+  }
+  .stage{display:flex;flex-direction:column;align-items:center;gap:26px}
+  .title{font-size:15px;letter-spacing:.14em;opacity:.62;font-weight:500}
+  .hint{font-size:12.5px;letter-spacing:.06em;opacity:.45;line-height:1.9;text-align:center}
+  .hint b{font-weight:600;opacity:.9}
+
+  /* ───────── 液态玻璃胶囊 ───────── */
+  .pill{
+    --iw:64px;   /* 单项宽度，由 JS 测量后回写，.tab 与 .ball 共享 */
+    position:relative;display:flex;padding:7px;border-radius:999px;
+    background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.07));
+    backdrop-filter:blur(26px) saturate(170%);-webkit-backdrop-filter:blur(26px) saturate(170%);
+    border:1px solid rgba(255,255,255,.20);
+    box-shadow:0 22px 48px rgba(3,8,28,.42),
+               0 2px 8px rgba(3,8,28,.24),
+               inset 0 1.5px 0 rgba(255,255,255,.34),
+               inset 0 -1px 0 rgba(255,255,255,.06);
+    isolation:isolate;
+    transition:transform .34s cubic-bezier(.3,1.4,.5,1);
+  }
+  body.light .pill{
+    background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34));
+    border-color:rgba(255,255,255,.75);
+    box-shadow:0 22px 44px rgba(70,90,140,.22),
+               0 2px 8px rgba(70,90,140,.12),
+               inset 0 1.5px 0 rgba(255,255,255,.95),
+               inset 0 -1px 0 rgba(255,255,255,.35);
+  }
+  .pill.pressing{transform:scale(.965)}
+  /* 顶部弧面反光，让玻璃更“厚” */
+  .pill::before{
+    content:'';position:absolute;left:22px;right:22px;top:2px;height:34%;
+    border-radius:999px;pointer-events:none;
+    background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,0));
+  }
+
+  /* ───────── 悬浮玻璃球 ───────── */
+  .ball{
+    position:absolute;top:7px;bottom:7px;left:0;width:var(--iw);z-index:0;
+    border-radius:999px;pointer-events:none;
+    transform:translateX(var(--x)) scale(var(--bs,1));
+    transition:transform .58s cubic-bezier(.3,1.5,.5,1);   /* 弹性滑动 */
+    background:
+      radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.62) 0%,rgba(255,255,255,.16) 42%,rgba(255,255,255,.05) 100%),
+      linear-gradient(180deg,rgba(140,170,255,.34),rgba(120,140,255,.14));
+    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55),
+               inset 0 -2px 6px rgba(255,255,255,.12),
+               0 6px 18px rgba(96,132,255,.30),
+               0 1px 4px rgba(20,40,120,.18);
+    border:1px solid rgba(255,255,255,.34);
+  }
+  body.light .ball{
+    background:
+      radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.95) 0%,rgba(255,255,255,.4) 45%,rgba(255,255,255,.14) 100%),
+      linear-gradient(180deg,rgba(160,190,255,.5),rgba(150,170,255,.2));
+    box-shadow:inset 0 1.5px 0 #fff,
+               0 6px 16px rgba(90,120,230,.28),
+               0 1px 3px rgba(60,80,160,.15);
+    border-color:rgba(255,255,255,.9);
+  }
+  .ball.stretch{transition:transform .30s cubic-bezier(.3,1.2,.5,1)}
+  .ball.drag{transition:none}
+  .ball.press{--bs:1.14}
+  .ball.long{--bs:1.26}
+
+  /* ───────── tab 项 ───────── */
+  .tabs{position:relative;z-index:1;display:flex}
+  .tab{
+    width:var(--iw);height:56px;border:none;background:none;color:inherit;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    cursor:pointer;position:relative;
+    -webkit-user-drag:none;touch-action:none;
+  }
+  .tab .ic{display:flex;transition:transform .42s cubic-bezier(.3,1.7,.55,1)}
+  .tab .ic svg{width:23px;height:23px}
+  .tab .lb{font-size:10.5px;letter-spacing:.05em;opacity:.55;transition:opacity .3s,color .3s}
+  .tab{color:rgba(235,240,255,.78)}
+  body.light .tab{color:rgba(40,52,84,.82)}
+  .tab.on{color:#fff}
+  body.light .tab.on{color:#1d2b6b}
+  .tab.on .lb{opacity:1;font-weight:600}
+  .tab .ic{transform:scale(1)}
+  .tab.on .ic{transform:scale(1.14)}
+  .tab.hover .ic{transform:scale(1.2)}
+  .tab.hover.on .ic{transform:scale(1.28)}
+  /* 图标 pop 一下 */
+  @keyframes pop{0%{transform:scale(1)}38%{transform:scale(1.34)}70%{transform:scale(.94)}100%{transform:scale(1.14)}}
+  .tab.pop .ic{animation:pop .5s cubic-bezier(.3,1.4,.5,1)}
+
+  .bgToggle{
+    position:fixed;top:22px;right:22px;border:1px solid rgba(255,255,255,.22);
+    background:rgba(255,255,255,.09);backdrop-filter:blur(14px);color:inherit;
+    font-size:12px;letter-spacing:.1em;padding:9px 16px;border-radius:999px;cursor:pointer;
+  }
+  body.light .bgToggle{border-color:rgba(60,80,140,.25);background:rgba(255,255,255,.5)}
+  .bgToggle:active{transform:scale(.94)}
+</style>
+</head>
+<body>
+  <button class="bgToggle" id="bgToggle">切换浅色</button>
+  <div class="stage">
+    <div class="title">LIQUID GLASS TAB BAR</div>
+    <div class="hint">
+      <b>点按</b> 弹性滑动切换 · <b>长按</b> 悬浮球膨胀 · <b>按住左右拖</b> 实时跟手松手吸附
+    </div>
+    <div class="pill" id="pill">
+      <div class="ball" id="ball"></div>
+      <div class="tabs" id="tabs">
+        <button class="tab" data-i="0">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.7 8.7 0 0 1-3.9-.9L3 20l1.2-5.4a8.1 8.1 0 0 1-.7-3.1A8.4 8.4 0 0 1 12 3.2a8.4 8.4 0 0 1 9 8.3z"/></svg></span>
+          <span class="lb">聊天</span>
+        </button>
+        <button class="tab" data-i="1">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S3.5 15.4 3.5 9.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8.5 2.6c0 5.8-8.5 10.9-8.5 10.9z"/></svg></span>
+          <span class="lb">心潮</span>
+        </button>
+        <button class="tab" data-i="2">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg></span>
+          <span class="lb">待办</span>
+        </button>
+        <button class="tab" data-i="3">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M15.2 8.8l-1.8 4.6-4.6 1.8 1.8-4.6z"/></svg></span>
+          <span class="lb">探索</span>
+        </button>
+        <button class="tab" data-i="4">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.6 12 4l8 6.6V20a.9.9 0 0 1-.9.9H14.8v-5.6H9.2v5.6H4.9A.9.9 0 0 1 4 20z"/></svg></span>
+          <span class="lb">主页</span>
+        </button>
+      </div>
+    </div>
+  </div>
+<script>
+(function(){
+  const pill  = document.getElementById('pill');
+  const ball  = document.getElementById('ball');
+  const tabs  = Array.from(document.querySelectorAll('.tab'));
+  const N     = tabs.length;
+  let idx     = 0;          /* 当前选中 */
+  let iw      = 0;          /* 单项宽度 */
+  let pad     = 7;          /* 胶囊内边距 */
+
+  function measure(){
+    iw = tabs[0].getBoundingClientRect().width;   /* 首次为 CSS 默认 64px */
+    if(!iw || iw < 40) iw = 64;
+    pill.style.setProperty('--iw', iw+'px');      /* 挂在胶囊上，.tab 与 .ball 共享 */
+    setBall(idx, false);
+  }
+  function ballX(i){ return pad + i*iw; }
+  function setBall(i, elastic){
+    ball.classList.remove('drag');
+    ball.style.setProperty('--x', ballX(i)+'px');
+  }
+  function setActive(i, pop){
+    tabs.forEach((t,k)=>t.classList.toggle('on', k===i));
+    if(pop){
+      const t=tabs[i], ic=t.querySelector('.ic');
+      t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
+    }
+    idx = i;
+  }
+
+  /* ── 交互：点按 / 长按 / 拖动 ── */
+  let pressTimer=null, longFired=false, dragging=false, startPX=0, curI=0;
+  const LONG_MS=430;
+
+  function onDown(e){
+    const tab = e.target.closest('.tab'); if(!tab) return;
+    e.preventDefault();
+    curI = +tab.dataset.i;
+    longFired = false; dragging = false;
+    startPX = (e.touches?e.touches[0].clientX:e.clientX);
+    pill.classList.add('pressing');
+    tabs[curI].classList.add('hover');
+    pressTimer = setTimeout(()=>{
+      longFired = true;
+      ball.classList.add('long');            /* 长按：悬浮球膨胀 */
+      if(navigator.vibrate) try{navigator.vibrate(12)}catch(err){}
+    }, LONG_MS);
+    try{ pill.setPointerCapture(e.pointerId); }catch(err){}   /* 拖出胶囊也能继续跟手 */
+  }
+  function onMove(e){
+    if(curI<0) return;
+    const px = (e.touches?e.touches[0].clientX:e.clientX);
+    const dx = px - startPX;
+    if(!dragging && Math.abs(dx)>7){          /* 超过阈值 → 进入拖动 */
+      dragging = true;
+      clearTimeout(pressTimer);
+      ball.classList.remove('long','stretch');
+      ball.classList.add('drag');             /* 跟手时关闭过渡 */
+    }
+    if(dragging){
+      let x = ballX(curI) + dx;
+      const minX = pad, maxX = pad + (N-1)*iw;
+      x = Math.max(minX, Math.min(maxX, x));
+      ball.style.setProperty('--x', x+'px');
+    }
+  }
+  function onUp(e){
+    if(curI<0) return;
+    clearTimeout(pressTimer);
+    pill.classList.remove('pressing');
+    tabs[curI].classList.remove('hover');
+    ball.classList.remove('long');
+    if(dragging){
+      /* 松手吸附最近项 */
+      const rect = pill.getBoundingClientRect();
+      const center = (e.changedTouches?e.changedTouches[0].clientX:e.clientX) - rect.left;
+      let best = 0, bd = 1e9;
+      for(let k=0;k<N;k++){ const d=Math.abs(pad+k*iw+iw/2-center); if(d<bd){bd=d;best=k;} }
+      ball.classList.add('stretch');
+      setBall(best, true);
+      if(best!==idx) setActive(best, true);
+    }else{
+      if(longFired){
+        ball.classList.add('stretch');       /* 长按松手：球回弹并收下这次选择 */
+        setBall(curI, true);
+        if(curI!==idx) setActive(curI, true);
+        setTimeout(()=>ball.classList.remove('stretch'), 320);
+      }else{
+        setBall(curI, true);                 /* 普通点按：弹性滑动 */
+        if(curI!==idx) setActive(curI, true);
+        else{
+          const t=tabs[curI];
+          t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
+        }
+      }
+    }
+    curI = -1; dragging = false; longFired = false;
+  }
+  function onCancel(){
+    clearTimeout(pressTimer);
+    pill.classList.remove('pressing');
+    if(curI>=0) tabs[curI].classList.remove('hover');
+    ball.classList.remove('long');
+    setBall(idx, true);
+    curI=-1; dragging=false; longFired=false;
+  }
+
+  pill.addEventListener('pointerdown', onDown);
+  pill.addEventListener('pointermove', onMove);
+  pill.addEventListener('pointerup', onUp);
+  pill.addEventListener('pointercancel', onCancel);
+  pill.addEventListener('lostpointercapture', onCancel);
+
+  document.getElementById('bgToggle').addEventListener('click', ()=>{
+    document.body.classList.toggle('light');
+    document.getElementById('bgToggle').textContent =
+      document.body.classList.contains('light') ? '切换深色' : '切换浅色';
+  });
+
+  window.addEventListener('resize', measure);
+  measure();
+  setActive(0, false);
+  setBall(0, false);
+})();
+</script>
+</body>
+</html>
