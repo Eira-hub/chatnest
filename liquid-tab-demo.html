@@ -58,10 +58,10 @@
 
   /* ───────── 悬浮玻璃球（唯一动的元素）───────── */
   .ball{
-    position:absolute;top:6px;bottom:6px;left:0;width:var(--iw);z-index:0;
+    position:absolute;top:9px;bottom:9px;left:0;width:var(--iw);z-index:0;
     border-radius:999px;pointer-events:none;
     transform:translateX(var(--x)) scale(var(--bs,1));
-    transition:transform .62s cubic-bezier(.26,1.7,.3,.96);  /* 弹性更大、更顺 */
+    transition:transform .68s cubic-bezier(.22,1.85,.3,.95);  /* 弹性更强、更顺 */
     background:
       radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.62) 0%,rgba(255,255,255,.16) 42%,rgba(255,255,255,.05) 100%),
       linear-gradient(180deg,rgba(140,170,255,.34),rgba(120,140,255,.14));
@@ -81,9 +81,9 @@
                0 1px 3px rgba(60,80,160,.15);
     border-color:rgba(255,255,255,.9);
   }
-  .ball.moving{--bs:1.12}                 /* 滑动到位：对当前页轻微放大包裹 */
-  .ball.drag{                             /* 拖动：关过渡跟手 + 放大到溢出边框 + 阴影提起 */
-    --bs:1.30;transition:none;
+  .ball.moving{--bs:1.32}                 /* 滑动到位：对当前页放大包裹 */
+  .ball.drag{                             /* 拖动：关过渡跟手 + 放大到明显溢出边框 + 阴影提起 */
+    --bs:1.6;transition:none;
     border-color:rgba(255,255,255,.6);
     background:
       radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.78) 0%,rgba(255,255,255,.26) 42%,rgba(255,255,255,.08) 100%),
@@ -98,7 +98,7 @@
                0 14px 30px rgba(90,120,230,.36),
                0 3px 10px rgba(60,80,160,.18);
   }
-  .ball.long{--bs:1.34}                   /* 长按：膨胀更明显 */
+  .ball.long{--bs:1.5}                    /* 长按：膨胀明显，溢出边框 */
 
   /* ───────── tab 项（全程不动；图标在球到达时果冻变形 + 变色）───────── */
   .tabs{position:relative;z-index:1;display:flex}
@@ -115,16 +115,15 @@
   .tab .lb{font-size:10.5px;letter-spacing:.05em;opacity:.55;transition:color .26s,opacity .26s}
   .tab{color:rgba(235,240,255,.78)}
   body.light .tab{color:rgba(40,52,84,.82)}
-  /* 球移动到哪里，哪里就实时变色 + 图标果冻变形放大 */
+  /* 球移动到哪里，哪里就实时变色 + 图标轻果冻变形放大 */
   .tab.on{color:var(--on)}
   .tab.on .lb{opacity:1;font-weight:600}
-  .tab.on .ic{transform:scale(1.14);animation:jelly .6s cubic-bezier(.3,1.4,.5,1)}
+  .tab.on .ic{transform:scale(1.08);animation:jelly .45s cubic-bezier(.3,1.3,.5,1)}
   @keyframes jelly{
     0%  {transform:scale(1)}
-    30% {transform:scale(1.28,.8)}     /* 横向压扁 */
-    58% {transform:scale(.86,1.2)}     /* 纵向拉长回弹 */
-    80% {transform:scale(1.12,.96)}
-    100%{transform:scale(1.14)}        /* 停在放大态 */
+    30% {transform:scale(1.12,.94)}    /* 轻微压扁 */
+    58% {transform:scale(.96,1.08)}    /* 轻微拉长回弹 */
+    100%{transform:scale(1.08)}        /* 停在轻放大态 */
   }
 
   .bgToggle{
