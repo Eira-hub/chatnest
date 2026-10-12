@@ -122,7 +122,7 @@
     pointer-events:none;
   }
   .lens-track{
-    position:absolute;left:0;width:max-content;transform-origin:0 0;
+    position:absolute;left:0;width:max-content;transform-origin:0 50%;
     will-change:transform;display:flex;
   }
   .lens-track .tabs{display:flex}          /* 克隆层与真实 tabs 同构 */
@@ -255,7 +255,7 @@
   let pad     = 7;          /* 胶囊内边距 */
 
   /* ── 透镜（iOS18 水珠折射）：球内嵌一套放大镜像，随球实时反位移 ── */
-  const LENS_S    = 1.4;                       /* 折射放大倍率 */
+  const LENS_S    = 1.18;                      /* 折射放大倍率（温和水珠感，不裁字） */
   const lensTrack = document.getElementById('lensTrack');
   let lensTabs    = [];
 
