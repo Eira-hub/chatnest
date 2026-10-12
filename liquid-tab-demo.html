@@ -116,7 +116,8 @@
   .tab{color:rgba(235,240,255,.78)}
   body.light .tab{color:rgba(40,52,84,.82)}
   /* 球移动到哪里，哪里就实时变色 + 图标轻果冻变形放大 */
-  .tab.on{color:var(--on)}
+  /* .pill 前缀提高特异性，避免被 body.light .tab 覆盖 */
+  .pill .tab.on{color:var(--on)}
   .tab.on .lb{opacity:1;font-weight:600}
   .tab.on .ic{transform:scale(1.08);animation:jelly .45s cubic-bezier(.3,1.3,.5,1)}
   @keyframes jelly{
