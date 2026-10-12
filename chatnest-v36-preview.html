@@ -633,8 +633,9 @@ body.has-wall .stars{opacity:.75}
   </div>
   <div class="set-block">
     <div class="set-label">拖动诊断</div>
-    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">如果悬浮球拖不动，开启后按住球拖一下，屏幕会弹出事件序列（PD/DRAG/UP/CANCEL），截图发我即可定位问题。</div>
+    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">如果悬浮球拖不动，开启后按住球拖一下，屏幕会弹出事件序列（PD/DRAG/UP/CANCEL），下方会记录最近一次，照着打字发我即可。</div>
     <button class="set-btn" id="btnDockDbg">开启诊断</button>
+    <div id="dockDbgLog" style="font-size:11px;color:var(--text2);margin-top:8px;word-break:break-all;line-height:1.6"></div>
   </div>
   <div class="set-block">
     <div class="set-label">接口设置</div>
@@ -1815,9 +1816,15 @@ if(dock){
     /* 选中色：与 liquid-tab-demo 共享 localStorage */
     try{ const sv=localStorage.getItem('ltb-on-color'); if(sv) dock.style.setProperty('--ball-on',sv); }catch(e){}
 
-    /* 拖动诊断：设置页开启后，事件序列以 toast 显示 */
+    /* 拖动诊断：设置页开启后，事件序列以 toast 显示并记录，可在设置页查看 */
     let dbg=false; try{ dbg=localStorage.getItem('cn_dock_dbg')==='1'; }catch(e){}
-    const dm=s=>{ try{ if(dbg) toast(s,1200); }catch(e){} };
+    const dm=s=>{
+      try{ if(!dbg) return;
+        toast(s,1200);
+        const log=((localStorage.getItem('cn_dock_dbg_log')||'')+' '+s).slice(-150);
+        localStorage.setItem('cn_dock_dbg_log',log);
+      }catch(e){}
+    };
 
     const dockLeft=()=>dock.getBoundingClientRect().left;
     const tabC=i=>{const r=btns[i].getBoundingClientRect();return r.left-dockLeft()+r.width/2;};
@@ -1988,12 +1995,17 @@ if(dock){
 /* ───────── 拖动诊断开关：开启后拖动时屏幕弹出事件序列，用于定位真机打断点 ───────── */
 (function(){
   const btn=document.getElementById('btnDockDbg'); if(!btn) return;
+  const logEl=document.getElementById('dockDbgLog');
   const on=()=>{ try{return localStorage.getItem('cn_dock_dbg')==='1'}catch(e){return false} };
-  const paint=()=>btn.textContent=on()?'诊断中（点击关闭）':'开启诊断';
+  const paint=()=>{
+    btn.textContent=on()?'诊断中（点击关闭）':'开启诊断';
+    if(logEl){ let l=''; try{l=localStorage.getItem('cn_dock_dbg_log')||''}catch(e){}
+      logEl.textContent=l?('最近一次：'+l):''; }
+  };
   paint();
   btn.addEventListener('click',()=>{
-    try{ localStorage.setItem('cn_dock_dbg',on()?'0':'1'); }catch(e){}
-    paint(); toast(on()?'已开启，回到页面按住球拖一下，看弹出的字':'已关闭',1800);
+    try{ localStorage.setItem('cn_dock_dbg',on()?'0':'1'); localStorage.setItem('cn_dock_dbg_log',''); }catch(e){}
+    paint(); toast(on()?'已开启，回到页面按住球拖一下，然后回设置页看记录':'已关闭',1800);
   });
 })();
 (function(){
