@@ -1997,6 +1997,6 @@ if(dock){
     else toast('这个浏览器不支持网页全屏，用菜单里的“添加到主屏幕”最稳',2600);});}
 })();
 </script>
-<script>/* 预览副本：自动进入主界面，跳过密码门与后端 */window.addEventListener("load",function(){try{showApp()}catch(e){setTimeout(function(){try{showApp()}catch(e2){}},500)}});</script>
+<script>/* 预览副本：自动进入主界面（立即执行+重试，跳过密码门与后端） */(function(){var n=0;(function t(){try{showApp();return}catch(e){}if(++n<40)setTimeout(t,250)})();})();</script>
 </body>
 </html>
