@@ -1894,7 +1894,7 @@ if(dock){
     dock.addEventListener('touchstart',e=>{
       const b=e.target.closest('.dock-btn'); if(!b) return;
       e.preventDefault();   /* 关键：取消浏览器手势（滚动/长按菜单/系统拖拽） */
-      if(tActive||!ready) return;
+      if(tActive) return;
       if(downIdx<0) downIdx=btns.indexOf(b);
       if(downIdx<0) return;
       const t=e.changedTouches[0];
