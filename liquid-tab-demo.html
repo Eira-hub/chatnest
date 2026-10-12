@@ -64,14 +64,11 @@
     transition:transform .3s cubic-bezier(.2,.9,.3,1);  /* 位置：快出快收，无长尾阻尼 */
     will-change:transform;
   }
-  /* 视觉+缩放层：变大变小走独立的平滑短过渡，不再和位置弹性共用曲线 */
+  /* 视觉+缩放层：变大变小走独立的平滑短过渡；玻璃高光用 ::before 盖在透镜上方（水珠罩住图标） */
   .ball .bs{
     position:absolute;inset:0;border-radius:999px;
     transform:scale(var(--bs,1));
     transition:transform .3s cubic-bezier(.3,1,.35,1);  /* 大小：与位置同步收尾，无过冲 */
-    background:
-      radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.62) 0%,rgba(255,255,255,.16) 42%,rgba(255,255,255,.05) 100%),
-      linear-gradient(180deg,rgba(140,170,255,.34),rgba(120,140,255,.14));
     box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55),
                inset 0 -2px 6px rgba(255,255,255,.12),
                0 6px 18px rgba(96,132,255,.30),
@@ -79,14 +76,22 @@
     border:1px solid rgba(255,255,255,.34);
     will-change:transform;
   }
-  body.light .ball .bs{
+  .ball .bs::before{
+    content:'';position:absolute;inset:0;border-radius:999px;pointer-events:none;z-index:3;
     background:
-      radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.95) 0%,rgba(255,255,255,.4) 45%,rgba(255,255,255,.14) 100%),
-      linear-gradient(180deg,rgba(160,190,255,.5),rgba(150,170,255,.2));
+      radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.55) 0%,rgba(255,255,255,.15) 42%,rgba(255,255,255,.04) 100%),
+      linear-gradient(180deg,rgba(140,170,255,.26),rgba(120,140,255,.10));
+  }
+  body.light .ball .bs{
     box-shadow:inset 0 1.5px 0 #fff,
                0 6px 16px rgba(90,120,230,.28),
                0 1px 3px rgba(60,80,160,.15);
     border-color:rgba(255,255,255,.9);
+  }
+  body.light .ball .bs::before{
+    background:
+      radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.9) 0%,rgba(255,255,255,.38) 45%,rgba(255,255,255,.12) 100%),
+      linear-gradient(180deg,rgba(160,190,255,.38),rgba(150,170,255,.14));
   }
   .ball.moving{--bs:1.24}                 /* 滑动到位：对当前页放大包裹 */
   .ball.drag{                             /* 拖动：仅位置层关过渡跟手；缩放层保持平滑 */
@@ -94,13 +99,15 @@
   }
   .ball.drag .bs{                         /* 拖动：放大到明显溢出边框 + 阴影提起 */
     border-color:rgba(255,255,255,.6);
-    background:
-      radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.78) 0%,rgba(255,255,255,.26) 42%,rgba(255,255,255,.08) 100%),
-      linear-gradient(180deg,rgba(150,178,255,.44),rgba(120,140,255,.18));
     box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),
                inset 0 -2px 6px rgba(255,255,255,.16),
                0 14px 34px rgba(60,90,220,.42),
                0 3px 10px rgba(20,40,120,.22);
+  }
+  .ball.drag .bs::before{                 /* 拖动：玻璃更亮 */
+    background:
+      radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.72) 0%,rgba(255,255,255,.24) 42%,rgba(255,255,255,.07) 100%),
+      linear-gradient(180deg,rgba(150,178,255,.34),rgba(120,140,255,.12));
   }
   body.light .ball.drag .bs{
     box-shadow:inset 0 1.5px 0 #fff,
@@ -109,7 +116,19 @@
   }
   .ball.long{--bs:1.38}                   /* 长按：膨胀明显，溢出边框 */
 
-  /* ───────── tab 项（全程不动；图标在球到达时果冻变形 + 变色）───────── */
+  /* ───────── 透镜层：球内嵌放大镜像（iOS18 水珠折射，实时渲染）───────── */
+  .lens{
+    position:absolute;inset:0;border-radius:999px;overflow:hidden;z-index:0;
+    pointer-events:none;
+  }
+  .lens-track{
+    position:absolute;left:0;width:max-content;transform-origin:0 0;
+    will-change:transform;display:flex;
+  }
+  .lens-track .tabs{display:flex}          /* 克隆层与真实 tabs 同构 */
+  .lens-track .tab{cursor:default;flex:none}
+
+  /* ───────── tab 项（全程不动、禁止弹动；图标只变色；被球吞入时沉进玻璃）───────── */
   .tabs{position:relative;z-index:1;display:flex}
   .pill{--on:#AFCBFF}                     /* 选中色：可被用户自定义覆盖 */
   body.light .pill{--on:#2F51D8}
@@ -124,17 +143,13 @@
   .tab .lb{font-size:10.5px;letter-spacing:.05em;opacity:.55;transition:color .26s,opacity .26s}
   .tab{color:rgba(235,240,255,.78)}
   body.light .tab{color:rgba(40,52,84,.82)}
-  /* 球移动到哪里，哪里就实时变色 + 图标轻果冻变形放大 */
+  /* 球移动到哪里，哪里就实时变色（图标禁止弹动，只变色） */
   /* .pill 前缀提高特异性，避免被 body.light .tab 覆盖 */
   .pill .tab.on{color:var(--on)}
   .tab.on .lb{opacity:1;font-weight:600}
-  .tab.on .ic{transform:scale(1.08);animation:jelly .45s cubic-bezier(.3,1.3,.5,1)}
-  @keyframes jelly{
-    0%  {transform:scale(1)}
-    30% {transform:scale(1.12,.94)}    /* 轻微压扁 */
-    58% {transform:scale(.96,1.08)}    /* 轻微拉长回弹 */
-    100%{transform:scale(1.08)}        /* 停在轻放大态 */
-  }
+  .tab .ic,.tab .lb{transition:opacity .2s,transform .2s}
+  .tab.swallow .ic{opacity:0;transform:scale(.6)}   /* 图标被水珠吞入：沉进玻璃 */
+  .tab.swallow .lb{opacity:0}
 
   .bgToggle{
     position:fixed;top:22px;right:22px;border:1px solid rgba(255,255,255,.22);
@@ -201,10 +216,10 @@
   <div class="stage">
     <div class="title">LIQUID GLASS TAB BAR</div>
     <div class="hint">
-      <b>点按</b> 悬浮球弹性滑到位 · <b>长按</b> 悬浮球膨胀 · <b>按住左右拖</b> 球放大溢出边框跟手，松手弹回吸附
+      <b>点按</b> 水珠滑到位 · <b>长按</b> 膨胀 · <b>按住左右拖</b> 放大溢出跟手 · 图标被水珠吞入，玻璃内实时呈现放大镜像
     </div>
     <div class="pill" id="pill">
-      <div class="ball" id="ball"><div class="bs"></div></div>
+      <div class="ball" id="ball"><div class="bs"><div class="lens"><div class="lens-track" id="lensTrack"></div></div></div></div>
       <div class="tabs" id="tabs">
         <button class="tab" data-i="0">
           <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.7 8.7 0 0 1-3.9-.9L3 20l1.2-5.4a8.1 8.1 0 0 1-.7-3.1A8.4 8.4 0 0 1 12 3.2a8.4 8.4 0 0 1 9 8.3z"/></svg></span>
@@ -239,10 +254,30 @@
   let iw      = 0;          /* 单项宽度 */
   let pad     = 7;          /* 胶囊内边距 */
 
+  /* ── 透镜（iOS18 水珠折射）：球内嵌一套放大镜像，随球实时反位移 ── */
+  const LENS_S    = 1.4;                       /* 折射放大倍率 */
+  const lensTrack = document.getElementById('lensTrack');
+  let lensTabs    = [];
+
+  function buildLens(){
+    lensTrack.innerHTML = '';
+    const clone = document.getElementById('tabs').cloneNode(true);
+    clone.removeAttribute('id');
+    clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+    lensTrack.appendChild(clone);
+    lensTabs = Array.from(clone.querySelectorAll('.tab'));
+    /* 垂直对齐：镜像与真实 tab 等高，在球内上下居中 */
+    const tabH = tabs[0].getBoundingClientRect().height || 58;
+    const ballH = ball.getBoundingClientRect().height || 60;
+    lensTrack.style.top = Math.max(0,(ballH-tabH)/2)+'px';
+    lensTabs.forEach((t,i)=>t.classList.toggle('on', i===idx));
+  }
+
   function measure(){
     iw = tabs[0].getBoundingClientRect().width;   /* 首次为 CSS 默认 64px */
     if(!iw || iw < 40) iw = 64;
     pill.style.setProperty('--iw', iw+'px');      /* 挂在胶囊上，.tab 与 .ball 共享 */
+    buildLens();
     setBall(idx);
   }
   function ballX(i){ return pad + i*iw; }
@@ -262,17 +297,27 @@
     idx = i;   /* on 类完全交给 trackLoop 按球的实时位置管理 */
   }
 
-  /* ── 实时变色：球移动到哪里，哪个 tab 就变色（rAF 读取球的实时位置）── */
+  /* ── 实时渲染循环：球移动到哪里，哪里就变色；透镜每帧反位移（折射）；图标被球吞入时沉进玻璃 ── */
   let liveIdx = -1;   /* -1 强制首帧应用初始高亮 */
   (function trackLoop(){
     try{
       const m = new DOMMatrixReadOnly(getComputedStyle(ball).transform);
-      let k = Math.round((m.e - pad) / iw);
+      const bx = m.e;                             /* 球左缘（pill 坐标） */
+      const c  = bx + iw/2;                       /* 球中心 */
+      let k = Math.round((bx - pad) / iw);
       k = Math.max(0, Math.min(N-1, k));
       if(k !== liveIdx){
         liveIdx = k;
         tabs.forEach((t,i)=>t.classList.toggle('on', i===k));
+        lensTabs.forEach((t,i)=>t.classList.toggle('on', i===k));
       }
+      /* 透镜折射：镜像内容坐标比真实坐标少一个 pad，使球心下方的图标精确落在球心 */
+      if(iw) lensTrack.style.transform = 'translate('+(iw/2 - LENS_S*(c - pad))+'px,0) scale('+LENS_S+')';
+      /* 水珠吞图标：真实图标接近球心时沉入玻璃，只在透镜里看放大像 */
+      tabs.forEach((t,i)=>{
+        const tc = pad + i*iw + iw/2;
+        t.classList.toggle('swallow', Math.abs(tc - c) < iw*0.55);
+      });
     }catch(err){}
     requestAnimationFrame(trackLoop);
   })();
