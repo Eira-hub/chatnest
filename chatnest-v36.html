@@ -251,16 +251,16 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
   color:var(--text2);transition:background .2s,color .2s,transform .15s var(--ease);
   -webkit-user-drag:none;touch-action:none}
 .dock-btn img,.dock-btn span{touch-action:none;-webkit-user-drag:none}
-.dock-btn img{width:19px;height:19px;object-fit:contain;display:block;transition:opacity .2s,transform .2s,filter .25s}
-[data-theme="dark"] .dock-btn img{filter:invert(1) brightness(1.55)}
+.dock-btn img{width:19px;height:19px;display:block;background:currentColor;
+  -webkit-mask:var(--im) center/contain no-repeat;mask:var(--im) center/contain no-repeat;
+  transition:opacity .2s,transform .2s,filter .25s}
+.dock-btn.on img{filter:drop-shadow(0 0 5px var(--ball-on))}
 .dock-btn span{line-height:1;transition:opacity .2s}
 .dock-btn:active{transform:scale(.93)}
 /* ───────── v36 水珠悬浮球（iOS18 液态玻璃 Dock）───────── */
 :root{--ball-on:#2F51D8}
 [data-theme="dark"]{--ball-on:#AFCBFF}
 .dock-btn.on{color:var(--ball-on);font-weight:600}
-.dock-btn.on img{filter:drop-shadow(0 0 5px var(--ball-on))}
-[data-theme="dark"] .dock-btn.on img{filter:invert(1) brightness(1.55) drop-shadow(0 0 5px var(--ball-on))}
 .dock .ball{position:absolute;top:4px;bottom:4px;left:0;width:var(--iw,60px);z-index:0;pointer-events:none;
   transform:translateX(var(--x,0px));transition:transform .3s cubic-bezier(.2,.9,.3,1);will-change:transform}
 .dock .ball .bs{position:absolute;inset:0;border-radius:999px;transform:scale(var(--bs,1));
@@ -564,7 +564,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.3 touch-fix</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.4 · mask-icons</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -630,6 +630,11 @@ body.has-wall .stars{opacity:.75}
     <div class="wall-row"><span class="wl-lab">色相</span><input type="range" id="ballH" min="0" max="360" value="220"></div>
     <div class="wall-row"><span class="wl-lab">饱和</span><input type="range" id="ballS" min="0" max="100" value="80"></div>
     <div class="wall-row" style="margin-top:14px"><span class="wl-lab">他想了想</span><button class="set-btn" id="btnThink" style="padding:5px 14px;font-size:12px">显示中</button></div>
+  </div>
+  <div class="set-block">
+    <div class="set-label">拖动诊断</div>
+    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">如果悬浮球拖不动，开启后按住球拖一下，屏幕会弹出事件序列（PD/DRAG/UP/CANCEL），截图发我即可定位问题。</div>
+    <button class="set-btn" id="btnDockDbg">开启诊断</button>
   </div>
   <div class="set-block">
     <div class="set-label">接口设置</div>
@@ -1810,6 +1815,10 @@ if(dock){
     /* 选中色：与 liquid-tab-demo 共享 localStorage */
     try{ const sv=localStorage.getItem('ltb-on-color'); if(sv) dock.style.setProperty('--ball-on',sv); }catch(e){}
 
+    /* 拖动诊断：设置页开启后，事件序列以 toast 显示 */
+    let dbg=false; try{ dbg=localStorage.getItem('cn_dock_dbg')==='1'; }catch(e){}
+    const dm=s=>{ try{ if(dbg) toast(s,1200); }catch(e){} };
+
     const dockLeft=()=>dock.getBoundingClientRect().left;
     const tabC=i=>{const r=btns[i].getBoundingClientRect();return r.left-dockLeft()+r.width/2;};
     const btnX=i=>tabC(i)-BALL_W/2;   /* 球左缘：对准第 i 个 tab 中心 */
@@ -1818,10 +1827,12 @@ if(dock){
       const dx=e.clientX-startPX;
       if(!dragging&&Math.abs(dx)>7){ dragging=true; clearTimeout(pressTimer);
         ball.classList.remove('moving'); ball.classList.add('drag');
+        dm('DRAG dx:'+Math.round(dx));
         try{dock.setPointerCapture(e.pointerId)}catch(err){} }
       if(dragging) ball.style.setProperty('--x', Math.max(btnX(0),Math.min(btnX(N-1),btnX(downIdx)+dx))+'px');
     }
     function onUp(e){
+      dm('UP d:'+dragging);
       if(downIdx<0||e.pointerId!==ptrId){ ball.classList.remove('drag','long'); downIdx=-1; dragging=false; longFired=false; return; }
       ptrId=null;
       try{dock.releasePointerCapture(e.pointerId)}catch(err){}
@@ -1838,12 +1849,15 @@ if(dock){
       downIdx=-1; dragging=false; longFired=false;
     }
     function onCancel(){
+      dm('CANCEL');
       clearTimeout(pressTimer);
       if(dragging||longFired) setBallAt(curIdx,false);   /* 手势被系统接管：直接收回常态，不切页 */
       downIdx=-1; dragging=false; longFired=false; ptrId=null;
     }
+    dock.addEventListener('lostpointercapture',()=>{ dm('LOST-CAPTURE'); onCancel(); });
     dock.addEventListener('pointerdown',e=>{
       const b=e.target.closest('.dock-btn'); if(!b) return;
+      dm('PD#'+e.pointerId);
       e.preventDefault();   /* 阻止兼容鼠标事件（滚动/选择），拖动必需 */
       downIdx=btns.indexOf(b); longFired=false; dragging=false; startPX=e.clientX; ptrId=e.pointerId;
       pressTimer=setTimeout(()=>{ longFired=true; ball.classList.add('long');
@@ -1854,11 +1868,10 @@ if(dock){
     dock.addEventListener('touchstart',e=>{
       if(e.target.closest('.dock-btn')) e.preventDefault();
     },{passive:false});
-    try{console.log('[ChatNest] Dock v36.3 · touch-fix')}catch(err){}
+    try{console.log('[ChatNest] Dock v36.4 · mask-icons')}catch(err){}
     dock.addEventListener('pointermove',onMove);
     dock.addEventListener('pointerup',onUp);
     dock.addEventListener('pointercancel',onCancel);
-    dock.addEventListener('lostpointercapture',onCancel);
     dock.addEventListener('click',e=>{ if(suppressClick){ e.stopPropagation(); e.preventDefault(); } },true);
     function buildLens(){
       lensTrack.innerHTML='';
@@ -1963,6 +1976,25 @@ if(dock){
   hI.addEventListener('input',slide);
   sI.addEventListener('input',slide);
   try{ const sv=localStorage.getItem('ltb-on-color'); if(sv) setColor(sv,true); }catch(err){}
+})();
+/* ───────── 图标遮罩上色：PNG 本体无法变色，改为 mask+currentColor，随选中色/主题走 ───────── */
+(function(){
+  document.querySelectorAll('.dock-btn img').forEach(im=>{
+    const src=im.getAttribute('src'); if(!src) return;
+    im.style.setProperty('--im','url("'+src+'")');
+    im.removeAttribute('src');
+  });
+})();
+/* ───────── 拖动诊断开关：开启后拖动时屏幕弹出事件序列，用于定位真机打断点 ───────── */
+(function(){
+  const btn=document.getElementById('btnDockDbg'); if(!btn) return;
+  const on=()=>{ try{return localStorage.getItem('cn_dock_dbg')==='1'}catch(e){return false} };
+  const paint=()=>btn.textContent=on()?'诊断中（点击关闭）':'开启诊断';
+  paint();
+  btn.addEventListener('click',()=>{
+    try{ localStorage.setItem('cn_dock_dbg',on()?'0':'1'); }catch(e){}
+    paint(); toast(on()?'已开启，回到页面按住球拖一下，看弹出的字':'已关闭',1800);
+  });
 })();
 (function(){
   const vh=document.getElementById('viewHome');
