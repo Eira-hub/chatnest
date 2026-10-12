@@ -56,12 +56,19 @@
     background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,0));
   }
 
-  /* ───────── 悬浮玻璃球（唯一动的元素）───────── */
+  /* ───────── 悬浮玻璃球（唯一动的元素；位置层与缩放层分离）───────── */
   .ball{
-    position:absolute;top:9px;bottom:9px;left:0;width:var(--iw);z-index:0;
-    border-radius:999px;pointer-events:none;
-    transform:translateX(var(--x)) scale(var(--bs,1));
-    transition:transform .68s cubic-bezier(.22,1.85,.3,.95);  /* 弹性更强、更顺 */
+    position:absolute;top:8px;bottom:8px;left:0;width:var(--iw);z-index:0;
+    pointer-events:none;
+    transform:translateX(var(--x));
+    transition:transform .68s cubic-bezier(.22,1.85,.3,.95);  /* 位置：弹性滑动 */
+    will-change:transform;
+  }
+  /* 视觉+缩放层：变大变小走独立的平滑短过渡，不再和位置弹性共用曲线 */
+  .ball .bs{
+    position:absolute;inset:0;border-radius:999px;
+    transform:scale(var(--bs,1));
+    transition:transform .34s cubic-bezier(.35,1.25,.4,1);  /* 大小：稍短、平滑、微果冻 */
     background:
       radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.62) 0%,rgba(255,255,255,.16) 42%,rgba(255,255,255,.05) 100%),
       linear-gradient(180deg,rgba(140,170,255,.34),rgba(120,140,255,.14));
@@ -72,7 +79,7 @@
     border:1px solid rgba(255,255,255,.34);
     will-change:transform;
   }
-  body.light .ball{
+  body.light .ball .bs{
     background:
       radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.95) 0%,rgba(255,255,255,.4) 45%,rgba(255,255,255,.14) 100%),
       linear-gradient(180deg,rgba(160,190,255,.5),rgba(150,170,255,.2));
@@ -82,8 +89,10 @@
     border-color:rgba(255,255,255,.9);
   }
   .ball.moving{--bs:1.32}                 /* 滑动到位：对当前页放大包裹 */
-  .ball.drag{                             /* 拖动：关过渡跟手 + 放大到明显溢出边框 + 阴影提起 */
+  .ball.drag{                             /* 拖动：仅位置层关过渡跟手；缩放层保持平滑 */
     --bs:1.6;transition:none;
+  }
+  .ball.drag .bs{                         /* 拖动：放大到明显溢出边框 + 阴影提起 */
     border-color:rgba(255,255,255,.6);
     background:
       radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.78) 0%,rgba(255,255,255,.26) 42%,rgba(255,255,255,.08) 100%),
@@ -93,7 +102,7 @@
                0 14px 34px rgba(60,90,220,.42),
                0 3px 10px rgba(20,40,120,.22);
   }
-  body.light .ball.drag{
+  body.light .ball.drag .bs{
     box-shadow:inset 0 1.5px 0 #fff,
                0 14px 30px rgba(90,120,230,.36),
                0 3px 10px rgba(60,80,160,.18);
@@ -195,7 +204,7 @@
       <b>点按</b> 悬浮球弹性滑到位 · <b>长按</b> 悬浮球膨胀 · <b>按住左右拖</b> 球放大溢出边框跟手，松手弹回吸附
     </div>
     <div class="pill" id="pill">
-      <div class="ball" id="ball"></div>
+      <div class="ball" id="ball"><div class="bs"></div></div>
       <div class="tabs" id="tabs">
         <button class="tab" data-i="0">
           <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.7 8.7 0 0 1-3.9-.9L3 20l1.2-5.4a8.1 8.1 0 0 1-.7-3.1A8.4 8.4 0 0 1 12 3.2a8.4 8.4 0 0 1 9 8.3z"/></svg></span>
