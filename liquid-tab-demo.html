@@ -61,7 +61,7 @@
     position:absolute;top:6px;bottom:6px;left:0;width:var(--iw);z-index:0;
     border-radius:999px;pointer-events:none;
     transform:translateX(var(--x)) scale(var(--bs,1));
-    transition:transform .58s cubic-bezier(.3,1.5,.5,1);   /* 弹性只属于球 */
+    transition:transform .62s cubic-bezier(.26,1.7,.3,.96);  /* 弹性更大、更顺 */
     background:
       radial-gradient(120% 130% at 28% 12%,rgba(255,255,255,.62) 0%,rgba(255,255,255,.16) 42%,rgba(255,255,255,.05) 100%),
       linear-gradient(180deg,rgba(140,170,255,.34),rgba(120,140,255,.14));
@@ -100,23 +100,32 @@
   }
   .ball.long{--bs:1.34}                   /* 长按：膨胀更明显 */
 
-  /* ───────── tab 项（全程不动，只变色）───────── */
+  /* ───────── tab 项（全程不动；图标在球到达时果冻变形 + 变色）───────── */
   .tabs{position:relative;z-index:1;display:flex}
+  .pill{--on:#AFCBFF}                     /* 选中色：可被用户自定义覆盖 */
+  body.light .pill{--on:#2F51D8}
   .tab{
     width:var(--iw);height:58px;border:none;background:none;color:inherit;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     cursor:pointer;position:relative;
     -webkit-user-drag:none;touch-action:none;
   }
-  .tab .ic{display:flex}
+  .tab .ic{display:flex;transform:scale(1);transition:transform .34s cubic-bezier(.3,1.5,.5,1)}
   .tab .ic svg{width:23px;height:23px}
-  .tab .lb{font-size:10.5px;letter-spacing:.05em;opacity:.55;transition:color .32s,opacity .32s}
+  .tab .lb{font-size:10.5px;letter-spacing:.05em;opacity:.55;transition:color .26s,opacity .26s}
   .tab{color:rgba(235,240,255,.78)}
   body.light .tab{color:rgba(40,52,84,.82)}
-  /* 选中：只变色（iOS 系统蓝的柔和版），不改图标、不放大 */
-  .tab.on{color:#AFCBFF}
-  body.light .tab.on{color:#2F51D8}
+  /* 球移动到哪里，哪里就实时变色 + 图标果冻变形放大 */
+  .tab.on{color:var(--on)}
   .tab.on .lb{opacity:1;font-weight:600}
+  .tab.on .ic{transform:scale(1.14);animation:jelly .6s cubic-bezier(.3,1.4,.5,1)}
+  @keyframes jelly{
+    0%  {transform:scale(1)}
+    30% {transform:scale(1.28,.8)}     /* 横向压扁 */
+    58% {transform:scale(.86,1.2)}     /* 纵向拉长回弹 */
+    80% {transform:scale(1.12,.96)}
+    100%{transform:scale(1.14)}        /* 停在放大态 */
+  }
 
   .bgToggle{
     position:fixed;top:22px;right:22px;border:1px solid rgba(255,255,255,.22);
@@ -128,6 +137,8 @@
 </style>
 </head>
 <body>
+  <button class="bgToggle" id="colorBtn" style="right:130px">选中色 <span id="onDot" style="display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;background:#AFCBFF;box-shadow:0 0 6px rgba(255,255,255,.5)"></span></button>
+  <input type="color" id="onColor" value="#afcbff" style="position:fixed;left:-100px;top:-100px;opacity:0;pointer-events:none" aria-hidden="true">
   <button class="bgToggle" id="bgToggle">切换浅色</button>
   <div class="stage">
     <div class="title">LIQUID GLASS TAB BAR</div>
@@ -186,9 +197,23 @@
     mvT=setTimeout(()=>ball.classList.remove('moving'), 620);
   }
   function setActive(i){
-    tabs.forEach((t,k)=>t.classList.toggle('on', k===i));   /* 只变色 */
-    idx = i;
+    idx = i;   /* on 类完全交给 trackLoop 按球的实时位置管理 */
   }
+
+  /* ── 实时变色：球移动到哪里，哪个 tab 就变色（rAF 读取球的实时位置）── */
+  let liveIdx = idx;
+  (function trackLoop(){
+    try{
+      const m = new DOMMatrixReadOnly(getComputedStyle(ball).transform);
+      let k = Math.round((m.e - pad) / iw);
+      k = Math.max(0, Math.min(N-1, k));
+      if(k !== liveIdx){
+        liveIdx = k;
+        tabs.forEach((t,i)=>t.classList.toggle('on', i===k));
+      }
+    }catch(err){}
+    requestAnimationFrame(trackLoop);
+  })();
 
   /* ── 交互：点按 / 长按 / 拖动 ── */
   let pressTimer=null, longFired=false, dragging=false, startPX=0, curI=0;
@@ -262,6 +287,25 @@
   measure();
   setActive(0);
   setBall(0);
+
+  /* ── 自定义选中颜色（用户自选，存 localStorage）── */
+  const onColor = document.getElementById('onColor');
+  const onDot   = document.getElementById('onDot');
+  const colorBtn = document.getElementById('colorBtn');
+  let savedColor = null;
+  try{ savedColor = localStorage.getItem('ltb-on-color'); }catch(err){}
+  if(savedColor && /^#[0-9a-fA-F]{6}$/.test(savedColor)){
+    onColor.value = savedColor;
+    pill.style.setProperty('--on', savedColor);
+    onDot.style.background = savedColor;
+  }
+  colorBtn.addEventListener('click', ()=>onColor.click());
+  onColor.addEventListener('input', ()=>{
+    const c = onColor.value;
+    pill.style.setProperty('--on', c);
+    onDot.style.background = c;
+    try{ localStorage.setItem('ltb-on-color', c); }catch(err){}
+  });
 })();
 </script>
 </body>
