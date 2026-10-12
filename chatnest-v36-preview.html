@@ -565,7 +565,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.7 · touch-drag</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.8 · snap-fix</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -1890,7 +1890,7 @@ if(dock){
        诊断证实（OPPO/Edge）：拖动一启动即 LOST-CAPTURE + CANCEL，Blink 会抢断 Pointer 捕获。
        触摸拖动改走 touch 事件并全程 preventDefault，浏览器无权取消，100% 稳定；
        Pointer 通道只保留鼠标拖动与点按/长按判定。 */
-    let tActive=false,tMoved=false,tId=null,tStartX=0,tFrom=0,touchDragged=false;
+    let tActive=false,tMoved=false,tId=null,tStartX=0,tFrom=0,tLastDX=0,touchDragged=false;
     dock.addEventListener('touchstart',e=>{
       const b=e.target.closest('.dock-btn'); if(!b) return;
       e.preventDefault();   /* 关键：取消浏览器手势（滚动/长按菜单/系统拖拽） */
@@ -1898,7 +1898,7 @@ if(dock){
       if(downIdx<0) downIdx=btns.indexOf(b);
       if(downIdx<0) return;
       const t=e.changedTouches[0];
-      tActive=true; tMoved=false; tId=t.identifier; tStartX=t.clientX; tFrom=btnX(downIdx);
+      tActive=true; tMoved=false; tId=t.identifier; tStartX=t.clientX; tFrom=btnX(downIdx); tLastDX=0;
       dm('T-DOWN');
     },{passive:false});
     dock.addEventListener('touchmove',e=>{
@@ -1911,8 +1911,11 @@ if(dock){
         ball.classList.remove('moving','long'); ball.classList.add('drag');
         if(navigator.vibrate) try{navigator.vibrate(6)}catch(err){}
         dm('T-DRAG dx:'+Math.round(dx)); }
+      tLastDX=dx;
       ball.style.setProperty('--x', Math.max(btnX(0),Math.min(btnX(N-1),tFrom+dx))+'px');
     },{passive:false});
+    /* 松手吸附：end 和 cancel 走同一逻辑——Edge 真机会把 touchend 掉包成 touchcancel，
+       拖动过就按球心位置吸附切页，不再回弹丢手势 */
     const tEnd=e=>{
       if(!tActive) return;
       const t=Array.from(e.changedTouches).find(x=>x.identifier===tId); if(!t) return;
@@ -1920,7 +1923,7 @@ if(dock){
       if(tMoved){
         touchDragged=true; setTimeout(()=>touchDragged=false,80);
         ball.classList.remove('drag','long');
-        const center=t.clientX-dockLeft();
+        const center=Math.max(btnX(0),Math.min(btnX(N-1),tFrom+tLastDX))+BALL_W/2;   /* 球心 */
         let best=0,bd=1e9;
         btns.forEach((b,i)=>{ const d=Math.abs(tabC(i)-center); if(d<bd){bd=d;best=i;} });
         if(best===curIdx) setBallAt(curIdx,false);   /* 同页短拖：回弹 */
@@ -1929,11 +1932,8 @@ if(dock){
       }else dm('T-TAP');
     };
     dock.addEventListener('touchend',tEnd,{passive:false});
-    dock.addEventListener('touchcancel',()=>{ if(!tActive) return; tActive=false;
-      clearTimeout(pressTimer); ball.classList.remove('drag','long');
-      if(tMoved){ touchDragged=true; setTimeout(()=>touchDragged=false,80); setBallAt(curIdx,false); }
-      dm('T-CANCEL'); },{passive:false});
-    try{console.log('[ChatNest] Dock v36.7 · touch-drag')}catch(err){}
+    dock.addEventListener('touchcancel',tEnd,{passive:false});
+    try{console.log('[ChatNest] Dock v36.8 · snap-fix')}catch(err){}
     dock.addEventListener('pointermove',onMove);
     dock.addEventListener('pointerup',onUp);
     dock.addEventListener('pointercancel',onCancel);
