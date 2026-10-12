@@ -247,12 +247,16 @@
   }
   function ballX(i){ return pad + i*iw; }
   let mvT=null;
-  function setBall(i){
+  function setBall(i, wrap=true){
     ball.classList.remove('drag','long');
-    ball.classList.add('moving');                 /* 滑动途中球轻微放大包裹当前页 */
-    ball.style.setProperty('--x', ballX(i)+'px');
     clearTimeout(mvT);
-    mvT=setTimeout(()=>ball.classList.remove('moving'), 620);
+    if(wrap){
+      ball.classList.add('moving');               /* 滑动途中球轻微放大包裹当前页 */
+      mvT=setTimeout(()=>ball.classList.remove('moving'), 620);
+    }else{
+      ball.classList.remove('moving');            /* 松手收回：跳过 1.32 平台，一气呵成回常态 */
+    }
+    ball.style.setProperty('--x', ballX(i)+'px');
   }
   function setActive(i){
     idx = i;   /* on 类完全交给 trackLoop 按球的实时位置管理 */
@@ -315,17 +319,17 @@
       const center = e.clientX - rect.left;
       let best = 0, bd = 1e9;
       for(let k=0;k<N;k++){ const d=Math.abs(pad+k*iw+iw/2-center); if(d<bd){bd=d;best=k;} }
-      setBall(best);
+      setBall(best, false);                     /* 拖动松手：直接连续收回，不停顿 */
       if(best!==idx) setActive(best);
     }else{
-      setBall(curI);                          /* 点按/长按松手：球弹性滑到位 */
+      setBall(curI, !longFired);                /* 点按保留滑动包裹；长按松手直接收回 */
       setActive(curI);
     }
     curI = -1; dragging = false; longFired = false;
   }
   function onCancel(){
     clearTimeout(pressTimer);
-    setBall(idx);
+    setBall(idx, false);                        /* 取消：直接收回常态 */
     curI=-1; dragging=false; longFired=false;
   }
 
