@@ -441,9 +441,9 @@ body.has-wall .stars{opacity:.75}
 #viewHome .hm-card-ghost{border-style:dashed}
 #viewHome .hm-ghost-body{font-size:12px;line-height:1.75;opacity:.6}
 #viewHome .hm-him-row{display:flex;align-items:center;gap:11px}
-#viewHome .hm-mini-av{width:38px;height:38px;border-radius:50%;overflow:hidden;flex:none;box-shadow:0 0 0 1.5px rgba(255,255,255,.3)}
+#viewHome .hm-mini-av{width:38px;height:38px;border-radius:50%;overflow:hidden;flex:none;box-shadow:0 0 0 1.5px rgba(255,255,255,.3);border:0;padding:0;background:rgba(255,255,255,.12);cursor:pointer;-webkit-appearance:none;appearance:none;display:block}
 #viewHome.hm-light .hm-mini-av{box-shadow:0 0 0 1.5px rgba(255,255,255,.85),0 2px 8px rgba(40,60,120,.2)}
-#viewHome .hm-mini-av svg{width:100%;height:100%;display:block}
+#viewHome .hm-mini-av svg,#viewHome .hm-mini-av img{width:100%;height:100%;object-fit:cover;display:block}
 #viewHome .hm-him-info{flex:1;min-width:0;text-align:left}
 #viewHome .hm-him-name{display:flex;align-items:center;gap:7px;font-size:14px}
 #viewHome .hm-dot{width:7px;height:7px;border-radius:50%;flex:none}
@@ -593,7 +593,8 @@ body.has-wall .stars{opacity:.75}
     <div class="hm-cards">
       <div class="hm-card">
         <div class="hm-him-row">
-          <span class="hm-mini-av" id="hmHimAv"></span>
+          <button class="hm-mini-av" id="hmHimAv" type="button" title="点一下换他的头像，长按恢复默认"></button>
+          <input type="file" id="hmHimFile" accept="image/*" hidden>
           <div class="hm-him-info">
             <div class="hm-him-name"><b id="hmHimName"></b><span class="hm-dot st-online" id="hmDot"></span><span class="hm-state" id="hmState"></span></div>
             <div class="hm-him-sub" id="hmStateSub"></div>
@@ -1902,7 +1903,10 @@ function aiMood(){
 /* 他留的话 · B 方案接口位：后端就绪后拉 /api/home/note（中转模型+Serein 生成），覆盖 hmNoteText/hmNoteTime */
 function renderHomeCards(){
   const av=document.getElementById('hmHimAv');
-  if(av)av.innerHTML=avatarSvg('ai');
+  if(av){
+    let own='';try{own=localStorage.getItem('cn_home_him_av')||'';}catch(e){}
+    av.innerHTML = own ? '<img src="'+own+'" alt="">' : avatarSvg('ai');
+  }
   const nm=document.getElementById('hmHimName');
   if(nm)nm.textContent=homeData().name_ai;
   const m=aiMood();
@@ -2375,6 +2379,49 @@ if(dock){
     const f=document.getElementById('avFile');
     if(f)f.click();
   }));
+  /* 状态卡头像自定义：点击选图（本地压缩256px存localStorage），长按恢复默认 */
+  (function(){
+    const av=document.getElementById('hmHimAv');
+    if(!av)return;
+    let holdT=null;
+    av.addEventListener('pointerdown',()=>{
+      holdT=setTimeout(()=>{
+        holdT=null;
+        try{localStorage.removeItem('cn_home_him_av');}catch(e){}
+        renderHomeCards();
+        toast('已恢复默认头像',1400);
+      },600);
+    });
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>av.addEventListener(ev,()=>{ if(holdT){clearTimeout(holdT);holdT=null;} }));
+    av.addEventListener('contextmenu',e=>e.preventDefault());
+    av.addEventListener('click',()=>{
+      if(holdT)return;
+      const f=document.getElementById('hmHimFile');
+      if(f)f.click();
+    });
+    const fi=document.getElementById('hmHimFile');
+    if(!fi)return;
+    fi.addEventListener('change',()=>{
+      const file=fi.files&&fi.files[0];
+      fi.value='';
+      if(!file||!/^image\//.test(file.type))return;
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const S=256,cv=document.createElement('canvas');cv.width=S;cv.height=S;
+          const cx=cv.getContext('2d');
+          const r=Math.min(img.width,img.height),sx=(img.width-r)/2,sy=(img.height-r)/2;
+          cx.drawImage(img,sx,sy,r,r,0,0,S,S);
+          localStorage.setItem('cn_home_him_av',cv.toDataURL('image/jpeg',.85));
+          renderHomeCards();
+          toast('他的头像换好啦',1400);
+        }catch(e){ toast('图片太大了，换张小的试试',1800); }
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror=()=>{ toast('这张图读不出来',1600); URL.revokeObjectURL(img.src); };
+      img.src=URL.createObjectURL(file);
+    });
+  })();
   function ask(id,key,label){
     const el=document.getElementById(id);
     if(!el)return;
