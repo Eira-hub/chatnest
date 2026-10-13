@@ -297,8 +297,10 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .dockbar:not(.flat) .dock::before{background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(243,246,251,.92) 58%,rgba(250,252,255,.95));backdrop-filter:none;-webkit-backdrop-filter:none}
 [data-theme="dark"] .dockbar:not(.flat) .dock::before{background:linear-gradient(145deg,rgba(40,48,80,.97),rgba(17,23,49,.93) 58%,rgba(28,34,60,.95));backdrop-filter:none;-webkit-backdrop-filter:none}
 /* ── v36.37 转场大聊天框：grid 堆叠第三层，与 dock 同布局同宽；壳/图标分层动画（合成器线程）── */
+/* v36.38：z-index 沉到 composer(z:2) 之下——缩小落位像沉进输入框后面；
+   展开阶段由 JS 临时抬 z 抢到输入框前面，避免被不透明输入框遮住右半段 */
 .bigchat{grid-area:1/1;width:min(calc(100% - 56px),660px);height:54px;margin:0 auto;border-radius:999px;
-  position:relative;visibility:hidden;pointer-events:none;z-index:3;color:var(--text2)}
+  position:relative;visibility:hidden;pointer-events:none;z-index:1;color:var(--text2)}
 .bigchat.run{visibility:visible}
 .bc-pill{position:absolute;inset:0;border-radius:999px;transform-origin:0 50%;will-change:transform;
   background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(243,246,251,.92) 58%,rgba(250,252,255,.95));
@@ -2172,27 +2174,30 @@ function playChatMorph(){
   const sx=wTg/wBc,sy=hTg/hBc;
   const iw=20,ih=20;
   ic.style.left=(dx+wTg/2-iw/2)+'px';                      /* 图标初始中心 = chatToggle 中心 */
-  ic.style.top=(dy+hBc/2-sy*hBc/2+ (0) +ih*0)+'px';        /* 顶边基准，下面 y 用中心差修正 */
   ic.style.top=((yAbs-yBc)+hTg/2-ih/2)+'px';
   const dxIc=wBc/2-(dx+wTg/2),dyIc=(hBc/2)-((yAbs-yBc)+hTg/2);
   const SMALL='translate('+dx+'px,'+dy+'px) scale('+sx.toFixed(4)+','+sy.toFixed(4)+')';
-  const EASE_OUT='cubic-bezier(.32,.9,.28,1)',EASE_IN='cubic-bezier(.55,0,.85,.45)';
+  const EASE_OUT='cubic-bezier(.2,.85,.25,1)',EASE_IN='cubic-bezier(.55,0,.85,.45)';
   bc.classList.add('run');
-  /* 与 tab 栏翻走同时：小聊天框 → 大聊天框；图标滑向中央并淡入 */
-  try{ pill.animate([{transform:SMALL},{transform:'none'}],{duration:240,easing:EASE_OUT,fill:'forwards'}); }catch(e){}
-  try{ ic.animate([{transform:'translate(0,0)',opacity:0},{opacity:0,offset:.4},{transform:'translate('+dxIc+'px,'+dyIc+'px)',opacity:1}],{duration:240,easing:EASE_OUT,fill:'forwards'}); }catch(e){}
-  /* 输入框紧随其后从右边弹出 */
-  try{ cp.animate([{transform:'translateX(56px)',opacity:0},{transform:'none',opacity:1}],{duration:250,delay:90,easing:EASE_OUT,fill:'backwards'}); }catch(e){}
-  /* 大聊天框停一拍后迅速缩小回 chatToggle 落位 */
+  /* v36.38：全程 ≤0.3s——展开 130ms 直冲最右 → 无缝缩小 150ms 落位；
+     展开期抬 z 到输入框前（不被不透明输入框遮右半段），缩小时刻沉回输入框后面「落进去」 */
+  bc.style.zIndex='3';
+  try{ pill.animate([{transform:SMALL},{transform:'none'}],{duration:130,easing:EASE_OUT,fill:'forwards'}); }catch(e){}
+  try{ ic.animate([{transform:'translate(0,0)',opacity:0},{opacity:0,offset:.45},{transform:'translate('+dxIc+'px,'+dyIc+'px)',opacity:1}],{duration:130,easing:EASE_OUT,fill:'forwards'}); }catch(e){}
+  /* 输入框从右边弹出，与大聊天框展开/缩小全程重叠 */
+  try{ cp.animate([{transform:'translateX(56px)',opacity:0},{transform:'none',opacity:1}],{duration:200,easing:EASE_OUT,fill:'backwards'}); }catch(e){}
+  /* 展开完立即缩小，沉到输入框图层下面，右端像被输入框吃掉、左端滑回小聊天框后面 */
   setTimeout(()=>{
-    try{ pill.animate([{transform:'none'},{transform:SMALL}],{duration:200,easing:EASE_IN,fill:'forwards'}); }catch(e){}
-    try{ ic.animate([{transform:'translate('+dxIc+'px,'+dyIc+'px)',opacity:1},{opacity:1,offset:.7},{transform:'translate(0,0)',opacity:0}],{duration:200,easing:EASE_IN,fill:'forwards'}); }catch(e){}
+    bc.style.zIndex='1';
+    try{ pill.animate([{transform:'none'},{transform:SMALL}],{duration:150,easing:EASE_IN,fill:'forwards'}); }catch(e){}
+    try{ ic.animate([{transform:'translate('+dxIc+'px,'+dyIc+'px)',opacity:1},{opacity:1,offset:.65},{transform:'translate(0,0)',opacity:0}],{duration:150,easing:EASE_IN,fill:'forwards'}); }catch(e){}
     setTimeout(()=>{
       bc.classList.remove('run');
+      bc.style.zIndex='';
       try{ pill.getAnimations().forEach(a=>a.cancel()); ic.getAnimations().forEach(a=>a.cancel()); }catch(e){}
       chatMorphing=false;
-    },210);
-  },310);
+    },160);
+  },130);
 }
 if(dock){
   const names={mood:'心潮',todo:'待办',explore:'探索'};
@@ -2200,7 +2205,7 @@ if(dock){
     const v=b.dataset.view;
     document.documentElement.setAttribute('data-v35','click:'+v);
     if(v==='home'){ syncDock('home'); showHome(true); setDock(true); setDockFlat(true); }
-    else if(v==='chat'){ setDockFlat(false); syncDock('chat'); showHome(false); setDock(false); playChatMorph(); }   /* 聊天项=翻回收起态+转场：dock 翻走同时大聊天框展开，缩回落位，输入框从右弹出（槽开关最先执行） */
+    else if(v==='chat'){ setDockFlat(false); syncDock('chat'); showHome(false); setDock(false); requestAnimationFrame(()=>requestAnimationFrame(playChatMorph)); }   /* 聊天项=翻回收起态+转场；双 rAF 空过切页渲染高峰再启动，防动画迟到半路被缩（槽开关最先执行） */
     else{ syncDock(v); toast('「'+(names[v]||v)+'」还在装修，先占个位',2200); setDock(true); setDockFlat(true); }
   }));
 }
