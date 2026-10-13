@@ -231,11 +231,9 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 /* v36.24 平铺页保持全透明（用户要求）：壁纸从胶囊四周直接透出。
    残影根源在固定壁纸层自身（空 blur 滤镜建合成层导致跟滚错位 + 视口高度变化时重定位），
    见 #wallpaper 与 wallBlurFx 的修复，不再用托板遮盖 */
-/* 主页等平铺态：dock 弃用 backdrop 采样（WebView 会把采样画面越界画到胶囊外一圈，跟滚动内容一起动），改实底玻璃 */
-.dockbar.flat .dock::before{backdrop-filter:none;-webkit-backdrop-filter:none;
-  background:linear-gradient(145deg,rgba(255,255,255,.80),rgba(242,245,251,.72) 58%,rgba(248,250,255,.76))}
-[data-theme="dark"] .dockbar.flat .dock::before{backdrop-filter:none;-webkit-backdrop-filter:none;
-  background:linear-gradient(145deg,rgba(42,50,84,.88),rgba(16,20,40,.84) 58%,rgba(30,36,64,.86))}
+/* v36.26 主页等平铺态 dock 恢复透明玻璃：透出底下壁纸（用户要求）。
+   壁纸已改 body 根层绘制（v36.25），backdrop-filter 采样的是根层背景、不再跟滚错位，
+   故删除此前的实底白板，dock 胶囊直接用默认 .dock::before 的透明磨砂玻璃 */
 .dockbar>*{grid-area:1/1;min-width:0;transform-origin:0 50%;will-change:transform,opacity;
   transition:transform .26s cubic-bezier(.32,.9,.28,1),opacity .16s ease}   /* 收起方向：快速回到聊天框 */
 .dockbar .dock{transform:translateX(-46%) rotateY(-76deg);opacity:0;pointer-events:none}
@@ -720,7 +718,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.25 · wall-root</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.26 · dock-clear</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
