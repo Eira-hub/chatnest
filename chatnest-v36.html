@@ -676,7 +676,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.21 · flip-slide</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.22 · home-cards</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -1930,8 +1930,12 @@ function renderHomeCards(){
       if(cid)openConv(cid);else toast('还没有对话');
     };
   }
+  if(!window._hmCardAnims)window._hmCardAnims=[];
+  window._hmCardAnims.forEach(a=>{try{a.cancel();}catch(e){}});
+  window._hmCardAnims=[];
   document.querySelectorAll('#viewHome .hm-card').forEach((c,i)=>{
-    c.animate([{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:420,delay:70*i,easing:'cubic-bezier(.22,.8,.3,1)',fill:'both'});
+    const a=c.animate([{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:420,delay:70*i,easing:'cubic-bezier(.22,.8,.3,1)',fill:'both'});
+    window._hmCardAnims.push(a);
   });
 }
 window.renderHomeCards=renderHomeCards;
