@@ -297,10 +297,10 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .dockbar:not(.flat) .dock::before{background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(243,246,251,.92) 58%,rgba(250,252,255,.95));backdrop-filter:none;-webkit-backdrop-filter:none}
 [data-theme="dark"] .dockbar:not(.flat) .dock::before{background:linear-gradient(145deg,rgba(40,48,80,.97),rgba(17,23,49,.93) 58%,rgba(28,34,60,.95));backdrop-filter:none;-webkit-backdrop-filter:none}
 /* ── v36.37 转场大聊天框：grid 堆叠第三层，与 dock 同布局同宽；壳/图标分层动画（合成器线程）── */
-/* v36.38：z-index 沉到 composer(z:2) 之下——缩小落位像沉进输入框后面；
-   展开阶段由 JS 临时抬 z 抢到输入框前面，避免被不透明输入框遮住右半段 */
+/* v36.39：鼓包式转场——大聊天框最远只鼓到屏宽约 1/3 即折返（单动画合并，无段间竞态）；
+   全程 z:3 在输入框前面，缩回终点与小聊天框精确重合，落位瞬间无缝接管 */
 .bigchat{grid-area:1/1;width:min(calc(100% - 56px),660px);height:54px;margin:0 auto;border-radius:999px;
-  position:relative;visibility:hidden;pointer-events:none;z-index:1;color:var(--text2)}
+  position:relative;visibility:hidden;pointer-events:none;z-index:3;color:var(--text2)}
 .bigchat.run{visibility:visible}
 .bc-pill{position:absolute;inset:0;border-radius:999px;transform-origin:0 50%;will-change:transform;
   background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(243,246,251,.92) 58%,rgba(250,252,255,.95));
@@ -2155,8 +2155,8 @@ if(dockbar){
   const ct=document.getElementById('chatToggle');
   if(ct) ct.addEventListener('click',()=>{ setDockFlat(false); setDock(true); });   /* 聊天框 → 回聊天页，必须脱离 flat（槽开关最先执行，防后续异常跳过） */
 }
-/* ── v36.37 聊天页转场：tab 栏翻走 → 小聊天框放大成大聊天框 → 迅速缩小回位 → 输入框从右弹出 ──
-   壳/图标全走 WAAPI 合成器线程（切页瞬间主线程忙，禁用布局动画）；几何用 offset 局部坐标测量 */
+/* ── v36.39 聊天页转场（鼓包式）：小聊天框向右鼓到屏宽约 1/3 → 顶点即折返缩回落位 → 输入框从右弹出 ──
+   壳/图标单动画合并走 WAAPI 合成器线程（无段间竞态）；几何用 offset 局部坐标测量 */
 let chatMorphing=false;
 function playChatMorph(){
   const bc=document.getElementById('bigChat');
@@ -2170,34 +2170,36 @@ function playChatMorph(){
   const yAbs=(tg.offsetParent?tg.offsetParent.offsetTop:0)+tg.offsetTop;
   const xBc=bc.offsetLeft,yBc=bc.offsetTop,wBc=bc.offsetWidth,hBc=bc.offsetHeight;
   const wTg=tg.offsetWidth,hTg=tg.offsetHeight;
-  const dx=xAbs-xBc,dy=(yAbs+hTg/2)-(yBc+hBc/2);          /* 壳：全宽 → chatToggle 几何 */
+  const dx=xAbs-xBc,dy=(yAbs+hTg/2)-(yBc+hBc/2);          /* 壳：chatToggle 几何 ↔ 鼓包几何共用 */
   const sx=wTg/wBc,sy=hTg/hBc;
   const iw=20,ih=20;
   ic.style.left=(dx+wTg/2-iw/2)+'px';                      /* 图标初始中心 = chatToggle 中心 */
   ic.style.top=((yAbs-yBc)+hTg/2-ih/2)+'px';
-  const dxIc=wBc/2-(dx+wTg/2),dyIc=(hBc/2)-((yAbs-yBc)+hTg/2);
   const SMALL='translate('+dx+'px,'+dy+'px) scale('+sx.toFixed(4)+','+sy.toFixed(4)+')';
+  /* v36.39 鼓包式：最远鼓到屏宽约 1/3（大屏封顶 220px），左缘贴小聊天框原位向右长，到顶立即折返 */
+  const wMid=Math.min((dockbar?dockbar.clientWidth:wBc)/3,220);
+  const MID='translate('+dx+'px,'+dy+'px) scale('+(wMid/wBc).toFixed(4)+','+sy.toFixed(4)+')';
   const EASE_OUT='cubic-bezier(.2,.85,.25,1)',EASE_IN='cubic-bezier(.55,0,.85,.45)';
+  const dxIc=(wMid-wTg)/2;                                 /* 图标：小框中心 → 鼓包中心，y 已由 top 对齐 */
   bc.classList.add('run');
-  /* v36.38：全程 ≤0.3s——展开 130ms 直冲最右 → 无缝缩小 150ms 落位；
-     展开期抬 z 到输入框前（不被不透明输入框遮右半段），缩小时刻沉回输入框后面「落进去」 */
-  bc.style.zIndex='3';
-  try{ pill.animate([{transform:SMALL},{transform:'none'}],{duration:130,easing:EASE_OUT,fill:'forwards'}); }catch(e){}
-  try{ ic.animate([{transform:'translate(0,0)',opacity:0},{opacity:0,offset:.45},{transform:'translate('+dxIc+'px,'+dyIc+'px)',opacity:1}],{duration:130,easing:EASE_OUT,fill:'forwards'}); }catch(e){}
-  /* 输入框从右边弹出，与大聊天框展开/缩小全程重叠 */
+  /* 单动画合并：展开 130ms 冲到 1/3 → 顶点即折返缩回 150ms，合成器精确控制，无段间竞态；全程 ≤0.3s */
+  try{ pill.animate([
+    {transform:SMALL,easing:EASE_OUT,offset:0},
+    {transform:MID,easing:EASE_IN,offset:.46},
+    {transform:SMALL}
+  ],{duration:280,fill:'forwards'}); }catch(e){}
+  try{ ic.animate([
+    {transform:'translate(0,0)',opacity:0,easing:EASE_OUT,offset:0},
+    {transform:'translate('+dxIc+'px,0px)',opacity:1,easing:EASE_IN,offset:.46},
+    {transform:'translate(0,0)',opacity:0}
+  ],{duration:280,fill:'forwards'}); }catch(e){}
+  /* 输入框从右边弹出，与鼓包全程重叠 */
   try{ cp.animate([{transform:'translateX(56px)',opacity:0},{transform:'none',opacity:1}],{duration:200,easing:EASE_OUT,fill:'backwards'}); }catch(e){}
-  /* 展开完立即缩小，沉到输入框图层下面，右端像被输入框吃掉、左端滑回小聊天框后面 */
   setTimeout(()=>{
-    bc.style.zIndex='1';
-    try{ pill.animate([{transform:'none'},{transform:SMALL}],{duration:150,easing:EASE_IN,fill:'forwards'}); }catch(e){}
-    try{ ic.animate([{transform:'translate('+dxIc+'px,'+dyIc+'px)',opacity:1},{opacity:1,offset:.65},{transform:'translate(0,0)',opacity:0}],{duration:150,easing:EASE_IN,fill:'forwards'}); }catch(e){}
-    setTimeout(()=>{
-      bc.classList.remove('run');
-      bc.style.zIndex='';
-      try{ pill.getAnimations().forEach(a=>a.cancel()); ic.getAnimations().forEach(a=>a.cancel()); }catch(e){}
-      chatMorphing=false;
-    },160);
-  },130);
+    bc.classList.remove('run');
+    try{ pill.getAnimations().forEach(a=>a.cancel()); ic.getAnimations().forEach(a=>a.cancel()); }catch(e){}
+    chatMorphing=false;
+  },290);
 }
 if(dock){
   const names={mood:'心潮',todo:'待办',explore:'探索'};
