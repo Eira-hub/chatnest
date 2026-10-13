@@ -222,7 +222,7 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
    收起态=聊天框+输入框（贴底，与 v35 dock 同位）；点聊天框 → dock 从左侧平移+翻折展开，输入框行平移翻走；
    点 dock 里的"聊天"项 → 翻回收起态。仅聊天页有收起/展开之分，其他页 dock 常驻。
    不用 visibility（手机上 backdrop-filter 层从 hidden 切回可见不重绘，表现为 tab 栏消失），只用 opacity+pointer-events。 */
-.dockbar{display:grid;perspective:900px;-webkit-perspective:900px;align-items:end;padding:0}
+.dockbar{display:grid;perspective:900px;-webkit-perspective:900px;align-items:end;padding:0 0 calc(env(safe-area-inset-bottom) + 14px)}
 .dockbar>*{grid-area:1/1;min-width:0;transform-origin:0 50%;will-change:transform,opacity;
   transition:transform .26s cubic-bezier(.32,.9,.28,1),opacity .16s ease}   /* 收起方向：快速回到聊天框 */
 .dockbar .dock{transform:translateX(-46%) rotateY(-76deg);opacity:0;pointer-events:none}
