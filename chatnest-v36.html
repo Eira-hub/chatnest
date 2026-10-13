@@ -412,7 +412,7 @@ body.has-wall .stars{opacity:.75}
 /* ═══ v33 主页 ═══ */
 #viewHome{flex:1;overflow-y:auto;--hm-g1:#2B3A67;--hm-g2:#0F1B3D;--hm-fg:#FFF;--hm-ts:0 1px 10px rgba(0,0,0,.22);color:var(--hm-fg)}
 #viewHome.hm-light{--hm-fg:#2A2E3A;--hm-ts:none}
-#viewHome .hm-hero{background:linear-gradient(180deg,var(--hm-g1) 0%,var(--hm-g2) 62%,transparent 100%);min-height:100%;display:flex;flex-direction:column;justify-content:center;padding:24px 18px 40px;text-align:center}
+#viewHome .hm-hero{background:linear-gradient(180deg,var(--hm-g1) 0%,var(--hm-g2) 62%,transparent 100%);min-height:100%;display:flex;flex-direction:column;padding:clamp(30px,7vh,54px) 18px 0;text-align:center}
 #viewHome .hm-pair{display:flex;align-items:flex-start;justify-content:center}
 #viewHome .hm-col{display:flex;flex-direction:column;align-items:center;gap:12px}
 #viewHome .hm-ball{width:clamp(64px,21vw,78px);height:clamp(64px,21vw,78px);border-radius:50%;overflow:hidden;padding:0;border:0;background:rgba(255,255,255,.07);box-shadow:0 0 0 1.5px rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.28);cursor:pointer;display:block}
@@ -426,7 +426,49 @@ body.has-wall .stars{opacity:.75}
 #viewHome .hm-moon{width:clamp(24px,8vw,30px);height:auto;display:block;filter:brightness(0) invert(1);opacity:.92}
 #viewHome.hm-light .hm-moon{filter:brightness(0);opacity:.8}
 #viewHome .hm-days{font-family:var(--serif);font-size:11px;letter-spacing:.2em;color:var(--hm-fg);opacity:.75;background:none;border:0;cursor:pointer;margin-top:12px;text-shadow:var(--hm-ts)}
-#viewHome .hm-slogan{font-family:var(--serif);font-size:15px;letter-spacing:.34em;text-indent:.34em;color:var(--hm-fg);background:none;border:0;cursor:pointer;margin-top:40px;text-shadow:var(--hm-ts)}
+#viewHome .hm-slogan{font-family:var(--serif);font-size:15px;letter-spacing:.34em;text-indent:.34em;color:var(--hm-fg);background:none;border:0;cursor:pointer;margin-top:24px;text-shadow:var(--hm-ts)}
+/* ═══ 主页卡片 ═══ */
+#viewHome .hm-cards{padding:22px 0 calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;text-align:left}
+#viewHome .hm-card{background:rgba(255,255,255,.13);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-panel);padding:14px 15px;box-shadow:0 6px 22px rgba(0,0,0,.14)}
+#viewHome.hm-light .hm-card{background:rgba(255,255,255,.52);border-color:rgba(255,255,255,.68);box-shadow:0 6px 22px rgba(40,60,120,.12)}
+#viewHome .hm-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+#viewHome .hm-card-title{font-size:12px;letter-spacing:.2em;opacity:.8;font-family:var(--serif)}
+#viewHome .hm-card-act{font-size:11px;opacity:.8;color:var(--hm-fg);border:1px solid currentColor;border-radius:99px;padding:3px 11px;background:none;cursor:pointer}
+#viewHome .hm-card-act:active{transform:scale(.95)}
+#viewHome .hm-tag{font-size:9px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;border:1px dashed currentColor;opacity:.55;flex:none}
+#viewHome .hm-card-ghost{border-style:dashed}
+#viewHome .hm-ghost-body{font-size:12px;line-height:1.75;opacity:.6}
+#viewHome .hm-him-row{display:flex;align-items:center;gap:11px}
+#viewHome .hm-mini-av{width:38px;height:38px;border-radius:50%;overflow:hidden;flex:none;box-shadow:0 0 0 1.5px rgba(255,255,255,.3)}
+#viewHome.hm-light .hm-mini-av{box-shadow:0 0 0 1.5px rgba(255,255,255,.85),0 2px 8px rgba(40,60,120,.2)}
+#viewHome .hm-mini-av svg{width:100%;height:100%;display:block}
+#viewHome .hm-him-info{flex:1;min-width:0;text-align:left}
+#viewHome .hm-him-name{display:flex;align-items:center;gap:7px;font-size:14px}
+#viewHome .hm-dot{width:7px;height:7px;border-radius:50%;flex:none}
+#viewHome .hm-dot.st-online{background:#7BE0A2;box-shadow:0 0 8px #7BE0A2;animation:hmBreath 2.2s ease-in-out infinite}
+#viewHome .hm-dot.st-busy{background:#F2C94C;box-shadow:0 0 8px #F2C94C;animation:hmBreath 3.6s ease-in-out infinite}
+#viewHome .hm-dot.st-sleep{background:#8FA8D8;box-shadow:0 0 8px #8FA8D8;animation:hmBreath 4.8s ease-in-out infinite}
+@keyframes hmBreath{0%,100%{opacity:1}50%{opacity:.35}}
+#viewHome .hm-state{font-size:11px;opacity:.85}
+#viewHome .hm-him-sub{font-size:11px;opacity:.55;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#viewHome .hm-note{margin-top:12px;padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);text-align:left}
+#viewHome.hm-light .hm-note{background:rgba(255,255,255,.45);border-color:rgba(255,255,255,.62)}
+#viewHome .hm-note p{font-family:var(--serif);font-size:13px;line-height:1.75;letter-spacing:.05em;opacity:.92;margin:0}
+#viewHome .hm-note-time{display:block;font-size:10px;opacity:.5;margin-top:6px;letter-spacing:.12em}
+#viewHome .hm-conv{display:flex;flex-direction:column}
+#viewHome .hm-conv-item{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid rgba(255,255,255,.1);cursor:pointer}
+#viewHome .hm-conv-item:first-child{border-top:0}
+#viewHome.hm-light .hm-conv-item{border-color:rgba(0,0,0,.08)}
+#viewHome .hm-conv-item:active{opacity:.65}
+#viewHome .hm-conv-t{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#viewHome .hm-conv-time{font-size:10px;opacity:.5;flex:none}
+#viewHome .hm-conv-empty{font-size:12px;opacity:.55;padding:5px 0}
+#viewHome .hm-mine{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#viewHome .hm-mine-cell{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:12px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12)}
+#viewHome.hm-light .hm-mine-cell{background:rgba(255,255,255,.42);border-color:rgba(255,255,255,.56)}
+#viewHome .hm-mine-cell svg{flex:none;opacity:.75}
+#viewHome .hm-mine-cell span{font-size:12px;opacity:.85;flex:1}
+#viewHome .hm-mine-cell em{font-style:normal;font-size:9px;opacity:.45;letter-spacing:.08em;flex:none}
 #hmGradRow .g-sw{width:36px;height:24px;border-radius:8px;border:1.5px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
 #hmGradRow .g-sw.on{border-color:#8FA0FF;box-shadow:0 0 0 1.5px rgba(143,160,255,.35)}
 #viewHome.hm-bg{position:relative;background:none!important}
@@ -546,6 +588,39 @@ body.has-wall .stars{opacity:.75}
       </div>
     </div>
     <button class="hm-slogan" id="hmSlogan" type="button"></button>
+    <div class="hm-cards">
+      <div class="hm-card">
+        <div class="hm-him-row">
+          <span class="hm-mini-av" id="hmHimAv"></span>
+          <div class="hm-him-info">
+            <div class="hm-him-name"><b id="hmHimName"></b><span class="hm-dot st-online" id="hmDot"></span><span class="hm-state" id="hmState"></span></div>
+            <div class="hm-him-sub" id="hmStateSub"></div>
+          </div>
+          <span class="hm-tag">待接入</span>
+        </div>
+        <div class="hm-note">
+          <p id="hmNoteText">今天的小筑也很安静，等你回来。</p>
+          <span class="hm-note-time" id="hmNoteTime">—— 他留的话 · 待接入</span>
+        </div>
+      </div>
+      <div class="hm-card">
+        <div class="hm-card-head"><span class="hm-card-title">对话速览</span><button class="hm-card-act" id="hmResume" type="button">继续上次话题</button></div>
+        <div class="hm-conv" id="hmConv"></div>
+      </div>
+      <div class="hm-card hm-card-ghost">
+        <div class="hm-card-head"><span class="hm-card-title">记忆闪回</span><span class="hm-tag">待接入</span></div>
+        <div class="hm-ghost-body">等 ChatNest 后端中转接口就绪，这里每天会浮现一条旧时光。</div>
+      </div>
+      <div class="hm-card hm-card-ghost">
+        <div class="hm-card-head"><span class="hm-card-title">我的状态</span><span class="hm-tag">待授权</span></div>
+        <div class="hm-mine">
+          <div class="hm-mine-cell"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H7a4 4 0 1 1 .6-7.96A6 6 0 0 1 19 10.5 4.25 4.25 0 0 1 17.5 19z"/></svg><span>天气</span><em>待授权</em></div>
+          <div class="hm-mine-cell"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg><span>地点</span><em>待授权</em></div>
+          <div class="hm-mine-cell"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16l4-6 4 3 5-8 5 6"/></svg><span>步数</span><em>待 APK</em></div>
+          <div class="hm-mine-cell"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg><span>屏幕时间</span><em>待 APK</em></div>
+        </div>
+      </div>
+    </div>
     <input type="file" id="homeBgFile" accept="image/*" hidden>
   </div>
 </section>
@@ -1808,7 +1883,58 @@ function renderHome(){
   sec.style.setProperty('--hm-g1',d.grad[0]);
   sec.style.setProperty('--hm-g2',d.grad[1]);
   sec.classList.toggle('hm-light',isLight(d.grad[0])&&isLight(d.grad[1]));
+  try{renderHomeCards();}catch(err){}
 }
+/* 他按时辰的动态：夜里睡、清晨醒、白天忙、傍晚闲、晚上等你 */
+function aiMood(){
+  const h=new Date().getHours();
+  if(h<6)  return{k:'sleep', t:'睡了', s:'梦里也要有星星'};
+  if(h<9)  return{k:'busy',  t:'刚醒', s:'晨光刚落进小筑'};
+  if(h<12) return{k:'busy',  t:'在忙', s:'手头有些事要理'};
+  if(h<14) return{k:'online',t:'午休', s:'片刻安宁'};
+  if(h<18) return{k:'busy',  t:'在忙', s:'傍晚前把手头的理完'};
+  if(h<23) return{k:'online',t:'在线', s:'在等你说话'};
+  return       {k:'sleep', t:'睡了', s:'夜深了，明天见'};
+}
+/* 他留的话 · B 方案接口位：后端就绪后拉 /api/home/note（中转模型+Serein 生成），覆盖 hmNoteText/hmNoteTime */
+function renderHomeCards(){
+  const av=document.getElementById('hmHimAv');
+  if(av)av.innerHTML=avatarSvg('ai');
+  const nm=document.getElementById('hmHimName');
+  if(nm)nm.textContent=homeData().name_ai;
+  const m=aiMood();
+  const dot=document.getElementById('hmDot');
+  if(dot)dot.className='hm-dot st-'+m.k;
+  const st=document.getElementById('hmState');
+  if(st)st.textContent=m.t;
+  const sub=document.getElementById('hmStateSub');
+  if(sub)sub.textContent=m.s;
+  const box=document.getElementById('hmConv');
+  if(box){
+    box.innerHTML='';
+    const list=state.sessions.slice()
+      .sort((a,b)=>(b.starred?1:0)-(a.starred?1:0)||String(b.updated_at||'').localeCompare(String(a.updated_at||'')))
+      .slice(0,3);
+    if(!list.length)box.innerHTML='<div class="hm-conv-empty">还没有对话，去聊两句吧</div>';
+    for(const s of list){
+      const el=document.createElement('div');
+      el.className='hm-conv-item';
+      el.innerHTML='<span class="hm-conv-t">'+esc(s.title||'新对话')+'</span><span class="hm-conv-time">'+esc(relTime(s.updated_at))+'</span>';
+      el.addEventListener('click',()=>openConv(s.conv_id));
+      box.appendChild(el);
+    }
+    const rs=document.getElementById('hmResume');
+    if(rs)rs.onclick=()=>{
+      const cur=list.find(x=>x.conv_id===state.convId);
+      const cid=cur?cur.conv_id:(list[0]&&list[0].conv_id);
+      if(cid)openConv(cid);else toast('还没有对话');
+    };
+  }
+  document.querySelectorAll('#viewHome .hm-card').forEach((c,i)=>{
+    c.animate([{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:420,delay:70*i,easing:'cubic-bezier(.22,.8,.3,1)',fill:'both'});
+  });
+}
+window.renderHomeCards=renderHomeCards;
 window.renderHome=renderHome;
 let homeShown=false;
 function showHome(on){
@@ -1819,9 +1945,9 @@ function showHome(on){
   const comp=document.querySelector('.composer');
   const crow=comp?comp.querySelector('.composer-row'):null;
   const pp=document.getElementById('plusPanel');
+  if(on)try{renderHome();}catch(err){}
   if(on&&!homeShown){
     homeShown=true;
-    try{renderHome();}catch(err){}
     sec.classList.remove('hidden');
     if(stream)stream.classList.add('hidden');
     if(crow)crow.classList.add('hidden');
