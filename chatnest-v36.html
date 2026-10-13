@@ -2089,25 +2089,26 @@ function syncDock(v){
   if(dock) dock.querySelectorAll('.dock-btn').forEach(x=>x.classList.toggle('on',x.dataset.view===v));
   document.documentElement.setAttribute('data-sync',String(v));
 }
-/* v34 newConv / openConv 会调用：把界面切回聊天并同步 Dock 高亮 */
-window.syncChatView=function(){ syncDock('chat'); showHome(false); };
+/* v34 newConv / openConv 会调用：把界面切回聊天并同步 Dock 高亮（切回聊天必须脱离 flat，否则输入框被摘出渲染层） */
+window.syncChatView=function(){ syncDock('chat'); showHome(false); setDockFlat(false); };
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
 function setDock(open){ if(dockbar) dockbar.classList.toggle('open',!!open); }
+/* flat=主页/心潮/待办/探索等无翻折页（340ms 等动画结束后退平，治 WebView 3D 层越界泄漏）；
+   聊天页（收起态+翻折）绝不能带 flat——flat 会把 composer 整体摘出渲染层，输入框会消失 */
+let setDockFlat=()=>{};
 if(dockbar){
+  let flatT=0;
+  setDockFlat=function(flat){
+    clearTimeout(flatT);
+    if(flat) flatT=setTimeout(()=>{ dockbar.classList.add('flat'); },340);
+    else{ dockbar.classList.remove('flat'); }
+  };
   const ct=document.getElementById('chatToggle');
-  if(ct) ct.addEventListener('click',()=>setDock(true));   /* 点聊天框 → dock 翻出 */
+  if(ct) ct.addEventListener('click',()=>{ setDock(true); setDockFlat(false); });   /* 聊天框 → 回聊天页，必须脱离 flat */
 }
 if(dock){
   const names={mood:'心潮',todo:'待办',explore:'探索'};
-  const bar=dock.closest('.dockbar');
-  let flatT=0;
-  function setDockFlat(flat){   /* 聊天页需要 3D 翻折；其余页退平（延时等动画结束），修玻璃采样泄漏 */
-    clearTimeout(flatT);
-    if(flat) flatT=setTimeout(()=>{ if(bar)bar.classList.add('flat'); },340);
-    else{ if(bar)bar.classList.remove('flat'); }
-  }
-  setDockFlat(true);
   dock.querySelectorAll('.dock-btn').forEach(b=>b.addEventListener('click',()=>{
     const v=b.dataset.view;
     document.documentElement.setAttribute('data-v35','click:'+v);
