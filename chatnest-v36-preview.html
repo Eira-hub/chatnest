@@ -565,7 +565,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.16 · comp-anim</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.17 · one-shot</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -1863,7 +1863,7 @@ if(dock){
         const center=e.clientX-dockLeft();
         let best=0,bd=1e9;
         btns.forEach((b,i)=>{ const d=Math.abs(tabC(i)-center); if(d<bd){bd=d;best=i;} });
-        snapTo(best,true);   /* 鼠标路径同步吸附（拦合成 click），无触摸抢断问题 */
+        snapTo(best,true,true);   /* 鼠标拖动松手：同步吸附，quiet 不加包裹（一步缩回） */
       }else if(longFired) snapTo(curIdx,true);
       else snapTo(downIdx,true);
       downIdx=-1; dragging=false; longFired=false;
@@ -1928,17 +1928,12 @@ if(dock){
         ballAnims.push(a);
       }catch(e){ ball.style.setProperty('--bs',to); }
     }
-    function snapTo(i,sync){
+    function snapTo(i,sync,quiet){
       freezeAndKill();
-      ball.classList.remove('drag','long');
-      ball.classList.add('moving');
+      ball.classList.remove('drag','long','moving');
       animX(btnX(i),340);                          /* 位置：轻过冲吸附（合成器） */
-      animBs(1.24,340,false);                      /* 缩放：撑满 → 包裹态（弹性） */
-      clearTimeout(snapTo._t);
-      snapTo._t=setTimeout(()=>{
-        ball.classList.remove('moving');
-        animBs(1,200,true);                        /* 二段：缓落回常态，结束清内联交给类值 */
-      },460);
+      animBs(1,340);                               /* 缩放：一步干脆缩回常态（back-out 弹性，无中间停留） */
+      snapTo._quiet=!!quiet;                       /* 拖动松手：切页后 observer 不再加包裹，避免二段感 */
       if(i===curIdx) return;
       clearTimeout(snapTo._go);
       const go=()=>{ btns[i].click(); suppressClick=true; setTimeout(()=>suppressClick=false,80); };
@@ -1986,14 +1981,14 @@ if(dock){
         const center=Math.max(btnX(0),Math.min(btnX(N-1),tFrom+tLastDX))+BALL_W/2;   /* 球心 */
         let best=0,bd=1e9;
         btns.forEach((b,i)=>{ const d=Math.abs(tabC(i)-center); if(d<bd){bd=d;best=i;} });
-        snapTo(best);
+        snapTo(best,false,true);   /* 拖动松手：220ms 后切页，quiet 一步缩回不包裹 */
         dm('T-END ->'+best);
       }else if(longFired){ longFired=false; snapTo(curIdx,true); dm('T-LONG'); }
       else if(i0>=0){ snapTo(i0,true); dm('T-TAP'); }   /* 点按无滑动动画，立即切页不吃延迟 */
     };
     dock.addEventListener('touchend',tEnd,{passive:false});
     dock.addEventListener('touchcancel',tEnd,{passive:false});
-    try{console.log('[ChatNest] Dock v36.16 · comp-anim')}catch(err){}
+    try{console.log('[ChatNest] Dock v36.17 · one-shot')}catch(err){}
     dock.addEventListener('pointermove',onMove);
     dock.addEventListener('pointerup',onUp);
     dock.addEventListener('pointercancel',onCancel);
@@ -2008,14 +2003,25 @@ if(dock){
     }
     function setBallAt(i,wrap){
       ball.classList.remove('drag','long');
-      if(wrap){ ball.classList.add('moving'); clearTimeout(setBallAt._t); setBallAt._t=setTimeout(()=>ball.classList.remove('moving'),450); }
-      else ball.classList.remove('moving');
-      ball.style.setProperty('--x', btnX(i)+'px');   /* 位置动画期间 WAAPI 优先级更高，写类值不干扰 */
+      if(wrap){
+        ball.classList.add('moving');
+        animX(btnX(i),320);                        /* 点按/切页：滑动过去 */
+        animBs(1.24,260,false);                    /* 轻微包裹（合成器弹性） */
+        clearTimeout(setBallAt._t);
+        setBallAt._t=setTimeout(()=>{ ball.classList.remove('moving'); animBs(1,260,true); },480);
+      }else{
+        ball.classList.remove('moving');
+        ball.style.setProperty('--x', btnX(i)+'px');   /* snapTo 动画进行中：只落定类值，不另起动画 */
+      }
     }
     /* 任何切页(syncDock) → on 类变化 → 水珠自动滑过去 */
     new MutationObserver(()=>{
       const i=btns.findIndex(b=>b.classList.contains('on'));
-      if(i>=0&&i!==curIdx){ curIdx=i; setBallAt(i,true); }
+      if(i>=0&&i!==curIdx){
+        curIdx=i;
+        if(snapTo._quiet){ snapTo._quiet=false; setBallAt(i,false); }   /* 拖动松手：动画已在跑，不加包裹 */
+        else setBallAt(i,true);
+      }
     }).observe(dock,{subtree:true,attributes:true,attributeFilter:['class']});
 
     /* 实时渲染循环：透镜折射 + 吞图标 + 透镜高亮跟随球心 */
