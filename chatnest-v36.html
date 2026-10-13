@@ -227,6 +227,10 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 /* 主页等无翻折场景退出 3D 上下文：backdrop-filter 采样在 perspective 下会越界泄漏（tab 栏周围一圈跟着滚动的模糊画面） */
 .dockbar.flat{perspective:none;-webkit-perspective:none}
 .dockbar.flat>*{will-change:auto}
+/* v36.23 平铺页托板：dockbar 原本全透明，胶囊两侧+底下漏出固定壁纸（含壁纸文字），WebView 上还画错位跟着滚动。
+   加不透明底板把 tab 栏"抠"成独立区，周围只露托板；聊天页（非 flat）保持悬浮玻璃不变 */
+.dockbar.flat{background:linear-gradient(180deg,var(--panel-solid),var(--bg0));border-top:1px solid var(--line)}
+[data-theme="dark"] .dockbar.flat{background:linear-gradient(180deg,#10152B,var(--bg1));border-top-color:var(--line)}
 /* 主页等平铺态：dock 弃用 backdrop 采样（WebView 会把采样画面越界画到胶囊外一圈，跟滚动内容一起动），改实底玻璃 */
 .dockbar.flat .dock::before{backdrop-filter:none;-webkit-backdrop-filter:none;
   background:linear-gradient(145deg,rgba(255,255,255,.80),rgba(242,245,251,.72) 58%,rgba(248,250,255,.76))}
@@ -714,7 +718,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.22 · home-cards</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.23 · dock-shelf</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
