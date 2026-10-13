@@ -455,7 +455,7 @@ body.has-wall .stars{opacity:.75}
 #viewHome .hm-him-sub{font-size:11px;opacity:.55;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #viewHome .hm-note{margin-top:12px;padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);text-align:left}
 #viewHome.hm-light .hm-note{background:rgba(255,255,255,.45);border-color:rgba(255,255,255,.62)}
-#viewHome .hm-note p{font-family:var(--serif);font-size:13px;line-height:1.75;letter-spacing:.05em;opacity:.92;margin:0}
+#viewHome .hm-note p{font-family:var(--serif);font-size:13px;line-height:1.75;letter-spacing:.05em;opacity:.92;margin:0;min-height:1.75em}
 #viewHome .hm-note-time{display:block;font-size:10px;opacity:.5;margin-top:6px;letter-spacing:.12em}
 #viewHome .hm-conv{display:flex;flex-direction:column}
 #viewHome .hm-conv-item{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid rgba(255,255,255,.1);cursor:pointer}
@@ -601,8 +601,8 @@ body.has-wall .stars{opacity:.75}
           <span class="hm-tag">待接入</span>
         </div>
         <div class="hm-note">
-          <p id="hmNoteText">今天的小筑也很安静，等你回来。</p>
-          <span class="hm-note-time" id="hmNoteTime">—— 他留的话 · 待接入</span>
+          <p id="hmNoteText"></p>
+          <span class="hm-note-time" id="hmNoteTime"></span>
         </div>
       </div>
       <div class="hm-card">
@@ -901,6 +901,7 @@ async function boot(){
     const [m, av] = await Promise.all([ api('/api/models'), api('/api/avatars').catch(()=>({me:{url:''},ai:{url:''}})) ]);
     state.models = m.models || [];
     state.avatars = av || {me:{url:''}, ai:{url:''}};
+    try{ renderHomeCards(); }catch(e){}   /* 头像到位后刷新主页状态卡 */
     if(!state.model || !state.models.find(x=>x.id===state.model)){
       const p = state.models.find(x=>x.primary) || state.models[0];
       state.model = p ? p.id : '';
