@@ -238,6 +238,9 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .dockbar.open .dock{transform:none;opacity:1;pointer-events:auto;
   transition:transform .55s cubic-bezier(.32,.9,.28,1),opacity .38s ease;transition-delay:0s}
 .dockbar.open .composer{transform:translateX(-30%) rotateY(-66deg);opacity:0;pointer-events:none}
+/* 主页等平铺态：composer 隐藏态的 rotateY 在部分 WebView 上产生 3D 层越界残影（tab 栏周围跟着滚动的清晰画面），
+   平铺时彻底去 transform 并用 visibility 摘出合成层 */
+.dockbar.flat .composer{transform:none!important;visibility:hidden;pointer-events:none;will-change:auto}
 #chatToggle{flex:none;width:46px;height:46px;border-radius:17px;display:flex;align-items:center;justify-content:center;
   color:var(--text2);position:relative;isolation:isolate}
 #chatToggle::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;
