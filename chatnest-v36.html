@@ -411,6 +411,14 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 /* 壁纸满屏透出（用户要壁纸在背景，dock 胶囊透明悬浮透出壁纸） */
 body.has-wall .sky{background:none}
 body.has-wall .stars{opacity:.75}
+/* v36.29 dock 悬浮槽：壁纸完整，仅 tab 栏背后一块区域被页面底色垫开（顶部柔和渐入），
+   胶囊玻璃浮在槽上——壁纸不延伸进 tab 栏背后。z-index:1 与 #app 同级但 DOM 在前，
+   整个 #app（含胶囊）绘制其上，胶囊 backdrop 采样到的只有槽底色 */
+#dockShelf{position:fixed;left:0;right:0;bottom:0;z-index:1;height:calc(104px + env(safe-area-inset-bottom));
+  background:var(--bg0);pointer-events:none;opacity:0;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 20px);mask-image:linear-gradient(180deg,transparent 0,#000 20px);
+  transition:opacity .35s var(--ease)}
+body.has-wall.dock-shelf #dockShelf{opacity:1}
 .wall-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .wall-grid .sw{display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 2px;border-radius:12px;border:1px solid transparent;transition:background .15s,border-color .2s}
 .wall-grid .sw:active{background:var(--panel3)}
@@ -536,6 +544,8 @@ body.has-wall .stars{opacity:.75}
 <body>
 <div class="sky"><div class="stars"></div></div>
 <div id="wallpaper"><div class="dim"></div></div>
+<!-- v36.29 dock 悬浮槽：壁纸完整显示，仅 tab 栏背后一块被底色垫开（挖槽），胶囊悬浮其上 -->
+<div id="dockShelf"></div>
 
 <!-- 登录门 -->
 <section id="gate" class="hidden">
@@ -719,7 +729,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.28 · wall-back</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.29 · dock-float2</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -2127,8 +2137,14 @@ if(dockbar){
   let flatT=0;
   setDockFlat=function(flat){
     clearTimeout(flatT);
-    if(flat) flatT=setTimeout(()=>{ dockbar.classList.add('flat'); },340);
-    else{ dockbar.classList.remove('flat'); }
+    if(flat) flatT=setTimeout(()=>{
+      dockbar.classList.add('flat');
+      document.body.classList.add('dock-shelf');   /* v36.29 非聊天页垫出悬浮槽 */
+    },340);
+    else{
+      dockbar.classList.remove('flat');
+      document.body.classList.remove('dock-shelf'); /* 聊天页收起槽，恢复全屏壁纸玻璃 */
+    }
   };
   const ct=document.getElementById('chatToggle');
   if(ct) ct.addEventListener('click',()=>{ setDock(true); setDockFlat(false); });   /* 聊天框 → 回聊天页，必须脱离 flat */
