@@ -247,12 +247,13 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .dockbar.flat .composer{transform:none!important;visibility:hidden;pointer-events:none;will-change:auto}
 #chatToggle{flex:none;width:46px;height:46px;border-radius:17px;display:flex;align-items:center;justify-content:center;
   color:var(--text2);position:relative;isolation:isolate}
+/* v36.36 聊天框/输入框与 dock 同理：3D 上下文下 backdrop-filter 层渲染异常导致发透，
+   补不透明底并摘除滤镜（composer 仅聊天页显示，不影响其他页面） */
 #chatToggle::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;
-  background:linear-gradient(145deg,rgba(255,255,255,.50),rgba(255,255,255,.20) 58%,rgba(255,255,255,.38));
+  background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(243,246,251,.92) 58%,rgba(250,252,255,.95));
   border:1px solid rgba(255,255,255,.48);
-  box-shadow:0 0 0 1px rgba(255,255,255,.55),0 8px 28px rgba(40,60,120,.10),inset 0 1px 0 rgba(255,255,255,.72);
-  backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4)}
-[data-theme="dark"] #chatToggle::before{background:linear-gradient(145deg,rgba(70,80,110,.48),rgba(28,34,52,.42) 58%,rgba(52,60,92,.46));border-color:rgba(140,155,205,.16);
+  box-shadow:0 0 0 1px rgba(255,255,255,.55),0 8px 28px rgba(40,60,120,.10),inset 0 1px 0 rgba(255,255,255,.72)}
+[data-theme="dark"] #chatToggle::before{background:linear-gradient(145deg,rgba(40,48,80,.97),rgba(17,23,49,.93) 58%,rgba(28,34,60,.95));border-color:rgba(140,155,205,.16);
   box-shadow:0 0 0 1px rgba(130,150,210,.20),0 8px 28px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.14)}
 /* PWA/WebAPK 的 WebView 上 perspective+rotateY+opacity:0 合成层有画丢风险（dock 与输入框整体消失）：
    standalone 模式降级为纯 2D 平移滑出，浏览器里保留完整 3D 翻折 */
@@ -268,12 +269,11 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
   border-radius:24px;padding:5px 5px 5px 7px;position:relative;isolation:isolate}
 /* v32 玻璃照小克Cat配方：只画在独立::before层，backdrop-filter不再与textarea共用合成层，避开键盘换帧光标漂移 */
 .glass-input::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;
-  background:linear-gradient(145deg,rgba(255,255,255,.50),rgba(255,255,255,.20) 58%,rgba(255,255,255,.38));
+  background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(243,246,251,.92) 58%,rgba(250,252,255,.95));
   border:1px solid rgba(255,255,255,.48);
   box-shadow:0 0 0 1px rgba(255,255,255,.55),0 8px 28px rgba(40,60,120,.10),inset 0 1px 0 rgba(255,255,255,.72);
-  backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);
   transition:border-color .25s,box-shadow .25s}
-[data-theme="dark"] .glass-input::before{background:linear-gradient(145deg,rgba(70,80,110,.48),rgba(28,34,52,.42) 58%,rgba(52,60,92,.46));border-color:rgba(140,155,205,.16);
+[data-theme="dark"] .glass-input::before{background:linear-gradient(145deg,rgba(40,48,80,.97),rgba(17,23,49,.93) 58%,rgba(28,34,60,.95));border-color:rgba(140,155,205,.16);
   box-shadow:0 0 0 1px rgba(130,150,210,.20),0 8px 28px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.14)}
 .glass-input:focus-within::before{border-color:rgba(120,140,220,.60);
   box-shadow:0 0 0 1px rgba(120,140,220,.45),0 10px 30px rgba(70,90,180,.16),inset 0 1px 0 rgba(255,255,255,.80)}
@@ -725,7 +725,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.35 · chat-dock-solid</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.36 · composer-solid</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
