@@ -1903,7 +1903,6 @@ if(dock){
        唯一确定顺滑的路径：纯 transform 的 WAAPI 动画跑在合成器线程，主线程再堵也冻结不了；
        弹性用 WAAPI 内置 back-out 曲线；动画结束把终值写进内联样式再取消（无缝交接）；
        打断时先冻结当前值到内联再取消（无跳变）。 */
-    const bsEl=ball.querySelector('.bs')||ball.firstElementChild;
     const EASE_POP='cubic-bezier(.34,1.56,.64,1)';   /* back-out：带过冲的弹性曲线 */
     let ballAnims=[];
     function freezeAndKill(){
