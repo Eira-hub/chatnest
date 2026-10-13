@@ -292,6 +292,10 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
   backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4)}
 [data-theme="dark"] .dock::before{background:linear-gradient(145deg,rgba(70,80,110,.46),rgba(28,34,52,.42) 58%,rgba(52,60,92,.44));border-color:rgba(140,155,205,.15);
   box-shadow:0 0 0 1px rgba(130,150,210,.18),0 10px 30px rgba(0,0,0,.40),inset 0 1px 0 rgba(255,255,255,.13)}
+/* v36.34 仅聊天页（非 flat 的 3D 上下文）：perspective 下 backdrop-filter 采样失效，胶囊发透；
+   补一层不透明底使其与其他页面磨砂观感一致。只动这一处 */
+.dockbar:not(.flat) .dock::before{background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(243,246,251,.92) 58%,rgba(250,252,255,.95))}
+[data-theme="dark"] .dockbar:not(.flat) .dock::before{background:linear-gradient(145deg,rgba(40,48,80,.97),rgba(17,23,49,.93) 58%,rgba(28,34,60,.95))}
 .dock-btn{flex:1;height:46px;border-radius:999px;font-family:var(--serif);font-size:.68em;letter-spacing:.04em;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   color:var(--text2);transition:background .2s,color .2s,transform .15s var(--ease);
@@ -721,7 +725,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.30 · dock-overlay</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.34 · chat-dock-opaque</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
