@@ -565,7 +565,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.10 · snap-smooth</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.11 · snap-smooth2</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -1886,17 +1886,22 @@ if(dock){
     /* iOS Safari 兜底：手势接管看的是 touchstart，pointerdown 的 preventDefault 拦不住它。
        这里直接取消触摸默认行为（滚动/长按呼出），指针移动序列就不会被 pointercancel 打断。 */
     /* ── 吸附/回弹统一入口 ──
-       球的滑动动画立即启动，切页 DOM 渲染延后一帧执行：
-       切页重排（聊天列表）若与动画同帧竞争会卡掉第一帧，视觉上"顿一下"。
-       sync=true 用于鼠标路径（需同步拦合成 click）；touch 路径无合成 click，走 rAF 解耦。 */
+       两个顿挫来源，各自解耦：
+       1) transition:none（拖动跟手）同帧恢复+位移会令过渡失效瞬移 → 动画分到下一帧；
+       2) 切页 DOM 重排是长任务，撞进动画中段会冻结滑动 → 推迟到动画基本完成（220ms）再切页。 */
     function snapTo(i,sync){
       ball.classList.remove('drag','long');
-      ball.classList.add('moving');
-      clearTimeout(snapTo._t); snapTo._t=setTimeout(()=>ball.classList.remove('moving'),450);
-      ball.style.setProperty('--x', btnX(i)+'px');
+      clearTimeout(snapTo._t);
+      const anim=()=>{
+        ball.classList.add('moving');
+        snapTo._t=setTimeout(()=>ball.classList.remove('moving'),450);
+        ball.style.setProperty('--x', btnX(i)+'px');
+      };
+      if(sync) anim(); else requestAnimationFrame(anim);
       if(i===curIdx) return;
+      clearTimeout(snapTo._go);
       const go=()=>{ btns[i].click(); suppressClick=true; setTimeout(()=>suppressClick=false,80); };
-      if(sync) go(); else requestAnimationFrame(go);
+      if(sync) go(); else snapTo._go=setTimeout(go,220);
     }
 
     /* ── Touch 原生拖动通道 ──
@@ -1945,7 +1950,7 @@ if(dock){
     };
     dock.addEventListener('touchend',tEnd,{passive:false});
     dock.addEventListener('touchcancel',tEnd,{passive:false});
-    try{console.log('[ChatNest] Dock v36.10 · snap-smooth')}catch(err){}
+    try{console.log('[ChatNest] Dock v36.11 · snap-smooth2')}catch(err){}
     dock.addEventListener('pointermove',onMove);
     dock.addEventListener('pointerup',onUp);
     dock.addEventListener('pointercancel',onCancel);
