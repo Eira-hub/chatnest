@@ -474,7 +474,18 @@ body.has-wall .stars{opacity:.75}
 #hmGradRow .g-sw{width:36px;height:24px;border-radius:8px;border:1.5px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
 #hmGradRow .g-sw.on{border-color:#8FA0FF;box-shadow:0 0 0 1.5px rgba(143,160,255,.35)}
 #viewHome.hm-bg{position:relative;background:none!important}
-#viewHome.hm-bg::before{content:'';position:absolute;left:0;right:0;top:0;height:33%;background-image:var(--hm-bgimg);background-size:cover;background-position:center;background-repeat:no-repeat;-webkit-mask-image:linear-gradient(180deg,#000 35%,transparent 100%);mask-image:linear-gradient(180deg,#000 35%,transparent 100%);pointer-events:none}
+#viewHome.hm-bg::before{content:'';position:absolute;left:0;right:0;top:0;height:calc(30vh + 14px);background-image:var(--hm-bgimg);background-size:cover;background-position:center;background-repeat:no-repeat;-webkit-mask-image:linear-gradient(180deg,#000 42%,transparent 94%);mask-image:linear-gradient(180deg,#000 42%,transparent 94%);pointer-events:none}
+/* ───────── 主页背景图裁剪层 ───────── */
+#cropLayer{position:fixed;inset:0;z-index:60;background:rgba(5,6,10,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+#cropLayer.hidden{display:none}
+#cropStage{position:relative;width:100%;max-width:660px;height:44vh;border-radius:16px;overflow:hidden;background:#0A0C14;touch-action:none;
+  box-shadow:0 0 0 1px rgba(255,255,255,.14),0 14px 44px rgba(0,0,0,.5)}
+#cropImg{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;pointer-events:none}
+.crop-bar{display:flex;align-items:center;gap:16px;margin-top:16px}
+.crop-bar button{font-size:13px;color:#E9EBF4;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:8px 20px;cursor:pointer}
+.crop-bar button:active{transform:scale(.96)}
+.crop-bar #cropOk{background:rgba(143,160,255,.24);border-color:rgba(143,160,255,.45)}
+.crop-hint{font-size:11px;color:rgba(233,235,244,.5);letter-spacing:.06em}
 /* ═══ v34 ═══ */
 /* 回到底部 */
 #btnBottom{position:absolute;right:16px;bottom:96px;z-index:4;width:38px;height:38px;border-radius:50%;
@@ -667,6 +678,16 @@ body.has-wall .stars{opacity:.75}
 </div><!-- /dockbar -->
           </div>
   </main>
+</div>
+
+<!-- 主页背景图裁剪 -->
+<div id="cropLayer" class="hidden">
+  <div id="cropStage"><img id="cropImg" alt=""></div>
+  <div class="crop-bar">
+    <button id="cropCancel" type="button">取消</button>
+    <span class="crop-hint">拖动摆位置 · 双指缩放</span>
+    <button id="cropOk" type="button">就用这张</button>
+  </div>
 </div>
 
 <!-- 模型选择 -->
@@ -1330,26 +1351,90 @@ if(bgFile){
   bgFile.addEventListener('change',()=>{
     const f=bgFile.files&&bgFile.files[0];if(!f)return;
     const fr=new FileReader();
-    fr.onload=()=>{
-      const im=new Image();
-      im.onload=()=>{
-        try{
-          const W=Math.min(1080,im.width||1080),sc=W/(im.width||W);
-          const cv=document.createElement('canvas');
-          cv.width=W;cv.height=Math.max(1,Math.round((im.height||W)*sc));
-          cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
-          const du=cv.toDataURL('image/jpeg',.85);
-          try{localStorage.setItem('cn_home_bgimg',du);}catch(e){}
-        }catch(e){}
-        applyHomeBg();
-        bgFile.value='';
-        toast('背景换好啦',1500);
-      };
-      im.src=fr.result;
-    };
+    fr.onload=()=>{ bgFile.value=''; cropOpen(fr.result); };
     fr.readAsDataURL(f);
   });
 }
+/* ───────── 主页背景图裁剪：拖动+双指缩放，取景框内即所得 ───────── */
+const cropLayer=document.getElementById('cropLayer'),cropStage=document.getElementById('cropStage'),
+      cropImg=document.getElementById('cropImg'),cropOk=document.getElementById('cropOk'),
+      cropCancel=document.getElementById('cropCancel');
+const crop={s:1,s0:1,tx:0,ty:0,w:0,h:0,L:0,T:0,Wv:0,Hv:0};
+const ptrs=new Map();
+let pinchD0=0,pinchS0=1;
+function cropApply(){
+  const p=crop;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  const W=Math.min(1080,Math.round(p.Wv*dpr)),H=Math.max(1,Math.round(W*p.Hv/p.Wv));
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  cv.getContext('2d').drawImage(cropImg,(p.L-p.tx)/p.s,(p.T-p.ty)/p.s,p.Wv/p.s,p.Hv/p.s,0,0,W,H);
+  try{localStorage.setItem('cn_home_bgimg',cv.toDataURL('image/jpeg',.85));}
+  catch(e){ toast('图太大了，缩放小一点再试',1800); return; }
+  applyHomeBg();
+  cropClose();
+  toast('背景换好啦',1500);
+}
+function cropClose(){ cropLayer.classList.add('hidden'); cropImg.removeAttribute('src'); ptrs.clear(); }
+function cropClamp(){
+  const p=crop;
+  p.s=Math.max(p.s0,Math.min(p.s0*6,p.s));
+  p.tx=Math.max(p.L+p.Wv-p.w*p.s,Math.min(p.L,p.tx));
+  p.ty=Math.max(p.T+p.Hv-p.h*p.s,Math.min(p.T,p.ty));
+  cropImg.style.transform='translate('+p.tx+'px,'+p.ty+'px) scale('+p.s+')';
+}
+function cropOpen(src){
+  cropImg.onload=()=>{
+    cropLayer.classList.remove('hidden');   /* 先显示再测量，否则取景框尺寸为 0 */
+    const r=cropStage.getBoundingClientRect();
+    crop.L=r.left;crop.T=r.top;crop.Wv=r.width;crop.Hv=r.height;
+    crop.w=cropImg.naturalWidth||1;crop.h=cropImg.naturalHeight||1;
+    crop.s0=Math.max(crop.Wv/crop.w,crop.Hv/crop.h);
+    crop.s=crop.s0;
+    crop.tx=crop.L+(crop.Wv-crop.w*crop.s)/2;
+    crop.ty=crop.T+(crop.Hv-crop.h*crop.s)/2;
+    cropImg.style.width=crop.w+'px';cropImg.style.height=crop.h+'px';
+    cropClamp();
+  };
+  cropImg.onerror=()=>toast('这张图读不出来',1600);
+  cropImg.src=src;
+}
+if(cropStage){
+  cropStage.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    cropStage.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===2){
+      const a=[...ptrs.values()];
+      pinchD0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;
+      pinchS0=crop.s;
+    }
+  });
+  cropStage.addEventListener('pointermove',e=>{
+    if(!ptrs.has(e.pointerId))return;
+    const prev=ptrs.get(e.pointerId);
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===1){
+      crop.tx+=e.clientX-prev.x; crop.ty+=e.clientY-prev.y;
+    }else if(ptrs.size===2){
+      const a=[...ptrs.values()];
+      const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;
+      const ns=Math.max(crop.s0,Math.min(crop.s0*6,pinchS0*d/pinchD0));
+      const mx=(a[0].x+a[1].x)/2,my=(a[0].y+a[1].y)/2;
+      crop.tx=mx-(mx-crop.tx)*ns/crop.s;   /* 以双指中点为锚缩放 */
+      crop.ty=my-(my-crop.ty)*ns/crop.s;
+      crop.s=ns;
+    }
+    cropClamp();
+  });
+  ['pointerup','pointercancel'].forEach(ev=>cropStage.addEventListener(ev,e=>{ ptrs.delete(e.pointerId); }));
+  cropStage.addEventListener('wheel',e=>{
+    e.preventDefault();
+    crop.s*=e.deltaY<0?1.08:0.92;
+    cropClamp();
+  },{passive:false});
+}
+if(cropOk)cropOk.addEventListener('click',cropApply);
+if(cropCancel)cropCancel.addEventListener('click',cropClose);
 applyHomeBg();
 
 $('btnSend').addEventListener('click', ()=>{
