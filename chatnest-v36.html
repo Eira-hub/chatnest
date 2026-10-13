@@ -2126,7 +2126,7 @@ function syncDock(v){
   document.documentElement.setAttribute('data-sync',String(v));
 }
 /* v34 newConv / openConv 会调用：把界面切回聊天并同步 Dock 高亮（切回聊天必须脱离 flat，否则输入框被摘出渲染层） */
-window.syncChatView=function(){ syncDock('chat'); showHome(false); setDockFlat(false); };
+window.syncChatView=function(){ setDockFlat(false); syncDock('chat'); showHome(false); };
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
 function setDock(open){ if(dockbar) dockbar.classList.toggle('open',!!open); }
@@ -2147,7 +2147,7 @@ if(dockbar){
     }
   };
   const ct=document.getElementById('chatToggle');
-  if(ct) ct.addEventListener('click',()=>{ setDock(true); setDockFlat(false); });   /* 聊天框 → 回聊天页，必须脱离 flat */
+  if(ct) ct.addEventListener('click',()=>{ setDockFlat(false); setDock(true); });   /* 聊天框 → 回聊天页，必须脱离 flat（槽开关最先执行，防后续异常跳过） */
 }
 if(dock){
   const names={mood:'心潮',todo:'待办',explore:'探索'};
@@ -2155,7 +2155,7 @@ if(dock){
     const v=b.dataset.view;
     document.documentElement.setAttribute('data-v35','click:'+v);
     if(v==='home'){ syncDock('home'); showHome(true); setDock(true); setDockFlat(true); }
-    else if(v==='chat'){ syncDock('chat'); showHome(false); setDock(false); setDockFlat(false); }   /* 聊天项=翻回收起态 */
+    else if(v==='chat'){ setDockFlat(false); syncDock('chat'); showHome(false); setDock(false); }   /* 聊天项=翻回收起态（槽开关最先执行） */
     else{ syncDock(v); toast('「'+(names[v]||v)+'」还在装修，先占个位',2200); setDock(true); setDockFlat(true); }
   }));
 }
