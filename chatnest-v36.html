@@ -2155,8 +2155,8 @@ if(dockbar){
   const ct=document.getElementById('chatToggle');
   if(ct) ct.addEventListener('click',()=>{ setDockFlat(false); setDock(true); });   /* 聊天框 → 回聊天页，必须脱离 flat（槽开关最先执行，防后续异常跳过） */
 }
-/* ── v36.39 聊天页转场（鼓包式）：小聊天框向右鼓到屏宽约 1/3 → 顶点即折返缩回落位 → 输入框从右弹出 ──
-   壳/图标单动画合并走 WAAPI 合成器线程（无段间竞态）；几何用 offset 局部坐标测量 */
+/* ── v36.42 聊天页转场（简化式）：tab 栏翻走同帧全宽大聊天框直接出现 → 从左边缩小成小聊天框 → 输入框从右弹出 ──
+   壳/图标单动画走 WAAPI 合成器线程；几何用 offset 局部坐标测量 */
 let chatMorphing=false;
 function playChatMorph(){
   const bc=document.getElementById('bigChat');
@@ -2170,42 +2170,36 @@ function playChatMorph(){
   const yAbs=(tg.offsetParent?tg.offsetParent.offsetTop:0)+tg.offsetTop;
   const xBc=bc.offsetLeft,yBc=bc.offsetTop,wBc=bc.offsetWidth,hBc=bc.offsetHeight;
   const wTg=tg.offsetWidth,hTg=tg.offsetHeight;
-  const dx=xAbs-xBc,dy=(yAbs+hTg/2)-(yBc+hBc/2);          /* 壳：chatToggle 几何 ↔ 鼓包几何共用 */
+  const dx=xAbs-xBc,dy=(yAbs+hTg/2)-(yBc+hBc/2);          /* 壳：chatToggle 几何 ↔ 大框几何共用 */
   const sx=wTg/wBc,sy=hTg/hBc;
   const iw=20,ih=20;
-  ic.style.left=(dx+wTg/2-iw/2)+'px';                      /* 图标初始中心 = chatToggle 中心 */
-  ic.style.top=((yAbs-yBc)+hTg/2-ih/2)+'px';
   const SMALL='translate('+dx+'px,'+dy+'px) scale('+sx.toFixed(4)+','+sy.toFixed(4)+')';
-  /* v36.39 鼓包式：最远鼓到屏宽约 1/3（大屏封顶 220px），左缘贴小聊天框原位向右长，到顶立即折返；
-     深度错开用透视等效 scale 模拟（近大远小）：顶点等比放大 6% 凸向观察者，输入框从 90% 缩放飞出放大归位。
-     不用真 translateZ——perspective 只作用于直接子元素，pill 是孙层会被扁平化，且宿主 WebView 3D 层有前科 */
-  const wMid=Math.min((dockbar?dockbar.clientWidth:wBc)/3,220);
-  const PUFF=1.06;                                         /* 顶点凸起 6% */
-  const MID='translate('+dx+'px,'+dy+'px) scale('+((wMid/wBc)*PUFF).toFixed(4)+','+(sy*PUFF).toFixed(4)+')';
   const EASE_OUT='cubic-bezier(.2,.85,.25,1)',EASE_IN='cubic-bezier(.55,0,.85,.45)';
-  const dxIc=(wMid-wTg)/2;                                 /* 图标：小框中心 → 鼓包中心，y 已由 top 对齐 */
+  /* v36.42 简化式：全宽大聊天框直接出现（不再向右鼓大），随即从左边缩小成小聊天框（origin 左中，右端向左收） */
+  const dxIc=(dx+wTg/2)-wBc/2,dyIc=((yAbs-yBc)+hTg/2)-hBc/2;   /* 图标：大框中心 → 小框中心 */
+  ic.style.left=(wBc/2-iw/2)+'px';
+  ic.style.top=(hBc/2-ih/2)+'px';
   bc.classList.add('run');
-  /* 单动画合并：展开 130ms 冲到 1/3（凸起）→ 顶点即折返缩回 150ms，合成器精确控制，无段间竞态；全程 ≤0.3s */
+  /* tab 栏翻走同帧：全宽大框直接顶上 → 立即从左边缩回 250ms；全程 ≤0.3s */
   try{ pill.animate([
-    {transform:SMALL,easing:EASE_OUT,offset:0},
-    {transform:MID,easing:EASE_IN,offset:.46},
+    {transform:'none',easing:EASE_IN,offset:0},
     {transform:SMALL}
-  ],{duration:280,fill:'forwards'}); }catch(e){}
+  ],{duration:250,fill:'forwards'}); }catch(e){}
   try{ ic.animate([
-    {transform:'translate(0,0)',opacity:0,easing:EASE_OUT,offset:0},
-    {transform:'translate('+dxIc+'px,0px)',opacity:1,easing:EASE_IN,offset:.46},
-    {transform:'translate(0,0)',opacity:0}
-  ],{duration:280,fill:'forwards'}); }catch(e){}
-  /* 输入框从屏幕深处（远）飞出：90% 缩放+右侧 64px，由远及近放大归位，与近处的鼓包深度交错 */
+    {transform:'translate(0,0)',opacity:0},
+    {opacity:1,offset:.15},
+    {transform:'translate('+dxIc+'px,'+dyIc+'px)',opacity:0}
+  ],{duration:250,easing:EASE_IN,fill:'forwards'}); }catch(e){}
+  /* 输入框从右边弹出，与缩回全程重叠 */
   try{ cp.animate([
-    {transform:'translateX(64px) scale(.9)',opacity:0},
+    {transform:'translateX(64px)',opacity:0},
     {transform:'none',opacity:1}
   ],{duration:220,easing:EASE_OUT,fill:'backwards'}); }catch(e){}
   setTimeout(()=>{
     bc.classList.remove('run');
     try{ pill.getAnimations().forEach(a=>a.cancel()); ic.getAnimations().forEach(a=>a.cancel()); }catch(e){}
     chatMorphing=false;
-  },290);
+  },260);
 }
 if(dock){
   const names={mood:'心潮',todo:'待办',explore:'探索'};
