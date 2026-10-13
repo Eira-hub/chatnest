@@ -224,6 +224,9 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
    不用 visibility（手机上 backdrop-filter 层从 hidden 切回可见不重绘，表现为 tab 栏消失），只用 opacity+pointer-events。 */
 .dockbar{display:grid;perspective:900px;-webkit-perspective:900px;align-items:end;padding:0 0 calc(env(safe-area-inset-bottom) + 30px)}
 .dockbar.flush{padding-bottom:0}
+/* 主页等无翻折场景退出 3D 上下文：backdrop-filter 采样在 perspective 下会越界泄漏（tab 栏周围一圈跟着滚动的模糊画面） */
+.dockbar.flat{perspective:none;-webkit-perspective:none}
+.dockbar.flat>*{will-change:auto}
 .dockbar>*{grid-area:1/1;min-width:0;transform-origin:0 50%;will-change:transform,opacity;
   transition:transform .26s cubic-bezier(.32,.9,.28,1),opacity .16s ease}   /* 收起方向：快速回到聊天框 */
 .dockbar .dock{transform:translateX(-46%) rotateY(-76deg);opacity:0;pointer-events:none}
@@ -2089,12 +2092,20 @@ if(dockbar){
 }
 if(dock){
   const names={mood:'心潮',todo:'待办',explore:'探索'};
+  const bar=dock.closest('.dockbar');
+  let flatT=0;
+  function setDockFlat(flat){   /* 聊天页需要 3D 翻折；其余页退平（延时等动画结束），修玻璃采样泄漏 */
+    clearTimeout(flatT);
+    if(flat) flatT=setTimeout(()=>{ if(bar)bar.classList.add('flat'); },340);
+    else{ if(bar)bar.classList.remove('flat'); }
+  }
+  setDockFlat(true);
   dock.querySelectorAll('.dock-btn').forEach(b=>b.addEventListener('click',()=>{
     const v=b.dataset.view;
     document.documentElement.setAttribute('data-v35','click:'+v);
-    if(v==='home'){ syncDock('home'); showHome(true); setDock(true); }
-    else if(v==='chat'){ syncDock('chat'); showHome(false); setDock(false); }   /* 聊天项=翻回收起态 */
-    else{ syncDock(v); toast('「'+(names[v]||v)+'」还在装修，先占个位',2200); setDock(true); }
+    if(v==='home'){ syncDock('home'); showHome(true); setDock(true); setDockFlat(true); }
+    else if(v==='chat'){ syncDock('chat'); showHome(false); setDock(false); setDockFlat(false); }   /* 聊天项=翻回收起态 */
+    else{ syncDock(v); toast('「'+(names[v]||v)+'」还在装修，先占个位',2200); setDock(true); setDockFlat(true); }
   }));
 }
 /* ───────── v36 水珠悬浮球：iOS18 液态玻璃 Dock ───────── */
