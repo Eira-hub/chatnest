@@ -565,7 +565,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.12 · snap-settle</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.13 · waa-snap</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -1886,18 +1886,32 @@ if(dock){
     /* iOS Safari 兜底：手势接管看的是 touchstart，pointerdown 的 preventDefault 拦不住它。
        这里直接取消触摸默认行为（滚动/长按呼出），指针移动序列就不会被 pointercancel 打断。 */
     /* ── 吸附/回弹统一入口 ──
-       顿挫的两个根源，处理原则：
-       1) 缩放：remove('drag') 后 --bs 会有"无来源"空窗（fallback 1），下一帧才补 moving 值，
-          过渡被连续重定向两次 → 视觉"先撑满停留再缩"。必须在同一帧把 --bs 内联钉到 1.24，
-          一次重算直达目标；450ms 后撤内联，让球缓落回常态（二段 settle）。
-       2) 切页 DOM 重排是长任务，撞进动画中段会冻结滑动 → touch 路径推迟 220ms（动画基本完成）再切页。 */
+       缩放回落不再依赖 CSS 变量过渡（真机上 var() 驱动的 transform 过渡启动不可控，
+       表现为"先撑满停留再缩回"），改用 WAAPI 显式动画：纯 transform 走合成器线程，
+       主线程忙也冻结不了，起始值从当前渲染状态实时读取。
+       位置仍走 CSS 过渡（历来正常）；切页 touch 路径推迟 220ms 避开重排长任务。 */
+    const bsEl=ball.querySelector('.bs')||ball.firstElementChild;
+    const curScale=()=>{ try{
+      const m=new DOMMatrixReadOnly(getComputedStyle(bsEl).transform);
+      return Math.hypot(m.a,m.b)||1;
+    }catch(e){ return 1; } };
+    const bsAnim=(to,dur)=>{ try{
+      bsEl.getAnimations().forEach(a=>a.cancel());
+      const from=curScale();
+      bsEl.animate([{transform:'scale('+from+')'},{transform:'scale('+to+')'}],
+        {duration:dur,easing:'cubic-bezier(.3,1,.35,1)',fill:'forwards'});
+    }catch(e){} };
     function snapTo(i,sync){
+      const s0=curScale();                        /* 类切换前读起始值（drag 1.55 / long 1.38） */
       ball.classList.remove('drag','long');
       ball.classList.add('moving');
-      ball.style.setProperty('--bs','1.24');
       ball.style.setProperty('--x', btnX(i)+'px');
+      bsAnim(1.24,300);                           /* 显式驱动：撑满 → 包裹态 */
       clearTimeout(snapTo._t);
-      snapTo._t=setTimeout(()=>{ ball.classList.remove('moving'); ball.style.removeProperty('--bs'); },450);
+      snapTo._t=setTimeout(()=>{
+        ball.classList.remove('moving');
+        bsAnim(1,180);                            /* 二段：缓落回常态 */
+      },450);
       if(i===curIdx) return;
       clearTimeout(snapTo._go);
       const go=()=>{ btns[i].click(); suppressClick=true; setTimeout(()=>suppressClick=false,80); };
@@ -1927,6 +1941,7 @@ if(dock){
       if(!tMoved&&Math.abs(dx)<=7) return;
       if(!tMoved){ tMoved=true; clearTimeout(pressTimer);
         ball.classList.remove('moving','long'); ball.classList.add('drag');
+        try{bsEl.getAnimations().forEach(a=>a.cancel())}catch(err){}   /* 清掉上次吸附的 WAAPI 残留，让 drag 的 1.55 生效 */
         if(navigator.vibrate) try{navigator.vibrate(6)}catch(err){}
         dm('T-DRAG dx:'+Math.round(dx)); }
       tLastDX=dx;
@@ -1950,7 +1965,7 @@ if(dock){
     };
     dock.addEventListener('touchend',tEnd,{passive:false});
     dock.addEventListener('touchcancel',tEnd,{passive:false});
-    try{console.log('[ChatNest] Dock v36.12 · snap-settle')}catch(err){}
+    try{console.log('[ChatNest] Dock v36.13 · waa-snap')}catch(err){}
     dock.addEventListener('pointermove',onMove);
     dock.addEventListener('pointerup',onUp);
     dock.addEventListener('pointercancel',onCancel);
