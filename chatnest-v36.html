@@ -480,7 +480,7 @@ body.has-wall .stars{opacity:.75}
 #hmGradRow .g-sw{width:36px;height:24px;border-radius:8px;border:1.5px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
 #hmGradRow .g-sw.on{border-color:#8FA0FF;box-shadow:0 0 0 1.5px rgba(143,160,255,.35)}
 #viewHome.hm-bg{position:relative;background:none!important}
-#viewHome.hm-bg::before{content:'';position:absolute;left:0;right:0;top:0;height:calc(30vh + 14px);background-image:var(--hm-bgimg);background-size:cover;background-position:center;background-repeat:no-repeat;-webkit-mask-image:linear-gradient(180deg,#000 42%,transparent 94%);mask-image:linear-gradient(180deg,#000 42%,transparent 94%);pointer-events:none}
+#viewHome.hm-bg::before{content:'';position:fixed;left:0;right:0;top:0;height:calc(30vh + 14px);background-image:var(--hm-bgimg);background-size:cover;background-position:center;background-repeat:no-repeat;-webkit-mask-image:linear-gradient(180deg,#000 42%,transparent 94%);mask-image:linear-gradient(180deg,#000 42%,transparent 94%);pointer-events:none}
 /* ───────── 主页背景图裁剪层 ───────── */
 #cropLayer{position:fixed;inset:0;z-index:60;background:rgba(5,6,10,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
 #cropLayer.hidden{display:none}
