@@ -565,7 +565,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.9 · snap-fix2</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.10 · snap-smooth</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -1862,18 +1862,16 @@ if(dock){
         const center=e.clientX-dockLeft();
         let best=0,bd=1e9;
         btns.forEach((b,i)=>{ const d=Math.abs(tabC(i)-center); if(d<bd){bd=d;best=i;} });
-        if(best===curIdx) setBallAt(curIdx,false);   /* 同页短拖：直接回弹 */
-        else{ ball.classList.remove('drag','long'); btns[best].click(); }   /* 手动切页（此时未拦截），syncDock 后水珠自动滑到位 */
-      }else if(longFired) setBallAt(curIdx,false);
-      else btns[downIdx].click();   /* 点按：手动切页（preventDefault 可能抑制原生 click，不依赖它） */
-      suppressClick=true; setTimeout(()=>suppressClick=false,80);   /* 拦截浏览器松手自带的合成 click，防双触发 */
+        snapTo(best,true);   /* 鼠标路径同步吸附（拦合成 click），无触摸抢断问题 */
+      }else if(longFired) snapTo(curIdx,true);
+      else snapTo(downIdx,true);
       downIdx=-1; dragging=false; longFired=false;
     }
     function onCancel(e){
       if(e&&e.pointerType==='touch'){ downIdx=-1; dragging=false; longFired=false; ptrId=null; return; }   /* touch 由 touch 通道全权处理 */
       dm('CANCEL');
       clearTimeout(pressTimer);
-      if(dragging||longFired) setBallAt(curIdx,false);   /* 手势被系统接管：直接收回常态，不切页 */
+      if(dragging||longFired) snapTo(curIdx,true);   /* 手势被系统接管：收回常态，不切页 */
       downIdx=-1; dragging=false; longFired=false; ptrId=null;
     }
     dock.addEventListener('lostpointercapture',()=>{ dm('LOST-CAPTURE'); onCancel(); });
@@ -1887,6 +1885,20 @@ if(dock){
     });
     /* iOS Safari 兜底：手势接管看的是 touchstart，pointerdown 的 preventDefault 拦不住它。
        这里直接取消触摸默认行为（滚动/长按呼出），指针移动序列就不会被 pointercancel 打断。 */
+    /* ── 吸附/回弹统一入口 ──
+       球的滑动动画立即启动，切页 DOM 渲染延后一帧执行：
+       切页重排（聊天列表）若与动画同帧竞争会卡掉第一帧，视觉上"顿一下"。
+       sync=true 用于鼠标路径（需同步拦合成 click）；touch 路径无合成 click，走 rAF 解耦。 */
+    function snapTo(i,sync){
+      ball.classList.remove('drag','long');
+      ball.classList.add('moving');
+      clearTimeout(snapTo._t); snapTo._t=setTimeout(()=>ball.classList.remove('moving'),450);
+      ball.style.setProperty('--x', btnX(i)+'px');
+      if(i===curIdx) return;
+      const go=()=>{ btns[i].click(); suppressClick=true; setTimeout(()=>suppressClick=false,80); };
+      if(sync) go(); else requestAnimationFrame(go);
+    }
+
     /* ── Touch 原生拖动通道 ──
        诊断证实（OPPO/Edge）：拖动一启动即 LOST-CAPTURE + CANCEL，Blink 会抢断 Pointer 捕获。
        触摸拖动改走 touch 事件并全程 preventDefault，浏览器无权取消，100% 稳定；
@@ -1923,20 +1935,17 @@ if(dock){
       tActive=false; e.preventDefault(); clearTimeout(pressTimer);
       const i0=downIdx; downIdx=-1;
       if(tMoved){
-        ball.classList.remove('drag','long');
         const center=Math.max(btnX(0),Math.min(btnX(N-1),tFrom+tLastDX))+BALL_W/2;   /* 球心 */
         let best=0,bd=1e9;
         btns.forEach((b,i)=>{ const d=Math.abs(tabC(i)-center); if(d<bd){bd=d;best=i;} });
-        if(best===curIdx) setBallAt(curIdx,false);   /* 同页短拖：回弹 */
-        else btns[best].click();                     /* 松手吸附切页，syncDock 后水珠滑到位 */
-        suppressClick=true; setTimeout(()=>suppressClick=false,80);   /* 拦截松手合成 click，防双触发 */
+        snapTo(best);
         dm('T-END ->'+best);
-      }else if(longFired){ longFired=false; setBallAt(curIdx,false); dm('T-LONG'); }
-      else if(i0>=0){ btns[i0].click(); suppressClick=true; setTimeout(()=>suppressClick=false,80); dm('T-TAP'); }
+      }else if(longFired){ longFired=false; snapTo(curIdx); dm('T-LONG'); }
+      else if(i0>=0){ snapTo(i0); dm('T-TAP'); }
     };
     dock.addEventListener('touchend',tEnd,{passive:false});
     dock.addEventListener('touchcancel',tEnd,{passive:false});
-    try{console.log('[ChatNest] Dock v36.9 · snap-fix2')}catch(err){}
+    try{console.log('[ChatNest] Dock v36.10 · snap-smooth')}catch(err){}
     dock.addEventListener('pointermove',onMove);
     dock.addEventListener('pointerup',onUp);
     dock.addEventListener('pointercancel',onCancel);
