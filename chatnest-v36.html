@@ -224,9 +224,10 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
    不用 visibility（手机上 backdrop-filter 层从 hidden 切回可见不重绘，表现为 tab 栏消失），只用 opacity+pointer-events。 */
 .dockbar{display:grid;perspective:900px;-webkit-perspective:900px;align-items:end;padding:0}
 .dockbar>*{grid-area:1/1;min-width:0;transform-origin:0 50%;will-change:transform,opacity;
-  transition:transform .55s cubic-bezier(.32,.9,.28,1),opacity .38s ease}
+  transition:transform .32s cubic-bezier(.32,.9,.28,1),opacity .22s ease}   /* 收起方向：快速回到聊天框 */
 .dockbar .dock{transform:translateX(-46%) rotateY(-76deg);opacity:0;pointer-events:none}
-.dockbar.open .dock{transform:none;opacity:1;pointer-events:auto;transition-delay:0s}
+.dockbar.open .dock{transform:none;opacity:1;pointer-events:auto;
+  transition:transform .55s cubic-bezier(.32,.9,.28,1),opacity .38s ease;transition-delay:0s}
 .dockbar.open .composer{transform:translateX(-30%) rotateY(-66deg);opacity:0;pointer-events:none}
 #chatToggle{flex:none;width:46px;height:46px;border-radius:17px;display:flex;align-items:center;justify-content:center;
   color:var(--text2);position:relative;isolation:isolate}
@@ -591,7 +592,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.19 · flip-slide</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.20 · flip-slide</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -1854,7 +1855,7 @@ if(dock){
   if(ball){
     const lensTrack=ball.querySelector('.lens-track');
     const btns=Array.from(dock.querySelectorAll('.dock-btn'));
-    const N=btns.length, LENS_S=1.18, BALL_W=60, PAD=4, HOLD_MS=430;   /* PAD=dock 内边距 */
+    const N=btns.length, LENS_S=1.10, BALL_W=60, PAD=4, HOLD_MS=430;   /* PAD=dock 内边距 */
     let iw=0, lastW=0, lensBtns=[], liveIdx=-1, curIdx=btns.findIndex(b=>b.classList.contains('on'));
     let pressTimer=null, longFired=false, dragging=false, startPX=0, downIdx=-1, suppressClick=false, ptrId=null;
 
@@ -2022,7 +2023,7 @@ if(dock){
     };
     dock.addEventListener('touchend',tEnd,{passive:false});
     dock.addEventListener('touchcancel',tEnd,{passive:false});
-    try{console.log('[ChatNest] Dock v36.19 · flip-slide')}catch(err){}
+    try{console.log('[ChatNest] Dock v36.20 · flip-slide')}catch(err){}
     dock.addEventListener('pointermove',onMove);
     dock.addEventListener('pointerup',onUp);
     dock.addEventListener('pointercancel',onCancel);
