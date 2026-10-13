@@ -720,7 +720,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.24 · dock-through</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.25 · wall-root</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -1811,10 +1811,30 @@ function wallApply(){
   const c=wallConf(); const w=$('wallpaper'); const has=c.mode&&c.mode!=='default';
   document.body.classList.toggle('has-wall', !!has);
   w.classList.toggle('on', !!has);
-  if(has){
-    const img=c.mode==='image'?localStorage.getItem(LS.wallImg):'';
-    w.style.backgroundImage=c.mode==='custom'?('linear-gradient(180deg,'+(c.c1||'#A5B9DC')+','+(c.c2||'#0A0F22')+')'):(c.mode==='preset'?WALL_PRESETS[c.pi||0].c:(img?'url('+img+')':'none'));
-    wallBlurFx(c.blur||0);
+  /* v36.25 根治：图片壁纸不再走 #wallpaper 固定浮层——部分 WebView 内层滚动时把固定层画错位（tab 栏周围壁纸跟着滚）。
+     blur=0 的图片直接画到 body 背景：body 是根层绘制，不经合成器，物理上不可能错位；
+     #wallpaper 只留 .dim 纯色蒙层（满屏同色，错位不可见）。
+     渐变壁纸满屏连续，错位同样不可见，保留原路径；blur>0 需要滤镜，也保留原路径 */
+  const img=c.mode==='image'?localStorage.getItem(LS.wallImg):'';
+  const useBodyBg=has && c.mode==='image' && img && !(c.blur>0);
+  if(useBodyBg){
+    document.body.style.backgroundImage='url('+img+')';
+    document.body.style.backgroundSize='cover';
+    document.body.style.backgroundPosition='center';
+    document.body.style.backgroundRepeat='no-repeat';
+    w.style.backgroundImage='none';
+    w.style.filter='';
+  }else{
+    document.body.style.backgroundImage='';
+    document.body.style.backgroundSize='';
+    document.body.style.backgroundPosition='';
+    document.body.style.backgroundRepeat='';
+    if(has){
+      w.style.backgroundImage=c.mode==='custom'?('linear-gradient(180deg,'+(c.c1||'#A5B9DC')+','+(c.c2||'#0A0F22')+')'):(c.mode==='preset'?WALL_PRESETS[c.pi||0].c:(img?'url('+img+')':'none'));
+      wallBlurFx(c.blur||0);
+    }else{
+      w.style.backgroundImage='';
+    }
   }
   w.querySelector('.dim').style.opacity=(c.dim||0)/100;
   if($('wallDim')) $('wallDim').value=c.dim||0;
@@ -1912,7 +1932,7 @@ $('btnTintReset').addEventListener('click', ()=>{ localStorage.removeItem(LS.the
 LS.think='cn_think';
 $('btnThink').addEventListener('click', ()=>{ const on=thinkOn(); localStorage.setItem(LS.think, on?'0':'1'); $('btnThink').textContent=on?'已隐藏':'显示中'; toast(on?'藏起来了':'好，给你看'); });
 $('wallDim').addEventListener('input', ()=>{ const c=wallConf(); c.dim=+$('wallDim').value; wallSave(c); $('wallpaper').querySelector('.dim').style.opacity=c.dim/100; });
-$('wallBlur').addEventListener('input', ()=>{ const c=wallConf(); c.blur=+$('wallBlur').value; wallSave(c); if(c.mode&&c.mode!=='default') wallBlurFx(c.blur); });
+$('wallBlur').addEventListener('input', ()=>{ const c=wallConf(); c.blur=+$('wallBlur').value; wallSave(c); if(c.mode&&c.mode!=='default') wallApply(); });   /* v36.25：blur 跨 0 切换要在 body 背景/滤镜两条路径间整体切换 */
 function toggleFull(){ document.body.classList.toggle('fs'); $('btnFull').classList.toggle('on', document.body.classList.contains('fs')); }
 $('btnFull').addEventListener('click', toggleFull);
 
