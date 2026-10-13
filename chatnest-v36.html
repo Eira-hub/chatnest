@@ -225,7 +225,7 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
    不用 visibility（手机上 backdrop-filter 层从 hidden 切回可见不重绘，表现为 tab 栏消失），只用 opacity+pointer-events。 */
 /* v36.30 dock 悬浮层（iOS 式）：dockbar 脱离布局流钉在底部，消息/卡片可滚到它背后，
    胶囊磨砂玻璃透出的就是底下滚动的页面内容本身——无底色、无托板、无壁纸挖槽 */
-.dockbar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:grid;perspective:900px;-webkit-perspective:900px;align-items:end;padding:0 0 calc(env(safe-area-inset-bottom) + 24px)}
+.dockbar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:grid;perspective:900px;-webkit-perspective:900px;align-items:end;padding:0 0 calc(env(safe-area-inset-bottom) + 21px)}
 .dockbar.flush{padding-bottom:0}
 /* 主页等无翻折场景退出 3D 上下文：backdrop-filter 采样在 perspective 下会越界泄漏（tab 栏周围一圈跟着滚动的模糊画面） */
 .dockbar.flat{perspective:none;-webkit-perspective:none}
