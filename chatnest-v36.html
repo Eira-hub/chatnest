@@ -1872,7 +1872,8 @@ if(dock){
     };
 
     const dockLeft=()=>dock.getBoundingClientRect().left;
-    const tabC=i=>{const r=btns[i].getBoundingClientRect();return r.left-dockLeft()+r.width/2;};
+    /* v36.19b：局部坐标一律用 offsetLeft/offsetWidth——收起态 dock 带 3D 变换，getBoundingClientRect 是透视投影后的错值 */
+    const tabC=i=>btns[i].offsetLeft+btns[i].offsetWidth/2;
     const btnX=i=>tabC(i)-BALL_W/2;   /* 球左缘：对准第 i 个 tab 中心 */
     function onMove(e){
       if(e.pointerType==='touch') return;   /* 触摸拖动走 touch 通道，避免被 pointercancel 抢断 */
@@ -2029,7 +2030,7 @@ if(dock){
     function buildLens(){
       lensTrack.innerHTML='';
       btns.forEach((b,i)=>{ const c=b.cloneNode(true);
-        c.classList.remove('swallow'); c.style.width=b.getBoundingClientRect().width+'px';
+        c.classList.remove('swallow'); c.style.width=b.offsetWidth+'px';
         c.classList.toggle('on', i===curIdx);
         lensTrack.appendChild(c); });
       lensBtns=Array.from(lensTrack.querySelectorAll('.dock-btn'));
@@ -2079,10 +2080,10 @@ if(dock){
       if(curIdx<0)curIdx=0;
       iw=BALL_W;
       dock.style.setProperty('--iw',iw+'px');
-      const w=btns[0].getBoundingClientRect().width;
+      const w=btns[0].offsetWidth;
       if(w>0&&w!==lastW){ lastW=w; buildLens(); }
       if(lensBtns.length){
-        const bh=ball.getBoundingClientRect().height, th=btns[0].getBoundingClientRect().height||36;
+        const bh=ball.offsetHeight, th=btns[0].offsetHeight||36;
         lensTrack.style.top=Math.max(0,(bh-th)/2)+'px';   /* 镜像在球内垂直居中 */
       }
       setBallAt(curIdx,false);
