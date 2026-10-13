@@ -413,6 +413,8 @@ body.has-wall .stars{opacity:.75}
 #viewHome{flex:1;overflow-y:auto;--hm-g1:#2B3A67;--hm-g2:#0F1B3D;--hm-fg:#FFF;--hm-ts:0 1px 10px rgba(0,0,0,.22);color:var(--hm-fg)}
 #viewHome.hm-light{--hm-fg:#2A2E3A;--hm-ts:none}
 #viewHome .hm-hero{background:linear-gradient(180deg,var(--hm-g1) 0%,var(--hm-g2) 62%,transparent 100%);min-height:100%;display:flex;flex-direction:column;padding:clamp(30px,7vh,54px) 18px 0;text-align:center}
+/* 开了背景图时：头像区下移到背景图渐隐区之下，避免叠图发白 */
+#viewHome.hm-bg .hm-hero{padding-top:calc(30vh + 16px)}
 #viewHome .hm-pair{display:flex;align-items:flex-start;justify-content:center}
 #viewHome .hm-col{display:flex;flex-direction:column;align-items:center;gap:12px}
 #viewHome .hm-ball{width:clamp(64px,21vw,78px);height:clamp(64px,21vw,78px);border-radius:50%;overflow:hidden;padding:0;border:0;background:rgba(255,255,255,.07);box-shadow:0 0 0 1.5px rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.28);cursor:pointer;display:block}
