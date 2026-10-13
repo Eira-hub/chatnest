@@ -263,7 +263,7 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .dock-btn.on{color:var(--dock-ic,var(--ball-on));font-weight:600}
 .dock,.dock *{touch-action:none!important}   /* 触摸手势全权交给拖动逻辑（Blink 会按触摸目标的 touch-action 判定抢断） */
 .dock .ball{position:absolute;top:4px;bottom:4px;left:0;width:var(--iw,60px);z-index:0;pointer-events:none;
-  transform:translateX(var(--x,0px));transition:transform .3s cubic-bezier(.2,.9,.3,1);will-change:transform}
+  transform:translateX(var(--x,0px));transition:none;will-change:transform}   /* 位置全 JS 驱动，CSS 过渡在真机 var() 上启动延迟 */
 .dock .ball .bs{position:absolute;inset:0;border-radius:999px;transform:scale(var(--bs,1));
   transition:none;border:1px solid rgba(255,255,255,.5);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 5px 16px rgba(60,90,220,.26),0 1px 4px rgba(20,40,120,.14);
@@ -565,7 +565,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.14 · js-tween</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.15 · all-js</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -1880,6 +1880,7 @@ if(dock){
       const b=e.target.closest('.dock-btn'); if(!b) return;
       dm('PD#'+e.pointerId);
       e.preventDefault();   /* 阻止兼容鼠标事件（滚动/选择），拖动必需 */
+      killTweenX();   /* 用户接管，立即停掉吸附补间 */
       downIdx=btns.indexOf(b); longFired=false; dragging=false; startPX=e.clientX; ptrId=e.pointerId;
       pressTimer=setTimeout(()=>{ longFired=true; ball.classList.add('long');
         tweenBs(1.38,220);                        /* 长按膨胀 JS 驱动（弹性） */
@@ -1899,6 +1900,7 @@ if(dock){
     }catch(e){ return 1; } };
     let bsTween=null;
     const easeOutBack=t=>{ const c1=1.4,c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); };
+    const easeSnap=t=>{ const c1=0.9,c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); };   /* 位置吸附：轻过冲 */
     function tweenBs(to,dur){
       if(bsTween) cancelAnimationFrame(bsTween.raf);
       const from=curScale();
@@ -1911,11 +1913,27 @@ if(dock){
       };
       bsTween={raf:requestAnimationFrame(step)};
     }
+    /* 位置吸附：同样 JS 逐帧驱动（真机上 CSS 变量过渡有启动延迟，是"停留撑满"的元凶之一） */
+    let xTween=null,ballTweening=false;
+    function tweenX(to,dur){
+      if(xTween) cancelAnimationFrame(xTween.raf);
+      ballTweening=true;
+      const m=new DOMMatrixReadOnly(getComputedStyle(ball).transform);
+      const from=m.e, t0=performance.now();
+      const step=n=>{
+        const t=Math.min(1,(n-t0)/dur);
+        ball.style.setProperty('--x',(from+(to-from)*easeSnap(t)).toFixed(2)+'px');
+        if(t<1) xTween.raf=requestAnimationFrame(step); else ballTweening=false;
+      };
+      xTween={raf:requestAnimationFrame(step)};
+    }
+    const killTweenX=()=>{ if(xTween){ cancelAnimationFrame(xTween.raf); xTween=null; } ballTweening=false; };
     function snapTo(i,sync){
+      killTweenX();
       ball.classList.remove('drag','long');
       ball.classList.add('moving');
-      ball.style.setProperty('--x', btnX(i)+'px');
-      tweenBs(1.24,320);                          /* 撑满 → 包裹态（弹性） */
+      tweenX(btnX(i),320);                        /* 位置：轻过冲吸附 */
+      tweenBs(1.24,320);                          /* 缩放：撑满 → 包裹态（弹性） */
       clearTimeout(snapTo._t);
       snapTo._t=setTimeout(()=>{
         ball.classList.remove('moving');
@@ -1935,6 +1953,7 @@ if(dock){
     dock.addEventListener('touchstart',e=>{
       const b=e.target.closest('.dock-btn'); if(!b) return;
       e.preventDefault();   /* 关键：取消浏览器手势（滚动/长按菜单/系统拖拽） */
+      killTweenX();   /* 用户接管，立即停掉吸附补间 */
       if(tActive) return;
       if(downIdx<0) downIdx=btns.indexOf(b);
       if(downIdx<0) return;
@@ -1969,12 +1988,12 @@ if(dock){
         btns.forEach((b,i)=>{ const d=Math.abs(tabC(i)-center); if(d<bd){bd=d;best=i;} });
         snapTo(best);
         dm('T-END ->'+best);
-      }else if(longFired){ longFired=false; snapTo(curIdx); dm('T-LONG'); }
-      else if(i0>=0){ snapTo(i0); dm('T-TAP'); }
+      }else if(longFired){ longFired=false; snapTo(curIdx,true); dm('T-LONG'); }
+      else if(i0>=0){ snapTo(i0,true); dm('T-TAP'); }   /* 点按无滑动动画，立即切页不吃延迟 */
     };
     dock.addEventListener('touchend',tEnd,{passive:false});
     dock.addEventListener('touchcancel',tEnd,{passive:false});
-    try{console.log('[ChatNest] Dock v36.14 · js-tween')}catch(err){}
+    try{console.log('[ChatNest] Dock v36.15 · all-js')}catch(err){}
     dock.addEventListener('pointermove',onMove);
     dock.addEventListener('pointerup',onUp);
     dock.addEventListener('pointercancel',onCancel);
@@ -1991,7 +2010,7 @@ if(dock){
       ball.classList.remove('drag','long');
       if(wrap){ ball.classList.add('moving'); clearTimeout(setBallAt._t); setBallAt._t=setTimeout(()=>ball.classList.remove('moving'),450); }
       else ball.classList.remove('moving');
-      ball.style.setProperty('--x', btnX(i)+'px');
+      if(!ballTweening) ball.style.setProperty('--x', btnX(i)+'px');   /* JS 补间进行中不抢写，避免瞬移 */
     }
     /* 任何切页(syncDock) → on 类变化 → 水珠自动滑过去 */
     new MutationObserver(()=>{
