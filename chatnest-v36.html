@@ -223,6 +223,7 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
    点 dock 里的"聊天"项 → 翻回收起态。仅聊天页有收起/展开之分，其他页 dock 常驻。
    不用 visibility（手机上 backdrop-filter 层从 hidden 切回可见不重绘，表现为 tab 栏消失），只用 opacity+pointer-events。 */
 .dockbar{display:grid;perspective:900px;-webkit-perspective:900px;align-items:end;padding:0 0 calc(env(safe-area-inset-bottom) + 22px)}
+.dockbar.flush{padding-bottom:0}
 .dockbar>*{grid-area:1/1;min-width:0;transform-origin:0 50%;will-change:transform,opacity;
   transition:transform .26s cubic-bezier(.32,.9,.28,1),opacity .16s ease}   /* 收起方向：快速回到聊天框 */
 .dockbar .dock{transform:translateX(-46%) rotateY(-76deg);opacity:0;pointer-events:none}
@@ -335,13 +336,13 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 .btn-send.stop{background:rgba(192,86,86,.18);color:var(--danger)}
 
 /* ───────── sheets ───────── */
-/* v31 加号面板：输入框下方展开，占键盘位置 */
-.plus-panel{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;
+/* v31 加号面板：输入框下方展开，背景直通屏幕底不留空 */
+.plus-panel{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;align-content:start;
   max-height:0;overflow:hidden;padding:0 10px;opacity:0;
-  background:linear-gradient(180deg,var(--panel-solid),var(--panel-solid)) padding-box;
-  border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);
+  background:var(--panel-solid);
+  border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;box-shadow:var(--shadow);
   transition:max-height .26s ease,opacity .2s ease,padding .26s ease}
-.plus-panel.open{max-height:240px;opacity:1;padding:18px 14px 10px}
+.plus-panel.open{max-height:240px;opacity:1;padding:18px 14px calc(env(safe-area-inset-bottom) + 16px)}
 .plus-panel button{background:none;border:none;padding:0;display:flex;flex-direction:column;align-items:center;cursor:pointer}
 .plus-panel img{width:50px;height:50px;object-fit:contain;transition:transform .12s ease}
 .plus-panel button:active img{transform:scale(.88)}
@@ -1646,17 +1647,31 @@ function openModelSheet(){
 }
 $('btnModel').addEventListener('click', openModelSheet);
 $('btnCModel').addEventListener('click', openModelSheet);
-// v31 加号面板
+// v31 加号面板（背景直通屏幕底）
 const plusPanel=$('plusPanel');
-$('btnPlus').addEventListener('click', (e)=>{ e.stopPropagation(); plusPanel.classList.toggle('open'); });
+function setPlus(open){
+  const bar=plusPanel.closest('.dockbar');
+  if(open){
+    const top=plusPanel.getBoundingClientRect().top;   /* 闭合态测顶，展开后顶位自洽 */
+    plusPanel.style.maxHeight=Math.max(240,Math.round(window.innerHeight-top))+'px';
+    plusPanel.classList.add('open');
+    if(bar)bar.classList.add('flush');
+  }else{
+    plusPanel.style.maxHeight='0px';
+    plusPanel.classList.remove('open');
+    if(bar)bar.classList.remove('flush');
+    setTimeout(()=>{ if(!plusPanel.classList.contains('open')) plusPanel.style.maxHeight=''; },320);
+  }
+}
+$('btnPlus').addEventListener('click', (e)=>{ e.stopPropagation(); setPlus(!plusPanel.classList.contains('open')); });
 plusPanel.addEventListener('click', (e)=>{
   const b=e.target.closest('button');
   if(!b) return;
-  plusPanel.classList.remove('open');
+  setPlus(false);
   toast('「'+b.dataset.name+'」还没修好，哥哥后面再来', 2000);
 });
 document.addEventListener('click', (e)=>{
-  if(plusPanel.classList.contains('open') && !plusPanel.contains(e.target) && !e.target.closest('#btnPlus')) plusPanel.classList.remove('open');
+  if(plusPanel.classList.contains('open') && !plusPanel.contains(e.target) && !e.target.closest('#btnPlus')) setPlus(false);
 });
 
 /* ───────── 设置 sheet ───────── */
