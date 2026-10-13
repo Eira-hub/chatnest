@@ -477,12 +477,7 @@ body.has-wall .stars{opacity:.75}
 #hmGradRow .g-sw{width:36px;height:24px;border-radius:8px;border:1.5px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
 #hmGradRow .g-sw.on{border-color:#8FA0FF;box-shadow:0 0 0 1.5px rgba(143,160,255,.35)}
 #viewHome.hm-bg{position:relative;background:none!important}
-#viewHome.hm-bg .hm-hero{background:none}
-#homeBgLayer{position:fixed;left:0;right:0;top:0;height:calc(30vh + 14px);z-index:0;pointer-events:none;
-  background-size:cover;background-position:center;background-repeat:no-repeat;
-  -webkit-mask-image:linear-gradient(180deg,#000 42%,transparent 94%);mask-image:linear-gradient(180deg,#000 42%,transparent 94%);
-  opacity:0;transition:opacity .3s ease}
-#homeBgLayer.on{opacity:1}
+#viewHome.hm-bg::before{content:'';position:absolute;left:0;right:0;top:0;height:calc(30vh + 14px);background-image:var(--hm-bgimg);background-size:cover;background-position:center;background-repeat:no-repeat;-webkit-mask-image:linear-gradient(180deg,#000 42%,transparent 94%);mask-image:linear-gradient(180deg,#000 42%,transparent 94%);pointer-events:none}
 /* ───────── 主页背景图裁剪层 ───────── */
 #cropLayer{position:fixed;inset:0;z-index:60;background:rgba(5,6,10,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
 #cropLayer.hidden{display:none}
@@ -524,8 +519,6 @@ body.has-wall .stars{opacity:.75}
 </head>
 <body>
 <div class="sky"><div class="stars"></div></div>
-<!-- 主页背景图独立固定层：不随主页滚动，不会从 tab 栏玻璃里透出滚动残影 -->
-<div id="homeBgLayer" class="hidden"></div>
 <div id="wallpaper"><div class="dim"></div></div>
 
 <!-- 登录门 -->
@@ -1352,14 +1345,10 @@ $('avFile').addEventListener('change', e=>{
 const bgFile=document.getElementById('homeBgFile');
 function applyHomeBg(){
   const secH=document.getElementById('viewHome');
-  const layer=document.getElementById('homeBgLayer');
+  if(!secH)return;
   const im=localStorage.getItem('cn_home_bgimg')||'';
-  if(secH)secH.classList.toggle('hm-bg',!!im);
-  if(layer){
-    layer.classList.toggle('hidden',!im);
-    layer.classList.toggle('on',!!im);
-    layer.style.backgroundImage=im?('url('+im+')'):'none';
-  }
+  secH.classList.toggle('hm-bg',!!im);
+  secH.style.setProperty('--hm-bgimg',im?('url('+im+')'):'none');
 }
 if(bgFile){
   bgFile.addEventListener('change',()=>{
