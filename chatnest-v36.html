@@ -2176,13 +2176,16 @@ function playChatMorph(){
   ic.style.left=(dx+wTg/2-iw/2)+'px';                      /* 图标初始中心 = chatToggle 中心 */
   ic.style.top=((yAbs-yBc)+hTg/2-ih/2)+'px';
   const SMALL='translate('+dx+'px,'+dy+'px) scale('+sx.toFixed(4)+','+sy.toFixed(4)+')';
-  /* v36.39 鼓包式：最远鼓到屏宽约 1/3（大屏封顶 220px），左缘贴小聊天框原位向右长，到顶立即折返 */
+  /* v36.39 鼓包式：最远鼓到屏宽约 1/3（大屏封顶 220px），左缘贴小聊天框原位向右长，到顶立即折返；
+     深度错开用透视等效 scale 模拟（近大远小）：顶点等比放大 6% 凸向观察者，输入框从 90% 缩放飞出放大归位。
+     不用真 translateZ——perspective 只作用于直接子元素，pill 是孙层会被扁平化，且宿主 WebView 3D 层有前科 */
   const wMid=Math.min((dockbar?dockbar.clientWidth:wBc)/3,220);
-  const MID='translate('+dx+'px,'+dy+'px) scale('+(wMid/wBc).toFixed(4)+','+sy.toFixed(4)+')';
+  const PUFF=1.06;                                         /* 顶点凸起 6% */
+  const MID='translate('+dx+'px,'+dy+'px) scale('+((wMid/wBc)*PUFF).toFixed(4)+','+(sy*PUFF).toFixed(4)+')';
   const EASE_OUT='cubic-bezier(.2,.85,.25,1)',EASE_IN='cubic-bezier(.55,0,.85,.45)';
   const dxIc=(wMid-wTg)/2;                                 /* 图标：小框中心 → 鼓包中心，y 已由 top 对齐 */
   bc.classList.add('run');
-  /* 单动画合并：展开 130ms 冲到 1/3 → 顶点即折返缩回 150ms，合成器精确控制，无段间竞态；全程 ≤0.3s */
+  /* 单动画合并：展开 130ms 冲到 1/3（凸起）→ 顶点即折返缩回 150ms，合成器精确控制，无段间竞态；全程 ≤0.3s */
   try{ pill.animate([
     {transform:SMALL,easing:EASE_OUT,offset:0},
     {transform:MID,easing:EASE_IN,offset:.46},
@@ -2193,8 +2196,11 @@ function playChatMorph(){
     {transform:'translate('+dxIc+'px,0px)',opacity:1,easing:EASE_IN,offset:.46},
     {transform:'translate(0,0)',opacity:0}
   ],{duration:280,fill:'forwards'}); }catch(e){}
-  /* 输入框从右边弹出，与鼓包全程重叠 */
-  try{ cp.animate([{transform:'translateX(56px)',opacity:0},{transform:'none',opacity:1}],{duration:200,easing:EASE_OUT,fill:'backwards'}); }catch(e){}
+  /* 输入框从屏幕深处（远）飞出：90% 缩放+右侧 64px，由远及近放大归位，与近处的鼓包深度交错 */
+  try{ cp.animate([
+    {transform:'translateX(64px) scale(.9)',opacity:0},
+    {transform:'none',opacity:1}
+  ],{duration:220,easing:EASE_OUT,fill:'backwards'}); }catch(e){}
   setTimeout(()=>{
     bc.classList.remove('run');
     try{ pill.getAnimations().forEach(a=>a.cancel()); ic.getAnimations().forEach(a=>a.cancel()); }catch(e){}
