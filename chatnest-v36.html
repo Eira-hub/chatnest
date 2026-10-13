@@ -37,7 +37,7 @@
   --shadow:0 8px 28px rgba(0,0,0,.38);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100dvh;overflow:hidden;background:var(--bg0)}
+html,body{height:100vh;height:100dvh;overflow:hidden;background:var(--bg0)}
 body{font-family:var(--sans);color:var(--text);font-size:var(--fs);line-height:1.65}
 button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer}
 input,textarea{font-family:inherit;color:inherit;border:none;outline:none;background:none}
@@ -102,7 +102,7 @@ svg{display:block}
 .gate-error.on{opacity:1}
 
 /* ───────── 主框架 ───────── */
-#app{position:fixed;inset:0;z-index:1;display:flex;height:100dvh;overflow:hidden}
+#app{position:fixed;inset:0;z-index:1;display:flex;height:100vh;height:100dvh;overflow:hidden}
 #main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;z-index:1}
 
 /* ───────── 侧栏 ───────── */
@@ -238,6 +238,15 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
   backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4)}
 [data-theme="dark"] #chatToggle::before{background:linear-gradient(145deg,rgba(70,80,110,.48),rgba(28,34,52,.42) 58%,rgba(52,60,92,.46));border-color:rgba(140,155,205,.16);
   box-shadow:0 0 0 1px rgba(130,150,210,.20),0 8px 28px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.14)}
+/* PWA/WebAPK 的 WebView 上 perspective+rotateY+opacity:0 合成层有画丢风险（dock 与输入框整体消失）：
+   standalone 模式降级为纯 2D 平移滑出，浏览器里保留完整 3D 翻折 */
+@media (display-mode:standalone){
+  .dockbar{perspective:none;-webkit-perspective:none}
+  .dockbar>*{will-change:auto}
+  .dockbar .dock{transform:translateX(-46%) scale(.98)}
+  .dockbar.open .dock{transform:none}
+  .dockbar.open .composer{transform:translateX(-30%) scale(.96)}
+}
 #chatToggle:active::before{border-color:rgba(120,140,220,.60)}
 .glass-input{flex:1;min-width:0;display:flex;align-items:center;gap:2px;
   border-radius:24px;padding:5px 5px 5px 7px;position:relative;isolation:isolate}
