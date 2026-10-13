@@ -296,6 +296,17 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
    光换背景没用——滤镜一并摘除，靠不透明底呈现实底磨砂观感。只动这一处 */
 .dockbar:not(.flat) .dock::before{background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(243,246,251,.92) 58%,rgba(250,252,255,.95));backdrop-filter:none;-webkit-backdrop-filter:none}
 [data-theme="dark"] .dockbar:not(.flat) .dock::before{background:linear-gradient(145deg,rgba(40,48,80,.97),rgba(17,23,49,.93) 58%,rgba(28,34,60,.95));backdrop-filter:none;-webkit-backdrop-filter:none}
+/* ── v36.37 转场大聊天框：grid 堆叠第三层，与 dock 同布局同宽；壳/图标分层动画（合成器线程）── */
+.bigchat{grid-area:1/1;width:min(calc(100% - 56px),660px);height:54px;margin:0 auto;border-radius:999px;
+  position:relative;visibility:hidden;pointer-events:none;z-index:3;color:var(--text2)}
+.bigchat.run{visibility:visible}
+.bc-pill{position:absolute;inset:0;border-radius:999px;transform-origin:0 50%;will-change:transform;
+  background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(243,246,251,.92) 58%,rgba(250,252,255,.95));
+  border:1px solid rgba(255,255,255,.48);
+  box-shadow:0 0 0 1px rgba(255,255,255,.55),0 8px 28px rgba(40,60,120,.10),inset 0 1px 0 rgba(255,255,255,.72)}
+[data-theme="dark"] .bc-pill{background:linear-gradient(145deg,rgba(40,48,80,.97),rgba(17,23,49,.93) 58%,rgba(28,34,60,.95));border-color:rgba(140,155,205,.16);
+  box-shadow:0 0 0 1px rgba(130,150,210,.20),0 8px 28px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.14)}
+.bc-ic{position:absolute;left:0;top:0;display:flex;align-items:center;justify-content:center;will-change:transform,opacity}
 .dock-btn{flex:1;height:46px;border-radius:999px;font-family:var(--serif);font-size:.68em;letter-spacing:.04em;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   color:var(--text2);transition:background .2s,color .2s,transform .15s var(--ease);
@@ -692,6 +703,9 @@ body.has-wall .stars{opacity:.75}
             <button data-name="拍一拍"><img src="assets/plus/8-pat.png" alt="拍一拍"><span class="pl-lab">拍一拍</span></button>
           </div>
   </div><!-- /composer -->
+
+<!-- v36.37 转场大聊天框：tab 栏翻走后从小放大、再迅速缩回 chatToggle 落位（仅切页进聊天页时 JS 驱动） -->
+<div class="bigchat" id="bigChat" aria-hidden="true"><span class="bc-pill"></span><span class="bc-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span></div>
 
 <div class="dock" id="dock"><div class="ball" id="dockBall"><div class="bs"><div class="lens"><div class="lens-track" id="lensTrack"></div></div></div></div>
         <button class="dock-btn on" data-view="chat" type="button"><img src="data:image/png;base64,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" alt=""><span>聊天</span></button>
@@ -2139,13 +2153,54 @@ if(dockbar){
   const ct=document.getElementById('chatToggle');
   if(ct) ct.addEventListener('click',()=>{ setDockFlat(false); setDock(true); });   /* 聊天框 → 回聊天页，必须脱离 flat（槽开关最先执行，防后续异常跳过） */
 }
+/* ── v36.37 聊天页转场：tab 栏翻走 → 小聊天框放大成大聊天框 → 迅速缩小回位 → 输入框从右弹出 ──
+   壳/图标全走 WAAPI 合成器线程（切页瞬间主线程忙，禁用布局动画）；几何用 offset 局部坐标测量 */
+let chatMorphing=false;
+function playChatMorph(){
+  const bc=document.getElementById('bigChat');
+  const tg=document.getElementById('chatToggle');
+  const cp=document.querySelector('.composer');
+  if(!bc||!tg||!cp||chatMorphing)return;
+  const pill=bc.querySelector('.bc-pill'),ic=bc.querySelector('.bc-ic');
+  chatMorphing=true;
+  /* 局部坐标：getBoundingClientRect 在 3D 上下文里是透视投影错值，一律 offset 链 */
+  const xAbs=(tg.offsetParent?tg.offsetParent.offsetLeft:0)+tg.offsetLeft;
+  const yAbs=(tg.offsetParent?tg.offsetParent.offsetTop:0)+tg.offsetTop;
+  const xBc=bc.offsetLeft,yBc=bc.offsetTop,wBc=bc.offsetWidth,hBc=bc.offsetHeight;
+  const wTg=tg.offsetWidth,hTg=tg.offsetHeight;
+  const dx=xAbs-xBc,dy=(yAbs+hTg/2)-(yBc+hBc/2);          /* 壳：全宽 → chatToggle 几何 */
+  const sx=wTg/wBc,sy=hTg/hBc;
+  const iw=20,ih=20;
+  ic.style.left=(dx+wTg/2-iw/2)+'px';                      /* 图标初始中心 = chatToggle 中心 */
+  ic.style.top=(dy+hBc/2-sy*hBc/2+ (0) +ih*0)+'px';        /* 顶边基准，下面 y 用中心差修正 */
+  ic.style.top=((yAbs-yBc)+hTg/2-ih/2)+'px';
+  const dxIc=wBc/2-(dx+wTg/2),dyIc=(hBc/2)-((yAbs-yBc)+hTg/2);
+  const SMALL='translate('+dx+'px,'+dy+'px) scale('+sx.toFixed(4)+','+sy.toFixed(4)+')';
+  const EASE_OUT='cubic-bezier(.32,.9,.28,1)',EASE_IN='cubic-bezier(.55,0,.85,.45)';
+  bc.classList.add('run');
+  /* 与 tab 栏翻走同时：小聊天框 → 大聊天框；图标滑向中央并淡入 */
+  try{ pill.animate([{transform:SMALL},{transform:'none'}],{duration:240,easing:EASE_OUT,fill:'forwards'}); }catch(e){}
+  try{ ic.animate([{transform:'translate(0,0)',opacity:0},{opacity:0,offset:.4},{transform:'translate('+dxIc+'px,'+dyIc+'px)',opacity:1}],{duration:240,easing:EASE_OUT,fill:'forwards'}); }catch(e){}
+  /* 输入框紧随其后从右边弹出 */
+  try{ cp.animate([{transform:'translateX(56px)',opacity:0},{transform:'none',opacity:1}],{duration:250,delay:90,easing:EASE_OUT,fill:'backwards'}); }catch(e){}
+  /* 大聊天框停一拍后迅速缩小回 chatToggle 落位 */
+  setTimeout(()=>{
+    try{ pill.animate([{transform:'none'},{transform:SMALL}],{duration:200,easing:EASE_IN,fill:'forwards'}); }catch(e){}
+    try{ ic.animate([{transform:'translate('+dxIc+'px,'+dyIc+'px)',opacity:1},{opacity:1,offset:.7},{transform:'translate(0,0)',opacity:0}],{duration:200,easing:EASE_IN,fill:'forwards'}); }catch(e){}
+    setTimeout(()=>{
+      bc.classList.remove('run');
+      try{ pill.getAnimations().forEach(a=>a.cancel()); ic.getAnimations().forEach(a=>a.cancel()); }catch(e){}
+      chatMorphing=false;
+    },210);
+  },310);
+}
 if(dock){
   const names={mood:'心潮',todo:'待办',explore:'探索'};
   dock.querySelectorAll('.dock-btn').forEach(b=>b.addEventListener('click',()=>{
     const v=b.dataset.view;
     document.documentElement.setAttribute('data-v35','click:'+v);
     if(v==='home'){ syncDock('home'); showHome(true); setDock(true); setDockFlat(true); }
-    else if(v==='chat'){ setDockFlat(false); syncDock('chat'); showHome(false); setDock(false); }   /* 聊天项=翻回收起态（槽开关最先执行） */
+    else if(v==='chat'){ setDockFlat(false); syncDock('chat'); showHome(false); setDock(false); playChatMorph(); }   /* 聊天项=翻回收起态+转场：dock 翻走同时大聊天框展开，缩回落位，输入框从右弹出（槽开关最先执行） */
     else{ syncDock(v); toast('「'+(names[v]||v)+'」还在装修，先占个位',2200); setDock(true); setDockFlat(true); }
   }));
 }
