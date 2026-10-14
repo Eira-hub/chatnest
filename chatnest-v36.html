@@ -731,7 +731,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.69</span>
+    <span class="fs-ver">v36.70</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -912,7 +912,7 @@ const state = {
   convId: localStorage.getItem(LS.conv) || '',
   model: localStorage.getItem(LS.model) || '',
   models: [], sessions: [], avatars: {me:'', ai:''},
-  streaming: false, abortCtl: null, splash: '',
+  splash: '',
 };
 
 function toast(msg, ms){
@@ -1396,16 +1396,17 @@ function scrollToBottom(force){
 }
 /* ───────── 发送 · SSE 流 ───────── */
 function setSendState(){
+  /* v36.70 AI 回复期间不再禁用发送键：按钮永远是「发送」，边聊边发不互斥 */
   const b = $('btnSend');
-  if(state.streaming){ b.classList.add('stop'); b.disabled=false; $('sendIcon').classList.add('hidden'); $('stopIcon').classList.remove('hidden'); }
-  else{ b.classList.remove('stop'); $('sendIcon').classList.remove('hidden'); $('stopIcon').classList.add('hidden'); b.disabled = !$('input').value.trim(); }
+  b.classList.remove('stop'); $('sendIcon').classList.remove('hidden'); $('stopIcon').classList.add('hidden');
+  b.disabled = !$('input').value.trim();
 }
 /* v34 输入框随内容长高（最多约 6 行，超出内部滚动） */
 function autoGrow(){
   const i = $('input');
   i.style.height = 'auto';
   i.style.height = Math.min(i.scrollHeight, 132) + 'px';
-  $('btnSend').disabled = state.streaming ? false : !i.value.trim();
+  $('btnSend').disabled = !i.value.trim();
 }
 $('input').addEventListener('input', autoGrow);
 $('input').addEventListener('keydown', e=>{
@@ -1547,13 +1548,12 @@ if(cropCancel)cropCancel.addEventListener('click',cropClose);
 applyHomeBg();
 
 $('btnSend').addEventListener('click', ()=>{
-  if(state.streaming){ if(state.abortCtl) state.abortCtl.abort(); return; }
   send();
 });
 
 async function send(){
   const text = $('input').value.trim();
-  if(!text || state.streaming) return;
+  if(!text) return;
   const sendAt = Date.now();   /* v36.68 记录发送时刻，历史时间缓存用 */
   $('splash').classList.add('hidden');
   const inner = $('streamInner');
@@ -1571,8 +1571,7 @@ async function send(){
   ab.style.display = 'none';   /* v36.69 思考/生成期间不显示任何占位气泡，段落写完才整条弹出 */
   inner.appendChild(ab);
 
-  state.streaming = true; setSendState();
-  state.abortCtl = new AbortController();
+  const myCtl = new AbortController();   /* v36.70 每条消息独立请求，可并行发送 */
   let tBuf = '', xBuf = '', had = false, err = null;
   let sDone = 0, tDone = false;   /* v36.68 即时拆条：已完结段落数 / 思考串是否已挂到第一段 */
   const bodyEl = ab.querySelector('.body');
@@ -1584,9 +1583,9 @@ async function send(){
     const res = await apiFetch('/api/chat', {
       method:'POST',
       body: { message: msgOut, conversation_id: state.convId||null, model: state.model||null, extended:true },
-      signal: state.abortCtl.signal
+      signal: myCtl.signal
     });
-    if(res.status===401){ state.streaming=false; state.abortCtl=null; setSendState(); logout(); return; }
+    if(res.status===401){ setSendState(); logout(); return; }
     if(!res.ok){ let m='请求失败 '+res.status; try{const j=await res.json(); if(j.detail)m=j.detail;}catch(e){} throw new Error(m); }
     const reader = res.body.getReader(), dec = new TextDecoder();
     let buf = '';
@@ -1692,7 +1691,7 @@ async function send(){
     if(xBuf) cacheMsgTime(state.convId, 'ai', xBuf, Date.now());
   }
   }finally{
-    state.streaming = false; state.abortCtl = null; setSendState();   /* v36.67 无论怎么退出去路，按钮必复位 */
+    setSendState();   /* v36.70 流结束刷新按钮可用性（不再有全局互斥） */
   }
   scrollToBottom();
   loadSessions();
