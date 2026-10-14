@@ -330,6 +330,20 @@ svg{display:block}
 .sheet.on{transform:none}
 .sheet .grip{width:38px;height:4px;border-radius:4px;background:rgba(255,255,255,.16);margin:4px auto 14px}
 .sheet h3{font-family:var(--serif);font-size:15px;font-weight:500;letter-spacing:.1em;color:var(--text2);margin-bottom:12px;text-align:center}
+/* ═══ v36.50 设置页=全屏独立界面（覆盖 .sheet 底部抽屉形态）═══ */
+#settingsSheet{top:0;bottom:0;max-height:none;height:100dvh;border-radius:0;border:none;
+  padding:0 18px calc(env(safe-area-inset-bottom) + 28px);
+  transform:translateY(100%);transition:transform .38s var(--ease)}
+#settingsSheet.on{transform:none}
+#settingsSheet .grip{display:none}
+#settingsSheet .fs-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:11px;
+  margin:0 -18px 14px;padding:calc(env(safe-area-inset-top) + 12px) 16px 12px 12px;
+  background:var(--panel-solid);border-bottom:1px solid var(--line)}
+.fs-back{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;
+  color:var(--text2);background:var(--panel3);border:1px solid var(--line)}
+.fs-back:active{transform:scale(.92)}
+.fs-title{font-family:var(--serif);font-size:16px;letter-spacing:.14em;color:var(--text)}
+.fs-ver{margin-left:auto;font-size:10px;color:var(--text3);letter-spacing:.08em}
 .m-item{width:100%;display:flex;flex-direction:column;gap:2px;text-align:left;padding:13px 14px;border-radius:13px;margin-bottom:6px;border:1px solid transparent;transition:background .15s}
 .m-item:active,.m-item.on{background:var(--panel3);border-color:rgba(165,185,220,.2)}
 .m-item .mt{font-size:14.5px}
@@ -385,9 +399,11 @@ body.has-wall .stars{opacity:.75}
 /* ═══ v33 主页 ═══ */
 #viewHome{flex:1;overflow-y:auto;position:relative;--hm-g1:#2B3A67;--hm-g2:#0F1B3D;--hm-fg:#FFF;--hm-ts:0 1px 10px rgba(0,0,0,.22);color:var(--hm-fg)}
 /* v36.49 主页悬浮设置：圆形旋钮，无底板无背景，absolute 随内容滚动，浮于卡片之上 */
+/* v36.50 加暗色投影轮廓：开背景图时白图标叠亮壁纸也能看清 */
 #hmSettings{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:15px;width:42px;height:42px;
   display:flex;align-items:center;justify-content:center;border-radius:50%;z-index:30;
-  color:var(--hm-fg);opacity:.88;background:none;border:0;padding:0;cursor:pointer;text-shadow:var(--hm-ts)}
+  color:var(--hm-fg);opacity:.9;background:none;border:0;padding:0;cursor:pointer;text-shadow:var(--hm-ts);
+  filter:drop-shadow(0 1px 4px rgba(0,0,0,.55))}
 #hmSettings:active{transform:scale(.9);opacity:1}
 #viewHome.hm-light{--hm-fg:#2A2E3A;--hm-ts:none}
 #viewHome .hm-hero{background:linear-gradient(180deg,var(--hm-g1) 0%,var(--hm-g2) 62%,transparent 100%);min-height:100%;display:flex;flex-direction:column;padding:clamp(30px,7vh,54px) 18px 0;text-align:center}
@@ -555,7 +571,7 @@ body.has-wall .stars{opacity:.75}
 <section id="viewHome" class="hidden">
   <!-- v36.49 主页悬浮设置：圆形旋钮图标，无底板，absolute 随主页内容一起滚 -->
   <button id="hmSettings" type="button" aria-label="设置">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
       <circle cx="12" cy="12" r="8.4"/>
       <circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/>
       <path d="M12 3.6v2.6"/>
@@ -679,8 +695,13 @@ body.has-wall .stars{opacity:.75}
 
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
-  <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.49 · composer-solid</span></h3>
+  <div class="fs-head">
+    <button class="fs-back" id="btnSetBack" type="button" aria-label="返回">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <span class="fs-title">设置</span>
+    <span class="fs-ver">v36.50</span>
+  </div>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -1608,7 +1629,8 @@ document.addEventListener('click', (e)=>{
 });
 
 /* ───────── 设置 sheet ───────── */
-/* v36.49 入口改为主页右上角悬浮设置按钮 */
+/* v36.49 入口改为主页右上角悬浮设置按钮；v36.50 设置页为全屏界面，返回按钮关闭 */
+$('btnSetBack').addEventListener('click', closeSheets);
 $('hmSettings').addEventListener('click', async ()=>{
   $('memoryArea').value = '加载中…';
   $('personaArea').value = '加载中…';
