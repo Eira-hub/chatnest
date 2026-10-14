@@ -729,7 +729,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.62</span>
+    <span class="fs-ver">v36.63</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -750,6 +750,23 @@ body.has-wall .stars{opacity:.75}
       <button class="set-btn" id="btnSaveApi" style="flex:1.4">保存接口</button>
       <button class="set-btn" id="btnApiReset" style="flex:1">恢复默认</button>
     </div>
+    <!-- v36.63 语音/生图模型设置：供应商按钮自动配地址，输入自动保存+统一保存按钮 -->
+    <div class="sub-lab" style="margin-top:18px">语音模型</div>
+    <div class="seg" id="segVoice" style="display:inline-flex;flex-wrap:wrap;margin-top:8px">
+      <button class="seg-btn" data-prov="mossland" data-url="https://api.mossland.ai/v1" type="button">Mossland</button>
+      <button class="seg-btn" data-prov="minimax" data-url="https://api.minimax.chat/v1" type="button">MINIMAX</button>
+      <button class="seg-btn" data-prov="chattts" data-url="https://api.chattts.com/v1" type="button">ChatTTS</button>
+      <button class="seg-btn" data-prov="elevenlabs" data-url="https://api.elevenlabs.io/v1" type="button">ElevenLabs</button>
+      <button class="seg-btn" data-prov="f5tts" data-url="http://127.0.0.1:7860" type="button">F5-TTS</button>
+    </div>
+    <input class="set-input" id="voiceBaseInput" placeholder="语音 API 地址（点上面按钮自动配好）" autocomplete="off" spellcheck="false" style="margin-top:10px">
+    <input class="set-input" id="voiceKeyInput" type="password" placeholder="语音 API key" autocomplete="off" style="margin-top:10px">
+    <input class="set-input" id="voiceTidInput" placeholder="音色ID" autocomplete="off" spellcheck="false" style="margin-top:10px">
+    <div class="sub-lab" style="margin-top:18px">生图模型</div>
+    <input class="set-input" id="imgBaseInput" placeholder="生图 API 地址" autocomplete="off" spellcheck="false" style="margin-top:8px">
+    <input class="set-input" id="imgKeyInput" type="password" placeholder="生图 API key" autocomplete="off" style="margin-top:10px">
+    <input class="set-input" id="imgModelInput" placeholder="绘图模型名（自己填，如 gpt-image-1）" autocomplete="off" spellcheck="false" style="margin-top:10px">
+    <button class="set-btn" id="btnSaveModels" style="margin-top:12px">保存模型设置</button>
   </div>
   </div><!-- /组1 模型与服务 -->
   <div class="set-group">
@@ -873,7 +890,9 @@ body.has-wall .stars{opacity:.75}
 'use strict';
 /* ═══════════ ChatNest v32 · 星夜小筑 ═══════════ */
 const DEFAULT_API_BASE = 'https://chatnest-fgkngqpobv.cn-hangzhou.fcapp.run';
-const LS = {token:'cn_token', model:'cn_model', conv:'cn_conv', apiBase:'chatnest_api_base', apiToken:'chatnest_api_token'};
+const LS = {token:'cn_token', model:'cn_model', conv:'cn_conv', apiBase:'chatnest_api_base', apiToken:'chatnest_api_token',
+  voiceBase:'cn_voice_base', voiceKey:'cn_voice_key', voiceTid:'cn_voice_tid', voiceProv:'cn_voice_prov',
+  imgBase:'cn_img_base', imgKey:'cn_img_key', imgModel:'cn_img_model'};
 const LS_SPLIT = 'chatnest_split_mode';           /* 长条/短条拆条模式，默认短 */
 const SPLIT_MAX_LEN = 280;                        /* 长条模式：单个气泡最多这么多字，超了才拆 */
 /* 后端地址/令牌：优先读接口设置（localStorage），没配置就用焊死的默认值（开箱即用） */
@@ -1702,12 +1721,53 @@ $('btnSetBack').addEventListener('click', ()=>{
   if($('settingsSheet').classList.contains('sub-on')) closeSub();  /* 详情态→回设置主页 */
   else closeSheets();                                              /* 主页态→关设置页 */
 });
+/* ─── v36.63 语音/生图模型设置 ─── */
+/* 供应商预设地址（data-url 写在按钮上，要改预设直接改 HTML）；点按钮选中并自动配地址 */
+function saveModels(){
+  localStorage.setItem(LS.voiceBase, $('voiceBaseInput').value.trim());
+  localStorage.setItem(LS.voiceKey,  $('voiceKeyInput').value.trim());
+  localStorage.setItem(LS.voiceTid,  $('voiceTidInput').value.trim());
+  localStorage.setItem(LS.imgBase,   $('imgBaseInput').value.trim());
+  localStorage.setItem(LS.imgKey,    $('imgKeyInput').value.trim());
+  localStorage.setItem(LS.imgModel,  $('imgModelInput').value.trim());
+  const on=document.querySelector('#segVoice .seg-btn.on');
+  localStorage.setItem(LS.voiceProv, on ? on.dataset.prov : '');
+}
+function restoreModels(){
+  $('voiceBaseInput').value = localStorage.getItem(LS.voiceBase) || '';
+  $('voiceKeyInput').value  = localStorage.getItem(LS.voiceKey)  || '';
+  $('voiceTidInput').value  = localStorage.getItem(LS.voiceTid)  || '';
+  $('imgBaseInput').value   = localStorage.getItem(LS.imgBase)   || '';
+  $('imgKeyInput').value    = localStorage.getItem(LS.imgKey)    || '';
+  $('imgModelInput').value  = localStorage.getItem(LS.imgModel)  || '';
+  const prov=localStorage.getItem(LS.voiceProv) || '';
+  document.querySelectorAll('#segVoice .seg-btn').forEach(b=>{
+    b.classList.toggle('on', b.dataset.prov===prov);
+  });
+}
+document.querySelectorAll('#segVoice .seg-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#segVoice .seg-btn').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    $('voiceBaseInput').value = b.dataset.url;   /* 点模型按钮自动配好地址 */
+    saveModels();
+  });
+});
+/* 输入完自动保存（失焦/改完即存），保存按钮是显式兜底 */
+['voiceBaseInput','voiceKeyInput','voiceTidInput','imgBaseInput','imgKeyInput','imgModelInput']
+  .forEach(id=>$(id).addEventListener('change', saveModels));
+$('btnSaveModels').addEventListener('click', function(){
+  saveModels();
+  const t=this.textContent; this.textContent='已保存 ✓';
+  setTimeout(()=>{ this.textContent=t; }, 1200);
+});
 $('hmSettings').addEventListener('click', async ()=>{
   closeSub();  /* v36.61 每次打开重置到设置主页 */
   $('memoryArea').value = '加载中…';
   $('personaArea').value = '加载中…';
   $('apiBaseInput').value = (localStorage.getItem(LS.apiBase) || '').trim();
   $('apiTokenInput').value = (localStorage.getItem(LS.apiToken) || '').trim();
+  restoreModels();  /* v36.63 语音/生图模型设置回填 */
   refreshAvPreviews();
   openSheet('settingsSheet');
   try{   /* 打开设置面板时刷新拖动诊断日志显示（原侧栏 btnMenu 逻辑迁入） */
