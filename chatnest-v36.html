@@ -15,7 +15,7 @@
   --fs:15px;
   --bg0:#EEF1F7;--bg1:#F3F5FA;--bg2:#E7EBF3;
   --panel:rgba(255,255,255,.74);--panel2:rgba(30,40,80,.05);--panel3:rgba(30,40,80,.09);
-  --panel-solid:#F6F8FC;--panel-top:rgba(255,255,255,.66);
+  --panel-solid:#F6F8FC;--panel-top:rgba(255,255,255,.66);--setgroup:#F7F5F1;
   --line:rgba(30,40,80,.12);--line2:rgba(30,40,80,.19);
   --text:#16181D;--text2:#565C6E;--text3:#8A90A2;
   --accent:#7C8BC9;--accent2:#4A57A5;--moon:#9C7B46;--danger:#C05656;
@@ -29,7 +29,7 @@
 [data-theme="dark"]{
   --bg0:#050508;--bg1:#08090F;--bg2:#0D0F18;
   --panel:rgba(18,24,48,.78);--panel2:rgba(255,255,255,.05);--panel3:rgba(255,255,255,.08);
-  --panel-solid:#111731;--panel-top:rgba(10,15,32,.6);
+  --panel-solid:#111731;--panel-top:rgba(10,15,32,.6);--setgroup:#141A38;
   --line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.16);
   --text:#E9EBF4;--text2:#9BA1B8;--text3:#626A85;
   --accent:#A5B9DC;--accent2:#CBD8EF;--moon:#E3C89E;--danger:#D97A7A;
@@ -348,8 +348,8 @@ svg{display:block}
 /* ═══ v36.57/v36.59 节标题：v36.59 起移入框内顶部，无底线；框角加大到 22px 更柔和 ═══ */
 .set-sec{font-family:var(--serif);font-size:13.5px;letter-spacing:.26em;color:var(--text3);
   margin:12px 2px 2px}
-/* ═══ v36.58 大类=圆角框组（按用户 orion 参照图）：框内顶部节标题，框内小类=折叠按钮行+右 chevron，行间细线 ═══ */
-.set-group{border:1px solid var(--line);border-radius:22px;background:var(--panel3);
+/* ═══ v36.58 大类=圆角框组（按用户 orion 参照图）：框内顶部节标题，框内小类=折叠按钮行+右 chevron，行间细线；v36.60 框底色=柔和暖白 --setgroup（深色主题 #141A38） ═══ */
+.set-group{border:1px solid var(--line);border-radius:22px;background:var(--setgroup);
   padding:2px 14px 6px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-top:20px}
 .set-group:first-of-type{margin-top:2px}
 .set-group .set-block{margin:0}
@@ -725,7 +725,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.59</span>
+    <span class="fs-ver">v36.60</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
