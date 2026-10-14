@@ -731,7 +731,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.67</span>
+    <span class="fs-ver">v36.68b</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -894,7 +894,7 @@ body.has-wall .stars{opacity:.75}
 const DEFAULT_API_BASE = 'https://chatnest-fgkngqpobv.cn-hangzhou.fcapp.run';
 const LS = {token:'cn_token', model:'cn_model', conv:'cn_conv', apiBase:'chatnest_api_base', apiToken:'chatnest_api_token',
   voiceBase:'cn_voice_base', voiceKey:'cn_voice_key', voiceTid:'cn_voice_tid', voiceProv:'cn_voice_prov',
-  imgBase:'cn_img_base', imgKey:'cn_img_key', imgModel:'cn_img_model'};
+  imgBase:'cn_img_base', imgKey:'cn_img_key', imgModel:'cn_img_model', mtc:'cn_mtc'};
 const LS_SPLIT = 'chatnest_split_mode';           /* 长条/短条拆条模式，默认短 */
 const SPLIT_MAX_LEN = 280;                        /* 长条模式：单个气泡最多这么多字，超了才拆 */
 /* 后端地址/令牌：优先读接口设置（localStorage），没配置就用焊死的默认值（开箱即用） */
@@ -1149,9 +1149,42 @@ document.addEventListener('click', function(e){
 const THINK_HEAD='<summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Thought process</span><span class="tp-arrow">›</span></summary>';
 function thinkOn(){ return localStorage.getItem(LS.think)!=='0'; }
 function fmtClock(ts){ try{ const d=ts?new Date(ts):new Date(); if(isNaN(d.getTime())) return ''; return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }catch(e){ return ''; } }
+/* v36.68 时间智能解析：毫秒/秒时间戳、ISO、'YYYY-MM-DD HH:MM:SS' 都认；解析不了返回空 */
+function fmtTimeSmart(v){
+  if(v===undefined||v===null||v==='') return '';
+  try{
+    if(typeof v==='number') return fmtClock(new Date(v>1e12?v:v*1000));
+    const s=String(v).trim();
+    if(/^\d{10,13}$/.test(s)) return fmtClock(new Date(+s>1e12?+s:+s*1000));
+    return fmtClock(/\d-\d/.test(s)? s.replace(' ','T') : s);
+  }catch(e){ return ''; }
+}
+/* v36.68 消息时间本地缓存：后端不回时间字段时，用发送时刻兜底，历史时间不漂移 */
+function mtCacheGet(cid){ try{ return JSON.parse(localStorage.getItem(LS.mtc)||'{}')[cid]||{}; }catch(e){ return {}; } }
+function mKey(text){ return String(text||'').replace(/\s+/g,' ').trim().slice(0,60); }
+function cacheMsgTime(cid, role, text, ts){
+  if(!cid||!text) return;
+  try{
+    const all=JSON.parse(localStorage.getItem(LS.mtc)||'{}');
+    const c=all[cid]||(all[cid]={});
+    const t=fmtClock(ts), r=role||'';
+    c[r+':'+mKey(text)] = t;
+    const clean=mKey(String(text).replace(VHINT_RE,''));
+    if(clean!==mKey(text)) c[r+':'+clean] = t;   /* 带/不带语音提示尾巴两个 key 都存，历史怎么存都能对上 */
+    const ks=Object.keys(c);
+    if(ks.length>240) ks.slice(0, ks.length-200).forEach(k=>delete c[k]);   /* 每会话留最近200条 */
+    localStorage.setItem(LS.mtc, JSON.stringify(all));
+  }catch(e){}
+}
+function lookupMsgTime(m){
+  try{
+    const c=mtCacheGet(state.convId||''), r=m.role||'';
+    return c[r+':'+mKey(m.text)] || c[r+':'+mKey(String(m.text||'').replace(VHINT_RE,''))] || '';
+  }catch(e){ return ''; }
+}
 function extractVoice(t){ if(/\[voice\]/i.test(t||'')) return (t||'').replace(/\[voice\]/ig,'').trim(); return null; }
 const VHINT='\n\n[[sys:若此次适合用语音回复，在回复正文最末尾另起一行加上[voice]标记，不要解释]]';
-const VHINT_RE=/\s*\[\[sys:[^\]]*\]\]\s*$/;
+const VHINT_RE=/\s*\[\[sys:[\s\S]*\]\]\s*$/;
 /* ───────── v36.65 生图协议：<IMG>画面描述</IMG> ───────── */
 /* 模型输出标记 → 前端拦截 → 调用户在 API设置 配的生图模型 → 图片气泡 */
 const GHINT='\n\n[[sys:若用户想生成图片或画画，直接输出<IMG>画面描述</IMG>标记（描述用中文写具体画面细节），程序会调用绘图模型把图画出来。不要解释这个标记，也不要用markdown图片语法]]';
@@ -1302,7 +1335,8 @@ function voiceMsgNode(text){
 }
 function bubbleEl(m){
   const isUser = m.role === 'user';
-  const mt = fmtClock(m.created_at);
+  /* v36.68 时间：优先后端字段（多名字兼容），后端没存就用本地发送时刻缓存，都没有才不显示 */
+  const mt = fmtTimeSmart(m.created_at||m.time||m.timestamp||'') || lookupMsgTime(m);
   if(isUser){
     const el=document.createElement('div');
     el.className='msg user';
@@ -1520,6 +1554,7 @@ $('btnSend').addEventListener('click', ()=>{
 async function send(){
   const text = $('input').value.trim();
   if(!text || state.streaming) return;
+  const sendAt = Date.now();   /* v36.68 记录发送时刻，历史时间缓存用 */
   $('splash').classList.add('hidden');
   const inner = $('streamInner');
   const um = document.createElement('div');
@@ -1538,6 +1573,7 @@ async function send(){
   state.streaming = true; setSendState();
   state.abortCtl = new AbortController();
   let tBuf = '', xBuf = '', had = false, err = null;
+  let sDone = 0, tDone = false;   /* v36.68 即时拆条：已完结段落数 / 思考串是否已挂到第一段 */
   const bodyEl = ab.querySelector('.body');
   const thinkEl = ()=>{ let d = ab.querySelector('.think'); if(!d){ d=document.createElement('details'); d.className='think'; d.innerHTML=THINK_HEAD+'<div class="tk-body"></div>'; ab.querySelector('.col').insertBefore(d, ab.querySelector('.bubble')); } return d; };
   try{
@@ -1576,7 +1612,27 @@ async function send(){
         }else if(ev==='delta'){
           xBuf += obj.text||'';
           if(!had){ ab.querySelector('.typing').style.display='none'; bodyEl.style.display=''; had=true; }
-          bodyEl.innerHTML = md(xBuf); scrollToBottom();
+          /* v36.68 即时拆条：除尾段外的段落一出现就落地成完整气泡（头像+时间），尾段在原气泡里实时流入 */
+          const chunks = splitAiText(xBuf);
+          const fresh = chunks.length - 1;
+          if(fresh > sDone){
+            const df = document.createDocumentFragment();
+            for(let k = sDone; k < fresh; k++){
+              const segsK = parseImgSegs(chunks[k]);
+              const kText = segsK.filter(s=>s.type==='text').map(s=>s.text).join('\n').trim();
+              if(kText){
+                df.appendChild(aiMsgNode(kText,{cont:false, thinking:(!tDone? tBuf:''), mtime:fmtClock(), raw:xBuf}));
+                tDone = true;
+              }
+            }
+            if(df.childNodes.length && ab.parentNode) ab.parentNode.insertBefore(df, ab);
+            sDone = fresh;
+          }
+          /* 尾段显示：剥掉已闭合/未闭合的生图标记（生图在结束时统一处理），标记没闭完时也不露出来 */
+          const cur = (chunks[sDone]||'').replace(IMG_RE,'').replace(/<IMG>[\s\S]*$/,'');
+          bodyEl.innerHTML = md(cur);
+          ab.style.display = (cur.trim()||sDone===0) ? '' : 'none';   /* 尾段只剩生图标记时藏住空气泡 */
+          scrollToBottom();
         }else if(ev==='error'){
           err = obj.message||'出错了';
         }
@@ -1632,8 +1688,13 @@ async function send(){
   else if(!tBuf && !had){ bodyEl.innerHTML = ''; }
   if(err){ const d = document.createElement('div'); d.className='msg-err'; d.textContent='⚠ '+err; ab.querySelector('.bubble').appendChild(d); }
   if(!xBuf && !tBuf && !err){ bodyEl.innerHTML = '<span style="color:var(--text3)">（没有收到回复）</span>'; }
-  /* v36.48 主页速览预览缓存：有回复存回复，否则存刚发的那句 */
+  /* v36.68 主页速览预览缓存：有回复存回复，否则存刚发的那句 */
   if(state.convId) stashLastMsg(state.convId, (!err&&xBuf)?'ai':'user', (!err&&xBuf)?xBuf:text);
+  /* v36.68 消息时间落缓存：用户消息=发送时刻，AI回复=收到时刻；后端不回时间时历史靠它兜底 */
+  if(state.convId && !err){
+    cacheMsgTime(state.convId, 'user', text, sendAt);
+    if(xBuf) cacheMsgTime(state.convId, 'ai', xBuf, Date.now());
+  }
   }finally{
     state.streaming = false; state.abortCtl = null; setSendState();   /* v36.67 无论怎么退出去路，按钮必复位 */
   }
