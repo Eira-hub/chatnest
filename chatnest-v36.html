@@ -225,7 +225,7 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
    不用 visibility（手机上 backdrop-filter 层从 hidden 切回可见不重绘，表现为 tab 栏消失），只用 opacity+pointer-events。 */
 /* v36.30 dock 悬浮层（iOS 式）：dockbar 脱离布局流钉在底部，消息/卡片可滚到它背后，
    胶囊磨砂玻璃透出的就是底下滚动的页面内容本身——无底色、无托板、无壁纸挖槽 */
-.dockbar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:grid;perspective:900px;-webkit-perspective:900px;align-items:end;padding:0 0 calc(env(safe-area-inset-bottom) + 21px)}
+.dockbar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:grid;perspective:900px;-webkit-perspective:900px;perspective-origin:50% 120%;-webkit-perspective-origin:50% 120%;align-items:end;padding:0 0 calc(env(safe-area-inset-bottom) + 21px)}
 .dockbar.flush{padding-bottom:0}
 /* 主页等无翻折场景退出 3D 上下文：backdrop-filter 采样在 perspective 下会越界泄漏（tab 栏周围一圈跟着滚动的模糊画面） */
 .dockbar.flat{perspective:none;-webkit-perspective:none}
@@ -238,7 +238,9 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
    故删除此前的实底白板，dock 胶囊直接用默认 .dock::before 的透明磨砂玻璃 */
 .dockbar>*{grid-area:1/1;min-width:0;transform-origin:0 50%;will-change:transform,opacity;
   transition:transform .26s cubic-bezier(.32,.9,.28,1),opacity .16s ease}   /* 收起方向：快速回到聊天框 */
-.dockbar .dock{transform:translateX(-46%) rotateY(-76deg);opacity:0;pointer-events:none}
+/* v36.44 下沉感转场：灭点移到 dock 栏下方深处（120%），翻转收缩指向地面 → 沉下去；
+   隐藏态再叠加 translateY 下沉分量，收走 = 往下 + 向左 + 翻进深处 */
+.dockbar .dock{transform:translateY(26px) translateX(-46%) rotateY(-76deg);opacity:0;pointer-events:none}
 .dockbar.open .dock{transform:none;opacity:1;pointer-events:auto;
   transition:transform .55s cubic-bezier(.32,.9,.28,1),opacity .38s ease;transition-delay:0s}
 .dockbar.open .composer{transform:translateX(-30%) rotateY(-66deg);opacity:0;pointer-events:none}
