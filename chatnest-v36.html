@@ -345,6 +345,14 @@ svg{display:block}
 .fs-back:active{transform:scale(.92)}
 .fs-title{font-family:var(--serif);font-size:16px;letter-spacing:.14em;color:var(--text)}
 .fs-ver{margin-left:auto;font-size:10px;color:var(--text3);letter-spacing:.08em}
+/* ═══ v36.56 设置两级：第一屏大类列表（cat-item），类内容 set-cat 隐藏切换 ═══ */
+#setHome{display:flex;flex-direction:column;gap:9px}
+.cat-item{width:100%;display:flex;flex-direction:column;gap:3px;text-align:left;padding:16px 16px 14px;
+  border-radius:14px;border:1px solid var(--line);background:var(--panel3);transition:background .15s}
+.cat-item:active{background:rgba(165,185,220,.16)}
+.cat-item .ct{font-family:var(--serif);font-size:16.5px;letter-spacing:.1em;color:var(--text)}
+.cat-item .cd{font-size:11.5px;color:var(--text3);letter-spacing:.02em}
+.set-cat.hidden{display:none}
 .m-item{width:100%;display:flex;flex-direction:column;gap:2px;text-align:left;padding:13px 14px;border-radius:13px;margin-bottom:6px;border:1px solid transparent;transition:background .15s}
 .m-item:active,.m-item.on{background:var(--panel3);border-color:rgba(165,185,220,.2)}
 .m-item .mt{font-size:14.5px}
@@ -708,9 +716,17 @@ body.has-wall .stars{opacity:.75}
     <button class="fs-back" id="btnSetBack" type="button" aria-label="返回">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
-    <span class="fs-title">设置</span>
-    <span class="fs-ver">v36.55</span>
+    <span class="fs-title" id="fsTitle">设置</span>
+    <span class="fs-ver">v36.56</span>
   </div>
+  <!-- v36.56 设置两级结构：第一屏大类列表，点大类进入类内容 -->
+  <div id="setHome">
+    <button class="cat-item" data-cat="catModel" type="button"><span class="ct">模型与服务</span><span class="cd">接口地址、回复拆条、长期记忆</span></button>
+    <button class="cat-item" data-cat="catLook" type="button"><span class="ct">外观与主题</span><span class="cd">颜色、壁纸、主页背景、字号</span></button>
+    <button class="cat-item" data-cat="catProfile" type="button"><span class="ct">资料与性格</span><span class="cd">头像、人设卡</span></button>
+    <button class="cat-item" data-cat="catMisc" type="button"><span class="ct">通用</span><span class="cd">诊断、关于、退出</span></button>
+  </div>
+  <div class="set-cat hidden" id="catProfile">
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -725,6 +741,8 @@ body.has-wall .stars{opacity:.75}
     <textarea class="set-area" id="personaArea" placeholder="还没写人设"></textarea>
     <button class="set-btn" id="btnSavePersona" style="margin-top:10px">保存人设</button>
   </div>
+  </div><!-- /catProfile -->
+  <div class="set-cat hidden" id="catModel">
   <div class="set-block">
     <div class="set-label">回复拆条</div>
     <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">长=一次一大条，短=拆成几个小气泡。</div>
@@ -733,6 +751,23 @@ body.has-wall .stars{opacity:.75}
       <button class="seg-btn on" data-mode="short" type="button">短</button>
     </div>
   </div>
+  <div class="set-block">
+    <div class="set-label">接口设置</div>
+    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">换后端/搬家时改这里，页面不用重发。</div>
+    <input class="set-input" id="apiBaseInput" placeholder="API 地址，不填用默认" autocomplete="off" spellcheck="false">
+    <input class="set-input" id="apiTokenInput" type="password" placeholder="访问令牌，不填用现在的" autocomplete="off" style="margin-top:10px">
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button class="set-btn" id="btnSaveApi" style="flex:1.4">保存接口</button>
+      <button class="set-btn" id="btnApiReset" style="flex:1">恢复默认</button>
+    </div>
+  </div>
+  <div class="set-block">
+    <div class="set-label">长期记忆（后端自动生成，可手动修改）</div>
+    <textarea class="set-area" id="memoryArea" placeholder="还没有记忆摘要"></textarea>
+    <button class="set-btn" id="btnSaveMemory" style="margin-top:10px">保存记忆</button>
+  </div>
+  </div><!-- /catModel -->
+  <div class="set-cat hidden" id="catLook">
   <div class="set-block">
     <div class="set-label">外观</div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -783,27 +818,6 @@ body.has-wall .stars{opacity:.75}
     <div class="wall-row" style="margin-top:14px"><span class="wl-lab">他想了想</span><button class="set-btn" id="btnThink" style="padding:5px 14px;font-size:12px">显示中</button></div>
   </div>
   <div class="set-block">
-    <div class="set-label">拖动诊断</div>
-    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">如果悬浮球拖不动，开启后按住球拖一下，屏幕会弹出事件序列（PD/DRAG/UP/CANCEL），下方会记录最近一次，照着打字发我即可。</div>
-    <button class="set-btn" id="btnDockDbg">开启诊断</button>
-    <div id="dockDbgLog" style="font-size:11px;color:var(--text2);margin-top:8px;word-break:break-all;line-height:1.6"></div>
-  </div>
-  <div class="set-block">
-    <div class="set-label">接口设置</div>
-    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">换后端/搬家时改这里，页面不用重发。</div>
-    <input class="set-input" id="apiBaseInput" placeholder="API 地址，不填用默认" autocomplete="off" spellcheck="false">
-    <input class="set-input" id="apiTokenInput" type="password" placeholder="访问令牌，不填用现在的" autocomplete="off" style="margin-top:10px">
-    <div style="display:flex;gap:10px;margin-top:10px">
-      <button class="set-btn" id="btnSaveApi" style="flex:1.4">保存接口</button>
-      <button class="set-btn" id="btnApiReset" style="flex:1">恢复默认</button>
-    </div>
-  </div>
-  <div class="set-block">
-    <div class="set-label">长期记忆（后端自动生成，可手动修改）</div>
-    <textarea class="set-area" id="memoryArea" placeholder="还没有记忆摘要"></textarea>
-    <button class="set-btn" id="btnSaveMemory" style="margin-top:10px">保存记忆</button>
-  </div>
-  <div class="set-block">
     <div class="set-label">壁纸</div>
     <div class="wall-grid" id="wallGrid"></div>
     <div class="wall-row"><span class="wl-lab">压暗</span><input type="range" id="wallDim" min="0" max="80" value="0"></div>
@@ -814,6 +828,14 @@ body.has-wall .stars{opacity:.75}
     </div>
     <input type="file" id="wallFile" accept="image/*" style="display:none">
   </div>
+  </div><!-- /catLook -->
+  <div class="set-cat hidden" id="catMisc">
+  <div class="set-block">
+    <div class="set-label">拖动诊断</div>
+    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">如果悬浮球拖不动，开启后按住球拖一下，屏幕会弹出事件序列（PD/DRAG/UP/CANCEL），下方会记录最近一次，照着打字发我即可。</div>
+    <button class="set-btn" id="btnDockDbg">开启诊断</button>
+    <div id="dockDbgLog" style="font-size:11px;color:var(--text2);margin-top:8px;word-break:break-all;line-height:1.6"></div>
+  </div>
   <div class="set-block">
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
@@ -821,6 +843,7 @@ body.has-wall .stars{opacity:.75}
     </div>
   </div>
   <button class="set-btn warn" id="btnLogout">退出登录</button>
+  </div><!-- /catMisc -->
 </div>
 
 <!-- v34 消息长按操作 -->
@@ -1638,9 +1661,25 @@ document.addEventListener('click', (e)=>{
 });
 
 /* ───────── 设置 sheet ───────── */
-/* v36.49 入口改为主页右上角悬浮设置按钮；v36.50 设置页为全屏界面，返回按钮关闭 */
-$('btnSetBack').addEventListener('click', closeSheets);
+/* v36.49 入口改为主页右上角悬浮设置按钮；v36.50 全屏界面；v36.56 两级：大类列表↔类内容，返回按钮跟随层级 */
+const SET_CATS=[['catModel','模型与服务'],['catLook','外观与主题'],['catProfile','资料与性格'],['catMisc','通用']];
+function setCatHome(){
+  $('setHome').classList.remove('hidden');
+  SET_CATS.forEach(c=>$(c[0]).classList.add('hidden'));
+  $('fsTitle').textContent='设置';
+}
+function openCat(id){
+  $('setHome').classList.add('hidden');
+  SET_CATS.forEach(c=>$(c[0]).classList.toggle('hidden', c[0]!==id));
+  $('fsTitle').textContent=(SET_CATS.find(c=>c[0]===id)||['','设置'])[1];
+}
+document.querySelectorAll('.cat-item').forEach(b=>b.addEventListener('click',()=>openCat(b.dataset.cat)));
+$('btnSetBack').addEventListener('click', ()=>{
+  if($('setHome').classList.contains('hidden')) setCatHome();  /* 在类内→回大类列表 */
+  else closeSheets();                                          /* 在第一屏→关设置页 */
+});
 $('hmSettings').addEventListener('click', async ()=>{
+  setCatHome();  /* 每次打开重置到第一屏 */
   $('memoryArea').value = '加载中…';
   $('personaArea').value = '加载中…';
   $('apiBaseInput').value = (localStorage.getItem(LS.apiBase) || '').trim();
