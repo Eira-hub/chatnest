@@ -105,56 +105,11 @@ svg{display:block}
 /* ───────── 主框架 ───────── */
 #app{position:fixed;inset:0;z-index:1;display:flex;height:100vh;height:100dvh;overflow:hidden}
 #main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;z-index:1}
-
-/* ───────── 侧栏 ───────── */
-#sidebar{width:min(78vw,300px);flex-shrink:0;background:var(--panel);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
-  border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;z-index:3}
-.sb-head{padding:calc(env(safe-area-inset-top) + 18px) 16px 12px}
-.sb-brand{display:flex;align-items:center;gap:8px;padding:0 4px 14px}
-.sb-brand .dot{width:7px;height:7px;border-radius:50%;background:var(--moon);box-shadow:0 0 8px rgba(227,200,158,.8)}
-.sb-brand span{font-family:var(--serif);font-size:15px;letter-spacing:.14em;color:var(--text2)}
-.btn-new{width:100%;height:44px;border-radius:13px;background:var(--panel3);border:1px solid rgba(165,185,220,.22);
-  color:var(--accent2);font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:transform .15s var(--ease),background .2s}
-.btn-new:active{transform:scale(.97);background:rgba(255,255,255,.11)}
-#sbList{flex:1;overflow-y:auto;padding:6px 10px 10px;min-height:0}
-.sb-date{padding:12px 8px 4px;font-size:11px;color:var(--text3);letter-spacing:.18em}
-.sb-item{position:relative;border-radius:12px;padding:10px 12px;margin-bottom:2px;display:flex;align-items:center;gap:8px;
-  cursor:pointer;transition:background .15s}
-.sb-item:active{background:var(--panel2)}
-.sb-item.on{background:var(--panel3)}
-.sb-item .t{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-item .time{font-size:11px;color:var(--text3);flex-shrink:0}
-.sb-item .starred{color:var(--moon);flex-shrink:0}
-.sb-item .ops{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:none;gap:2px;
-  background:linear-gradient(90deg,transparent,rgba(18,24,48,.95) 22%);padding-left:18px}
-.sb-item .ops button{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:var(--text2)}
-.sb-item .ops button:active{background:rgba(255,255,255,.1)}
-.sb-item .ops .del:active{color:var(--danger)}
-.sb-item:hover .ops,.sb-item.on .ops{display:flex}
-.sb-item:active .ops{display:flex}
-.sb-foot{padding:10px 16px calc(env(safe-area-inset-bottom) + 14px);border-top:1px solid var(--line);display:flex;gap:8px}
-.sb-foot button{flex:1;height:38px;border-radius:11px;font-size:13px;color:var(--text2);display:flex;align-items:center;justify-content:center;gap:6px}
-.sb-foot button:active{background:var(--panel2);color:var(--text)}
 #scrim{position:fixed;inset:0;z-index:2;background:rgba(4,7,16,.55);opacity:0;pointer-events:none;transition:opacity .25s}
 #scrim.on{opacity:1;pointer-events:auto}
 
-/* ───────── 顶栏 ───────── */
-#topbar{flex-shrink:0;height:calc(env(safe-area-inset-top) + 54px);padding:env(safe-area-inset-top) 12px 0;
-  display:flex;align-items:center;gap:6px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  background:var(--panel-top);border-bottom:1px solid var(--line);z-index:2;transition:background .3s,backdrop-filter .3s}
-body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:linear-gradient(180deg,rgba(5,5,8,.78),rgba(5,5,8,0));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:none}
-.tb-btn{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--text2);
-  transition:background .15s,color .15s;flex-shrink:0}
-.tb-btn:active{background:var(--panel3);color:var(--text)}
-#btnModel{height:32px;padding:0 12px;border-radius:var(--r-full);border:1px solid var(--line);display:flex;align-items:center;gap:5px;
-  font-size:12.5px;color:var(--text2);max-width:46vw;flex-shrink:0}
-#btnModel span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#convTitle{flex:1;min-width:0;text-align:center;font-size:14px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--serif);letter-spacing:.04em}
-.tb-right{width:40px;flex-shrink:0}
-
 /* ───────── 消息流 ───────── */
-#stream{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 14px calc(116px + env(safe-area-inset-bottom));min-height:0;scroll-behavior:auto}
+#stream{flex:1;overflow-y:auto;overflow-x:hidden;padding:calc(env(safe-area-inset-top) + 14px) 14px calc(116px + env(safe-area-inset-bottom));min-height:0;scroll-behavior:auto}
 .stream-inner{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .load-more{align-self:center;font-size:12px;color:var(--text3);padding:6px 16px;border-radius:var(--r-full);border:1px solid var(--line)}
 .load-more:active{color:var(--text2)}
@@ -399,16 +354,7 @@ body.fs #topbar{position:absolute;left:0;right:0;top:0;z-index:6;background:line
 
 /* 桌面宽屏 */
 @media (min-width:820px){
-  #sidebar{position:relative;left:0!important;transform:none!important;box-shadow:none}
   #scrim{display:none}
-  #btnMenu{display:none}
-  .sb-item .ops{display:none}
-  .sb-item:hover .ops{display:flex}
-}
-/* 移动端侧栏抽屉 */
-@media (max-width:819px){
-  #sidebar{position:fixed;top:0;bottom:0;left:0;transform:translateX(-102%);transition:transform .3s var(--ease)}
-  #sidebar.open{transform:none;box-shadow:24px 0 60px rgba(0,0,0,.45)}
 }
 /* ───────── 壁纸 & 全屏 v14 ───────── */
 /* v36.24：高度钉在 100vh（移动端=地址栏收起的大视口）而非 inset:0——地址栏伸缩时视口高度变化不再触发重定位重绘，
@@ -437,7 +383,12 @@ body.has-wall .stars{opacity:.75}
 .wall-row input[type=color]::-webkit-color-swatch{border:none;border-radius:6px}
 .tb-btn.on{color:var(--accent2);background:var(--panel3)}
 /* ═══ v33 主页 ═══ */
-#viewHome{flex:1;overflow-y:auto;--hm-g1:#2B3A67;--hm-g2:#0F1B3D;--hm-fg:#FFF;--hm-ts:0 1px 10px rgba(0,0,0,.22);color:var(--hm-fg)}
+#viewHome{flex:1;overflow-y:auto;position:relative;--hm-g1:#2B3A67;--hm-g2:#0F1B3D;--hm-fg:#FFF;--hm-ts:0 1px 10px rgba(0,0,0,.22);color:var(--hm-fg)}
+/* v36.49 主页悬浮设置：圆形旋钮，无底板无背景，absolute 随内容滚动，浮于卡片之上 */
+#hmSettings{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:15px;width:42px;height:42px;
+  display:flex;align-items:center;justify-content:center;border-radius:50%;z-index:30;
+  color:var(--hm-fg);opacity:.88;background:none;border:0;padding:0;cursor:pointer;text-shadow:var(--hm-ts)}
+#hmSettings:active{transform:scale(.9);opacity:1}
 #viewHome.hm-light{--hm-fg:#2A2E3A;--hm-ts:none}
 #viewHome .hm-hero{background:linear-gradient(180deg,var(--hm-g1) 0%,var(--hm-g2) 62%,transparent 100%);min-height:100%;display:flex;flex-direction:column;padding:clamp(30px,7vh,54px) 18px 0;text-align:center}
 /* 开了背景图时：头像区下移到背景图渐隐区之下，避免叠图发白 */
@@ -585,38 +536,9 @@ body.has-wall .stars{opacity:.75}
 
 <!-- 主界面 -->
 <div id="app" class="hidden">
-  <aside id="sidebar">
-    <div class="sb-head">
-      <div class="sb-brand"><i class="dot"></i><span>星夜小筑</span></div>
-      <button class="btn-new" id="btnNew">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        新对话
-      </button>
-    </div>
-    <div id="sbList"></div>
-    <div class="sb-foot">
-      <button id="btnSettings">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        设置
-      </button>
-    </div>
-  </aside>
   <div id="scrim"></div>
 
   <main id="main">
-    <header id="topbar">
-      <button class="tb-btn" id="btnMenu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
-      <button id="btnModel"><span id="modelLabel">…</span>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-      </button>
-      <span id="convTitle"></span>
-      <button class="tb-btn" id="btnFull" aria-label="全屏">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-      </button>
-    </header>
-
     <div id="stream"><div class="stream-inner" id="streamInner"></div></div>
     <button id="btnBottom" aria-label="回到底部">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
@@ -631,6 +553,14 @@ body.has-wall .stars{opacity:.75}
 <!-- ═══ v33 主页（main 一级，勿入 composer）═══ -->
     <!-- ═══ v33 主页 ═══ -->
 <section id="viewHome" class="hidden">
+  <!-- v36.49 主页悬浮设置：圆形旋钮图标，无底板，absolute 随主页内容一起滚 -->
+  <button id="hmSettings" type="button" aria-label="设置">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+      <circle cx="12" cy="12" r="8.4"/>
+      <circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/>
+      <path d="M12 3.6v2.6"/>
+    </svg>
+  </button>
   <div class="hm-hero">
     <div class="hm-pair">
       <div class="hm-col">
@@ -750,7 +680,7 @@ body.has-wall .stars{opacity:.75}
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="grip"></div>
-  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.36 · composer-solid</span></h3>
+  <h3>设置 <span style="font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.05em">v36.49 · composer-solid</span></h3>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
     <div style="display:flex;gap:22px;align-items:center">
@@ -996,73 +926,25 @@ async function loadSessions(){
   try{
     const r = await api('/api/sessions');
     state.sessions = r.sessions || [];
-    renderSidebar();
   }catch(e){ /* 静默 */ }
-}
-function renderSidebar(){
-  const box = $('sbList'); box.innerHTML = '';
-  const list = state.sessions.slice();
-  list.sort((a,b)=> (b.starred?1:0)-(a.starred?1:0) || String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
-  if(!list.length){
-    box.innerHTML = '<div class="sb-date" style="padding:18px 8px">还没有对话，点上面「新对话」开始</div>';
-    return;
-  }
-  for(const s of list){
-    const el = document.createElement('div');
-    el.className = 'sb-item' + (s.conv_id===state.convId ? ' on':'');
-    el.innerHTML =
-      (s.starred ? '<svg class="starred" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>' : '') +
-      '<span class="t">'+esc(s.title||'新对话')+'</span>' +
-      '<span class="time">'+esc(relTime(s.updated_at))+'</span>' +
-      '<span class="ops">' +
-        '<button class="ren" aria-label="重命名"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>' +
-        '<button class="del" aria-label="删除"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>' +
-      '</span>';
-    el.addEventListener('click', e=>{
-      if(e.target.closest('.ops')) return;
-      openConv(s.conv_id); closeSidebar();
-    });
-    el.querySelector('.ren').addEventListener('click', async ()=>{
-      const t = prompt('重命名这段对话', s.title||'');
-      if(t===null) return;
-      try{ await api('/api/sessions/'+s.conv_id+'/title',{method:'PATCH',body:{title:t}}); s.title = t.trim()||'新对话'; renderSidebar(); if(s.conv_id===state.convId) $('convTitle').textContent = s.title; }catch(e){ toast(e.message); }
-    });
-    el.querySelector('.del').addEventListener('click', async e=>{
-      e.stopPropagation();
-      if(!confirm('删除「'+(s.title||'新对话')+'」？聊天记录会一起删掉')) return;
-      try{
-        await api('/api/sessions/'+s.conv_id,{method:'DELETE'});
-        state.sessions = state.sessions.filter(x=>x.conv_id!==s.conv_id);
-        if(s.conv_id===state.convId) newConv();
-        renderSidebar();
-        toast('已删除');
-      }catch(ex){ toast(ex.message); }
-    });
-    box.appendChild(el);
-  }
 }
 function newConv(){
   if(window.syncChatView) window.syncChatView();
   state.convId = '';
   localStorage.removeItem(LS.conv);
-  $('convTitle').textContent = '';
   $('streamInner').innerHTML = '';
   const sp = $('splash');
   sp.classList.remove('hidden');
   $('splashLine').textContent = state.splash || '今晚月色不错';
-  renderSidebar();
 }
 async function openConv(id, opt){
   opt = opt||{};
   if(window.syncChatView) window.syncChatView();
   state.convId = id;
   localStorage.setItem(LS.conv, id);
-  const s = state.sessions.find(x=>x.conv_id===id);
-  $('convTitle').textContent = s ? (s.title||'新对话') : '新对话';
   $('splash').classList.add('hidden');
   const inner = $('streamInner');
   inner.innerHTML = '';
-  if(!opt.silent) renderSidebar();
   try{
     const r = await api('/api/sessions/'+id+'/messages?limit=40');
     const msgs = r.messages || [];
@@ -1601,13 +1483,14 @@ function modelIconSvg(id){
 function renderModelIcon(){ const el=$('cModelIcon'); if(el) el.innerHTML = modelIconSvg(state.model); }
 function renderModelLabel(){
   const m = state.models.find(x=>x.id===state.model);
-  $('modelLabel').textContent = m ? (m.label||m.id) : '模型';
+  const ml=$('modelLabel');
+  if(ml) ml.textContent = m ? (m.label||m.id) : '模型';
   renderModelIcon();
 }
 function openSheet(id){ $(id).classList.add('on'); $('scrim').classList.add('on'); }
 function closeSheets(){
   $('modelSheet').classList.remove('on'); $('settingsSheet').classList.remove('on'); $('ctxSheet').classList.remove('on');
-  if(!$('sidebar').classList.contains('open')) $('scrim').classList.remove('on');
+  $('scrim').classList.remove('on');
 }
 
 /* ═════════ v34 交互增强 ═════════ */
@@ -1696,7 +1579,6 @@ function openModelSheet(){
   }
   openSheet('modelSheet');
 }
-$('btnModel').addEventListener('click', openModelSheet);
 $('btnCModel').addEventListener('click', openModelSheet);
 // v31 加号面板（背景直通屏幕底）
 const plusPanel=$('plusPanel');
@@ -1726,14 +1608,18 @@ document.addEventListener('click', (e)=>{
 });
 
 /* ───────── 设置 sheet ───────── */
-$('btnSettings').addEventListener('click', async ()=>{
-  closeSidebar();
+/* v36.49 入口改为主页右上角悬浮设置按钮 */
+$('hmSettings').addEventListener('click', async ()=>{
   $('memoryArea').value = '加载中…';
   $('personaArea').value = '加载中…';
   $('apiBaseInput').value = (localStorage.getItem(LS.apiBase) || '').trim();
   $('apiTokenInput').value = (localStorage.getItem(LS.apiToken) || '').trim();
   refreshAvPreviews();
   openSheet('settingsSheet');
+  try{   /* 打开设置面板时刷新拖动诊断日志显示（原侧栏 btnMenu 逻辑迁入） */
+    const el=document.getElementById('dockDbgLog');
+    if(el){ const l=localStorage.getItem('cn_dock_dbg_log')||''; el.textContent=l?('最近一次：'+l):''; }
+  }catch(e){}
   try{
     const r = await api('/api/memory-summary');
     const t = typeof r === 'string' ? r : (r.text || r.summary || (r.content || JSON.stringify(r, null, 1)));
@@ -1967,21 +1853,9 @@ LS.think='cn_think';
 $('btnThink').addEventListener('click', ()=>{ const on=thinkOn(); localStorage.setItem(LS.think, on?'0':'1'); $('btnThink').textContent=on?'已隐藏':'显示中'; toast(on?'藏起来了':'好，给你看'); });
 $('wallDim').addEventListener('input', ()=>{ const c=wallConf(); c.dim=+$('wallDim').value; wallSave(c); $('wallpaper').querySelector('.dim').style.opacity=c.dim/100; });
 $('wallBlur').addEventListener('input', ()=>{ const c=wallConf(); c.blur=+$('wallBlur').value; wallSave(c); if(c.mode&&c.mode!=='default') wallApply(); });   /* v36.25：blur 跨 0 切换要在 body 背景/滤镜两条路径间整体切换 */
-function toggleFull(){ document.body.classList.toggle('fs'); $('btnFull').classList.toggle('on', document.body.classList.contains('fs')); }
-$('btnFull').addEventListener('click', toggleFull);
 
-/* ───────── 侧栏 & 遮罩 ───────── */
-function openSidebar(){ $('sidebar').classList.add('open'); $('scrim').classList.add('on'); }
-function closeSidebar(){ $('sidebar').classList.remove('open'); if(!$('modelSheet').classList.contains('on') && !$('settingsSheet').classList.contains('on') && !$('ctxSheet').classList.contains('on')) $('scrim').classList.remove('on'); }
-$('btnMenu').addEventListener('click', openSidebar);
-/* 打开设置面板时刷新拖动诊断日志显示 */
-$('btnMenu').addEventListener('click',()=>{ try{
-  const el=document.getElementById('dockDbgLog'); if(!el) return;
-  const l=localStorage.getItem('cn_dock_dbg_log')||'';
-  el.textContent=l?('最近一次：'+l):'';
-}catch(e){} });
-$('btnNew').addEventListener('click', ()=>{ newConv(); closeSidebar(); });
-$('scrim').addEventListener('click', ()=>{ closeSheets(); closeSidebar(); });
+/* ───────── 遮罩 ───────── */
+$('scrim').addEventListener('click', ()=>{ closeSheets(); });
 
 /* ───────── init ───────── */
 (function init(){
