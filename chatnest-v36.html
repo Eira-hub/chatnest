@@ -2127,7 +2127,24 @@ function syncDock(v){
 window.syncChatView=function(){ setDockFlat(false); syncDock('chat'); showHome(false); };
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
-function setDock(open){ if(dockbar) dockbar.classList.toggle('open',!!open); }
+/* ── v36.45 展开=从上方沉落到位：收走下沉、展开落下，同一下沉基调（不再从底部深处往上翻）；
+   WAAPI 期间禁 CSS transition 防双重过渡跳变，落定后交还 CSS ── */
+function setDock(open){
+  if(!dockbar)return;
+  dockbar.classList.toggle('open',!!open);
+  if(open){
+    const dk=dockbar.querySelector('.dock');
+    if(!dk)return;
+    try{
+      dk.style.transition='none';
+      const a=dk.animate([
+        {transform:'translateY(-24px) rotateY(-34deg)',opacity:0},
+        {transform:'none',opacity:1}
+      ],{duration:420,easing:'cubic-bezier(.22,.7,.3,1)',fill:'forwards'});
+      a.onfinish=()=>{ try{a.cancel();}catch(e){} dk.style.transition=''; };
+    }catch(e){ try{dk.style.transition='';}catch(err){} }
+  }
+}
 /* flat=主页/心潮/待办/探索等无翻折页（340ms 等动画结束后退平，治 WebView 3D 层越界泄漏）；
    聊天页（收起态+翻折）绝不能带 flat——flat 会把 composer 整体摘出渲染层，输入框会消失 */
 let setDockFlat=()=>{};
