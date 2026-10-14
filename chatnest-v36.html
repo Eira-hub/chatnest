@@ -2129,10 +2129,12 @@ window.syncChatView=function(){ setDockFlat(false); syncDock('chat'); showHome(f
 const dockbar=document.getElementById('dockbar');
 /* ── v36.46 展开=纯垂直沉落：任何 rotateY 在下方灭点的透视里右缘都会从深处向上浮出（上升感根源），
    展开一律无旋转、纯 translateY 落下；收走保持下沉翻走 ── */
+/* ── v36.47 沉落动画只在「隐藏→显示」时播：已显示的切页跳过，治换页时 tab 栏往上弹一下 ── */
 function setDock(open){
   if(!dockbar)return;
+  const wasOpen=dockbar.classList.contains('open');
   dockbar.classList.toggle('open',!!open);
-  if(open){
+  if(open&&!wasOpen){
     const dk=dockbar.querySelector('.dock');
     if(!dk)return;
     try{
