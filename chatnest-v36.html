@@ -731,7 +731,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.70</span>
+    <span class="fs-ver">v36.71</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1072,7 +1072,7 @@ function md(src){
       out += mdInline(p);
     }
   });
-  return out;
+  return out.replace(/(?:<br\s*\/?>)+\s*$/i,'');   /* v36.71 剥掉渲染尾巴的空行，避免气泡尾部留白 */
 }
 /* v34 行内格式：新增图片语法，链接/加粗/斜体/行内代码保持原有行为 */
 function inlineFmt(line){
@@ -1314,6 +1314,7 @@ document.querySelectorAll('#segSplit .seg-btn').forEach(b=>b.addEventListener('c
 
 function aiMsgNode(chunk, o){
   o=o||{};
+  chunk = String(chunk==null?'':chunk).replace(/^[\s\n]+|[\s\n]+$/g,'');   /* v36.71 掐头去尾空白，两个字的消息气泡就只有两个字的宽度 */
   const el=document.createElement('div');
   el.className='msg ai'+(o.cont?' cont':'');
   let inner='';
@@ -1574,6 +1575,8 @@ async function send(){
   const myCtl = new AbortController();   /* v36.70 每条消息独立请求，可并行发送 */
   let tBuf = '', xBuf = '', had = false, err = null;
   let sDone = 0, tDone = false;   /* v36.68 即时拆条：已完结段落数 / 思考串是否已挂到第一段 */
+  let finished = false;           /* v36.71 流是否已结束（定时器弹段用） */
+  const myLive = [];              /* v36.71 本条流已弹出的节点，结束时移除后统一重渲染，防消息发两遍 */
   const bodyEl = ab.querySelector('.body');
   try{
     /* v36.65 语音提示与生图提示按需叠加（都以[[sys:...]]结尾，显示时会被剥掉） */
@@ -1614,18 +1617,26 @@ async function send(){
           const chunks = splitAiText(xBuf);
           const fresh = chunks.length - 1;
           if(fresh > sDone){
-            const df = document.createDocumentFragment();
+            let delay = 0;
             for(let k = sDone; k < fresh; k++){
               const segsK = parseImgSegs(chunks[k]);
               const kText = segsK.filter(s=>s.type==='text').map(s=>s.text).join('\n').trim();
               if(kText){
-                df.appendChild(aiMsgNode(kText,{cont:false, thinking:(!tDone? tBuf:''), mtime:fmtClock(), raw:xBuf}));
+                (function(txt, first){
+                  setTimeout(function(){   /* v36.71 像真人发消息：一条一条蹦，条与条之间留点间隔 */
+                    if(finished) return;
+                    const n = aiMsgNode(txt,{cont:false, thinking:(first? tBuf:''), mtime:fmtClock(), raw:xBuf});
+                    n.setAttribute('data-live','1');
+                    myLive.push(n);
+                    if(ab.parentNode) ab.parentNode.insertBefore(n, ab);
+                    scrollToBottom();
+                  }, delay);
+                  delay += 420;
+                })(kText, !tDone);
                 tDone = true;
               }
             }
-            if(df.childNodes.length && ab.parentNode) ab.parentNode.insertBefore(df, ab);
             sDone = fresh;
-            scrollToBottom();
           }
         }else if(ev==='error'){
           err = obj.message||'出错了';
@@ -1644,6 +1655,8 @@ async function send(){
     ab.dataset.raw = xBuf;   /* v34 流式气泡也可长按 */
     bodyEl.innerHTML = md(xBuf);
     if(!err){
+      myLive.forEach(n=>{ if(n.parentNode) n.parentNode.removeChild(n); });   /* v36.71 先移除流式期间弹出的段落，再统一重渲染，否则会发两遍 */
+      myLive.length = 0;
       const vText=extractVoice(xBuf);
       const bodyText=vText!==null?vText:xBuf.trim();
       const frag=document.createDocumentFragment();
@@ -1691,6 +1704,7 @@ async function send(){
     if(xBuf) cacheMsgTime(state.convId, 'ai', xBuf, Date.now());
   }
   }finally{
+    finished = true;   /* v36.71 未弹完的定时器段不再弹出，由结束渲染统一补齐 */
     setSendState();   /* v36.70 流结束刷新按钮可用性（不再有全局互斥） */
   }
   scrollToBottom();
