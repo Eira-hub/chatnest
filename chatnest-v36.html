@@ -2127,8 +2127,8 @@ function syncDock(v){
 window.syncChatView=function(){ setDockFlat(false); syncDock('chat'); showHome(false); };
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
-/* ── v36.45 展开=从上方沉落到位：收走下沉、展开落下，同一下沉基调（不再从底部深处往上翻）；
-   WAAPI 期间禁 CSS transition 防双重过渡跳变，落定后交还 CSS ── */
+/* ── v36.46 展开=纯垂直沉落：任何 rotateY 在下方灭点的透视里右缘都会从深处向上浮出（上升感根源），
+   展开一律无旋转、纯 translateY 落下；收走保持下沉翻走 ── */
 function setDock(open){
   if(!dockbar)return;
   dockbar.classList.toggle('open',!!open);
@@ -2138,9 +2138,9 @@ function setDock(open){
     try{
       dk.style.transition='none';
       const a=dk.animate([
-        {transform:'translateY(-24px) rotateY(-34deg)',opacity:0},
+        {transform:'translateY(-26px)',opacity:0},
         {transform:'none',opacity:1}
-      ],{duration:420,easing:'cubic-bezier(.22,.7,.3,1)',fill:'forwards'});
+      ],{duration:300,easing:'cubic-bezier(.22,.7,.3,1)',fill:'forwards'});
       a.onfinish=()=>{ try{a.cancel();}catch(e){} dk.style.transition=''; };
     }catch(e){ try{dk.style.transition='';}catch(err){} }
   }
