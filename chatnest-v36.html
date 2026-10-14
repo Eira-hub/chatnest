@@ -731,7 +731,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.68b</span>
+    <span class="fs-ver">v36.69</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1568,14 +1568,14 @@ async function send(){
   const ab = document.createElement('div');
   ab.className = 'msg ai';
   ab.innerHTML = '<div class="avatar">'+avatarSvg()+'</div><div class="col"><div class="bubble"><div class="typing"><i></i><i></i><i></i></div><div class="body" style="display:none"></div></div></div>';
-  inner.appendChild(ab); scrollToBottom(true);
+  ab.style.display = 'none';   /* v36.69 思考/生成期间不显示任何占位气泡，段落写完才整条弹出 */
+  inner.appendChild(ab);
 
   state.streaming = true; setSendState();
   state.abortCtl = new AbortController();
   let tBuf = '', xBuf = '', had = false, err = null;
   let sDone = 0, tDone = false;   /* v36.68 即时拆条：已完结段落数 / 思考串是否已挂到第一段 */
   const bodyEl = ab.querySelector('.body');
-  const thinkEl = ()=>{ let d = ab.querySelector('.think'); if(!d){ d=document.createElement('details'); d.className='think'; d.innerHTML=THINK_HEAD+'<div class="tk-body"></div>'; ab.querySelector('.col').insertBefore(d, ab.querySelector('.bubble')); } return d; };
   try{
     /* v36.65 语音提示与生图提示按需叠加（都以[[sys:...]]结尾，显示时会被剥掉） */
     let msgOut = text;
@@ -1607,12 +1607,11 @@ async function send(){
         if(ev==='conversation' && obj.conversation_id){
           state.convId = obj.conversation_id; localStorage.setItem(LS.conv, state.convId);
         }else if(ev==='thinking'){
-          tBuf += obj.text||'';
-          if(thinkOn() && !had){ const d = thinkEl(); d.querySelector('.tk-body').textContent = tBuf; ab.querySelector('.typing').style.display='none'; bodyEl.style.display=''; had=true; scrollToBottom(); }
+          tBuf += obj.text||'';   /* v36.69 思考中不显示任何东西，思考内容在回复弹出时收进折叠条 */
         }else if(ev==='delta'){
           xBuf += obj.text||'';
-          if(!had){ ab.querySelector('.typing').style.display='none'; bodyEl.style.display=''; had=true; }
-          /* v36.68 即时拆条：除尾段外的段落一出现就落地成完整气泡（头像+时间），尾段在原气泡里实时流入 */
+          had = true;
+          /* v36.69 不打字机：尾段只缓冲不显示；前面段落一写完，立刻整条弹出（头像+时间），像一条一条发消息 */
           const chunks = splitAiText(xBuf);
           const fresh = chunks.length - 1;
           if(fresh > sDone){
@@ -1627,12 +1626,8 @@ async function send(){
             }
             if(df.childNodes.length && ab.parentNode) ab.parentNode.insertBefore(df, ab);
             sDone = fresh;
+            scrollToBottom();
           }
-          /* 尾段显示：剥掉已闭合/未闭合的生图标记（生图在结束时统一处理），标记没闭完时也不露出来 */
-          const cur = (chunks[sDone]||'').replace(IMG_RE,'').replace(/<IMG>[\s\S]*$/,'');
-          bodyEl.innerHTML = md(cur);
-          ab.style.display = (cur.trim()||sDone===0) ? '' : 'none';   /* 尾段只剩生图标记时藏住空气泡 */
-          scrollToBottom();
         }else if(ev==='error'){
           err = obj.message||'出错了';
         }
@@ -1643,6 +1638,7 @@ async function send(){
   }
   ab.querySelector('.typing') && (ab.querySelector('.typing').style.display='none');
   bodyEl.style.display='';
+  if(err || (!xBuf && !tBuf)) ab.style.display='';   /* v36.69 只有出错或空回复才把兜底气泡露出来 */
   /* v36.67 渲染段包 try/finally：任何异常都不再卡住发送按钮（streaming 必复位） */
   try{
   if(xBuf){
@@ -1655,7 +1651,7 @@ async function send(){
       /* v36.66 微信式：AI 回复每段都是完整消息（头像+时间+段间间隔）；<IMG>段无占位，画完直接出图 */
       const segs=parseImgSegs(bodyText);
       const plainText=segs.filter(s=>s.type==='text').map(s=>s.text).join('\n');
-      const hasText=segs.some(s=>s.type==='text' && s.text);
+      const hasText=segs.some(s=>s.type==='text' && s.text) || !!vText;   /* v36.69 纯语音回复也按有文字处理，避免折叠进隐藏气泡 */
       const clock=fmtClock();
       let first=true;
       segs.forEach(s=>{
