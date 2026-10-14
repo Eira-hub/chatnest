@@ -731,7 +731,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.66</span>
+    <span class="fs-ver">v36.67</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1550,7 +1550,7 @@ async function send(){
       body: { message: msgOut, conversation_id: state.convId||null, model: state.model||null, extended:true },
       signal: state.abortCtl.signal
     });
-    if(res.status===401){ logout(); return; }
+    if(res.status===401){ state.streaming=false; state.abortCtl=null; setSendState(); logout(); return; }
     if(!res.ok){ let m='请求失败 '+res.status; try{const j=await res.json(); if(j.detail)m=j.detail;}catch(e){} throw new Error(m); }
     const reader = res.body.getReader(), dec = new TextDecoder();
     let buf = '';
@@ -1587,6 +1587,8 @@ async function send(){
   }
   ab.querySelector('.typing') && (ab.querySelector('.typing').style.display='none');
   bodyEl.style.display='';
+  /* v36.67 渲染段包 try/finally：任何异常都不再卡住发送按钮（streaming 必复位） */
+  try{
   if(xBuf){
     ab.dataset.raw = xBuf;   /* v34 流式气泡也可长按 */
     bodyEl.innerHTML = md(xBuf);
@@ -1597,6 +1599,7 @@ async function send(){
       /* v36.66 微信式：AI 回复每段都是完整消息（头像+时间+段间间隔）；<IMG>段无占位，画完直接出图 */
       const segs=parseImgSegs(bodyText);
       const plainText=segs.filter(s=>s.type==='text').map(s=>s.text).join('\n');
+      const hasText=segs.some(s=>s.type==='text' && s.text);
       const clock=fmtClock();
       let first=true;
       segs.forEach(s=>{
@@ -1609,15 +1612,19 @@ async function send(){
         }else{
           first=false;
           genImage(s.prompt).then(url=>{
-            $('streamInner').appendChild(imgDoneNode(url));
+            const node=imgDoneNode(url);
+            /* v36.67 纯图回复：打字动画气泡保留到出图，图片直接替换它（不闪空） */
+            if(!hasText && ab.isConnected) ab.replaceWith(node);
+            else $('streamInner').appendChild(node);
             scrollToBottom();
           }).catch(e=>{
+            if(!hasText && ab.isConnected) ab.remove();
             toast('画失败：'+(e.message||String(e)), 2600);
           });
         }
       });
       if(vText) frag.appendChild(voiceMsgNode(vText));
-      ab.replaceWith(frag);
+      if(hasText) ab.replaceWith(frag);   /* 纯图时保留 typing 气泡等图，避免消息消失 */
     }else{
       const vb=document.createElement('div'); vb.innerHTML=makeVoiceBar(xBuf.trim()); ab.querySelector('.bubble').appendChild(vb.firstChild);
     }
@@ -1627,7 +1634,9 @@ async function send(){
   if(!xBuf && !tBuf && !err){ bodyEl.innerHTML = '<span style="color:var(--text3)">（没有收到回复）</span>'; }
   /* v36.48 主页速览预览缓存：有回复存回复，否则存刚发的那句 */
   if(state.convId) stashLastMsg(state.convId, (!err&&xBuf)?'ai':'user', (!err&&xBuf)?xBuf:text);
-  state.streaming = false; state.abortCtl = null; setSendState();
+  }finally{
+    state.streaming = false; state.abortCtl = null; setSendState();   /* v36.67 无论怎么退出去路，按钮必复位 */
+  }
   scrollToBottom();
   loadSessions();
 }
