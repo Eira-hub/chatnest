@@ -731,7 +731,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.71</span>
+    <span class="fs-ver">v36.72</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1411,6 +1411,8 @@ function autoGrow(){
 }
 $('input').addEventListener('input', autoGrow);
 $('input').addEventListener('keydown', e=>{
+  /* v36.72 输入法组字（选拼音/候选词）时的 Enter 不是发送，忽略之——否则中文输入会连发两条 */
+  if(e.isComposing || e.keyCode===229) return;
   if(e.key==='Enter' && !e.shiftKey && window.matchMedia('(min-width:820px)').matches){
     e.preventDefault(); send();
   }
