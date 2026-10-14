@@ -729,7 +729,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.63</span>
+    <span class="fs-ver">v36.64</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -753,9 +753,9 @@ body.has-wall .stars{opacity:.75}
     <!-- v36.63 语音/生图模型设置：供应商按钮自动配地址，输入自动保存+统一保存按钮 -->
     <div class="sub-lab" style="margin-top:18px">语音模型</div>
     <div class="seg" id="segVoice" style="display:inline-flex;flex-wrap:wrap;margin-top:8px">
-      <button class="seg-btn" data-prov="mossland" data-url="https://api.mossland.ai/v1" type="button">Mossland</button>
+      <button class="seg-btn" data-prov="mossland" data-url="https://api.mosi.cn/v1" type="button">Mossland</button>
       <button class="seg-btn" data-prov="minimax" data-url="https://api.minimax.chat/v1" type="button">MINIMAX</button>
-      <button class="seg-btn" data-prov="chattts" data-url="https://api.chattts.com/v1" type="button">ChatTTS</button>
+      <button class="seg-btn" data-prov="chattts" data-url="" type="button">ChatTTS</button>
       <button class="seg-btn" data-prov="elevenlabs" data-url="https://api.elevenlabs.io/v1" type="button">ElevenLabs</button>
       <button class="seg-btn" data-prov="f5tts" data-url="http://127.0.0.1:7860" type="button">F5-TTS</button>
     </div>
@@ -1749,7 +1749,7 @@ document.querySelectorAll('#segVoice .seg-btn').forEach(b=>{
   b.addEventListener('click', ()=>{
     document.querySelectorAll('#segVoice .seg-btn').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');
-    $('voiceBaseInput').value = b.dataset.url;   /* 点模型按钮自动配好地址 */
+    if(b.dataset.url) $('voiceBaseInput').value = b.dataset.url;   /* 点模型按钮自动配好地址（ChatTTS 预设留空，手动填） */
     saveModels();
   });
 });
