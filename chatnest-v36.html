@@ -492,6 +492,25 @@ body.has-wall .stars{opacity:.75}
 #viewHome .hm-conv-t{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #viewHome .hm-conv-time{font-size:10px;opacity:.5;flex:none}
 #viewHome .hm-conv-empty{font-size:12px;opacity:.55;padding:5px 0}
+/* v36.48 速览最近一条消息预览（只在主页卡片，会话列表不动） */
+#viewHome .hm-conv-main{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+#viewHome .hm-conv-prev{margin-top:3px;font-size:11px;line-height:1.5;opacity:.62;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:2px}
+#viewHome .hm-conv-prev b{font-weight:600;opacity:.85;margin-right:6px;font-size:10px;letter-spacing:.05em}
+/* v36.48 倒数日卡片 */
+#viewHome .hm-cd{display:flex;flex-direction:column}
+#viewHome .hm-cd-item{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid rgba(255,255,255,.1);cursor:default}
+#viewHome .hm-cd-item:first-child{border-top:0}
+#viewHome.hm-light .hm-cd-item{border-color:rgba(0,0,0,.08)}
+#viewHome .hm-cd-name{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border-bottom:1px dashed currentColor;opacity:.92;padding-bottom:1px}
+#viewHome .hm-cd-name:active{opacity:.6}
+#viewHome .hm-cd-date{font-size:10px;opacity:.45;flex:none}
+#viewHome .hm-cd-n{font-size:12px;flex:none;font-family:var(--serif)}
+#viewHome .hm-cd-n.past{opacity:.92}
+#viewHome .hm-cd-n.today{color:#E8B96A;opacity:1}
+#viewHome .hm-cd-n.future{opacity:.6}
+#viewHome .hm-cd-del{flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;opacity:.35;border-radius:50%;color:var(--hm-fg)}
+#viewHome .hm-cd-del:active{opacity:.9;background:rgba(255,255,255,.14)}
+#viewHome .hm-cd-empty{font-size:12px;opacity:.55;padding:5px 0}
 #viewHome .hm-mine{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 #viewHome .hm-mine-cell{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:12px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12)}
 #viewHome.hm-light .hm-mine-cell{background:rgba(255,255,255,.42);border-color:rgba(255,255,255,.56)}
@@ -647,6 +666,10 @@ body.has-wall .stars{opacity:.75}
       <div class="hm-card">
         <div class="hm-card-head"><span class="hm-card-title">对话速览</span><button class="hm-card-act" id="hmResume" type="button">继续上次话题</button></div>
         <div class="hm-conv" id="hmConv"></div>
+      </div>
+      <div class="hm-card">
+        <div class="hm-card-head"><span class="hm-card-title">倒数日</span><button class="hm-card-act" id="hmCdAdd" type="button">添加</button></div>
+        <div class="hm-cd" id="hmCdList"></div>
       </div>
       <div class="hm-card hm-card-ghost">
         <div class="hm-card-head"><span class="hm-card-title">记忆闪回</span><span class="hm-tag">待接入</span></div>
@@ -1050,6 +1073,8 @@ async function openConv(id, opt){
       inner.appendChild(btn);
     }
     for(const m of msgs) inner.appendChild(bubbleEl(m));
+    const lm=msgs[msgs.length-1];
+    if(lm) stashLastMsg(id, lm.role, lm.text);   /* v36.48 主页速览预览缓存 */
     scrollToBottom(true);
   }catch(e){
     toast(e.message||'历史加载失败');
@@ -1553,6 +1578,8 @@ async function send(){
   else if(!tBuf && !had){ bodyEl.innerHTML = ''; }
   if(err){ const d = document.createElement('div'); d.className='msg-err'; d.textContent='⚠ '+err; ab.querySelector('.bubble').appendChild(d); }
   if(!xBuf && !tBuf && !err){ bodyEl.innerHTML = '<span style="color:var(--text3)">（没有收到回复）</span>'; }
+  /* v36.48 主页速览预览缓存：有回复存回复，否则存刚发的那句 */
+  if(state.convId) stashLastMsg(state.convId, (!err&&xBuf)?'ai':'user', (!err&&xBuf)?xBuf:text);
   state.streaming = false; state.abortCtl = null; setSendState();
   scrollToBottom();
   loadSessions();
@@ -2048,6 +2075,86 @@ function aiMood(){
   return       {k:'sleep', t:'睡了', s:'夜深了，明天见'};
 }
 /* 他留的话 · B 方案接口位：后端就绪后拉 /api/home/note（中转模型+Serein 生成），覆盖 hmNoteText/hmNoteTime */
+/* ── v36.48 主页速览的最近消息缓存（只在主页读，会话列表/聊天页不动）── */
+function stashLastMsg(cid, role, text){
+  if(!cid) return;
+  try{
+    const t=String(text||'').replace(VHINT_RE,'').replace(/\s+/g,' ').trim().slice(0,80);
+    if(!t) return;
+    localStorage.setItem('cn_lastmsg_'+cid, JSON.stringify({r:role==='user'?'me':'ai', t:t}));
+  }catch(e){}
+}
+function readLastMsg(cid){
+  try{ return JSON.parse(localStorage.getItem('cn_lastmsg_'+cid)||'null'); }catch(e){ return null; }
+}
+/* ── v36.48 倒数日：全部自定义事件（名字可改/可删），起始日只预置一个默认事件 ── */
+const CD_KEY='cn_home_countdowns';
+function cdList(){
+  let arr=[];
+  try{ const s=JSON.parse(localStorage.getItem(CD_KEY)||'null'); if(Array.isArray(s))arr=s; }catch(e){}
+  arr=arr.filter(x=>x&&typeof x.n==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.d||''));
+  if(!arr.length){
+    const since=localStorage.getItem('cn_home_since')||'';
+    if(/^\d{4}-\d{2}-\d{2}$/.test(since))arr=[{n:'在一起',d:since}];
+  }
+  return arr;
+}
+function cdSave(a){ try{ localStorage.setItem(CD_KEY,JSON.stringify(a)); }catch(e){} }
+function cdDiff(d){ /* 未来>0 / 当天0 / 已过<0 */
+  const p=d.split('-').map(Number);
+  const t=new Date(p[0],p[1]-1,p[2]);
+  if(t.getFullYear()!==p[0]||t.getMonth()!==p[1]-1||t.getDate()!==p[2])return null;
+  const now=new Date();
+  return Math.round((new Date(now.getFullYear(),now.getMonth(),now.getDate())-t)/864e5)*-1;
+}
+function cdLabel(dv){
+  if(dv>0)return{c:'future',s:'还有 '+dv+' 天'};
+  if(dv===0)return{c:'today',s:'就是今天'};
+  return{c:'past',s:'第 '+(-dv+1)+' 天'};
+}
+function renderCountdown(){
+  const box=document.getElementById('hmCdList');
+  if(!box)return;
+  const list=cdList();
+  box.innerHTML='';
+  if(!list.length){
+    box.innerHTML='<div class="hm-cd-empty">还没有倒数日，点右上「添加」</div>';
+  }
+  for(const it of list){
+    const dv=cdDiff(it.d);
+    const lb=dv===null?{c:'future',s:'日期无效'}:cdLabel(dv);
+    const el=document.createElement('div');
+    el.className='hm-cd-item';
+    el.innerHTML='<span class="hm-cd-name" title="点一下改名">'+esc(it.n)+'</span>'
+      +'<span class="hm-cd-date">'+esc(it.d)+'</span>'
+      +'<span class="hm-cd-n '+lb.c+'">'+esc(lb.s)+'</span>'
+      +'<button class="hm-cd-del" type="button" aria-label="删除"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+    el.querySelector('.hm-cd-name').addEventListener('click',()=>{
+      const t=prompt('改事件名字',it.n);
+      if(t===null)return;
+      const v=t.trim();
+      if(!v){toast('名字不能为空');return;}
+      const a=cdList();
+      const i=a.findIndex(x=>x.n===it.n&&x.d===it.d);
+      if(i>-1){a[i].n=v.slice(0,20);cdSave(a);renderCountdown();}
+    });
+    el.querySelector('.hm-cd-del').addEventListener('click',()=>{
+      cdSave(cdList().filter(x=>!(x.n===it.n&&x.d===it.d)));
+      renderCountdown(); toast('已删除');
+    });
+    box.appendChild(el);
+  }
+}
+function cdAddFlow(){
+  const n=(prompt('事件名字（如：生日 / 旅行出发）')||'').trim().slice(0,20);
+  if(!n)return;
+  const d=(prompt('日期（格式 2026-01-16）')||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||cdDiff(d)===null){toast('日期格式不对');return;}
+  const a=cdList();
+  if(a.some(x=>x.n===n&&x.d===d)){toast('已经有这个事件了');return;}
+  a.push({n:n,d:d});
+  cdSave(a); renderCountdown(); toast('已添加');
+}
 function renderHomeCards(){
   const av=document.getElementById('hmHimAv');
   if(av){
@@ -2071,9 +2178,11 @@ function renderHomeCards(){
       .slice(0,3);
     if(!list.length)box.innerHTML='<div class="hm-conv-empty">还没有对话，去聊两句吧</div>';
     for(const s of list){
+      const last=readLastMsg(s.conv_id);
       const el=document.createElement('div');
       el.className='hm-conv-item';
-      el.innerHTML='<span class="hm-conv-t">'+esc(s.title||'新对话')+'</span><span class="hm-conv-time">'+esc(relTime(s.updated_at))+'</span>';
+      el.innerHTML='<div class="hm-conv-main"><span class="hm-conv-t">'+esc(s.title||'新对话')+'</span><span class="hm-conv-time">'+esc(relTime(s.updated_at))+'</span></div>'
+        +(last?'<div class="hm-conv-prev"><b>'+(last.r==='me'?'我':'他')+'</b>'+esc(last.t)+'</div>':'');
       el.addEventListener('click',()=>openConv(s.conv_id));
       box.appendChild(el);
     }
@@ -2084,6 +2193,9 @@ function renderHomeCards(){
       if(cid)openConv(cid);else toast('还没有对话');
     };
   }
+  renderCountdown();
+  const cdAdd=document.getElementById('hmCdAdd');
+  if(cdAdd)cdAdd.onclick=cdAddFlow;
   if(!window._hmCardAnims)window._hmCardAnims=[];
   window._hmCardAnims.forEach(a=>{try{a.cancel();}catch(e){}});
   window._hmCardAnims=[];
