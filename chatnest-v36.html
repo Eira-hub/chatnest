@@ -1694,7 +1694,8 @@ document.querySelectorAll('#settingsSheet .set-group').forEach(g=>{
     head.type='button'; head.className='sr-head';
     head.innerHTML='<span>'+name+'</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
     const body=document.createElement('div'); body.className='sr-body';
-    while(b.firstChild!==lab) body.appendChild(b.firstChild);
+    /* set-label 在块首：label 之后的兄弟节点才是该小类内容，全部收进 sr-body（v36.61b 修复内容漏在行外） */
+    while(b.lastChild!==lab) body.insertBefore(b.lastChild, body.firstChild);
     lab.remove();
     b.appendChild(head); b.appendChild(body);
     head.addEventListener('click',()=>openSub(b, name));
