@@ -345,14 +345,10 @@ svg{display:block}
 .fs-back:active{transform:scale(.92)}
 .fs-title{font-family:var(--serif);font-size:16px;letter-spacing:.14em;color:var(--text)}
 .fs-ver{margin-left:auto;font-size:10px;color:var(--text3);letter-spacing:.08em}
-/* ═══ v36.56 设置两级：第一屏大类列表（cat-item），类内容 set-cat 隐藏切换 ═══ */
-#setHome{display:flex;flex-direction:column;gap:9px}
-.cat-item{width:100%;display:flex;flex-direction:column;gap:3px;text-align:left;padding:16px 16px 14px;
-  border-radius:14px;border:1px solid var(--line);background:var(--panel3);transition:background .15s}
-.cat-item:active{background:rgba(165,185,220,.16)}
-.cat-item .ct{font-family:var(--serif);font-size:16.5px;letter-spacing:.1em;color:var(--text)}
-.cat-item .cd{font-size:11.5px;color:var(--text3);letter-spacing:.02em}
-.set-cat.hidden{display:none}
+/* ═══ v36.57 大类=分节标签（不可点，非按钮），小类平铺，节与节之间大间距 ═══ */
+.set-sec{font-family:var(--serif);font-size:13.5px;letter-spacing:.26em;color:var(--text3);
+  margin:30px 2px 6px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.set-sec:first-of-type{margin-top:4px}
 .m-item{width:100%;display:flex;flex-direction:column;gap:2px;text-align:left;padding:13px 14px;border-radius:13px;margin-bottom:6px;border:1px solid transparent;transition:background .15s}
 .m-item:active,.m-item.on{background:var(--panel3);border-color:rgba(165,185,220,.2)}
 .m-item .mt{font-size:14.5px}
@@ -717,32 +713,9 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.56</span>
+    <span class="fs-ver">v36.57</span>
   </div>
-  <!-- v36.56 设置两级结构：第一屏大类列表，点大类进入类内容 -->
-  <div id="setHome">
-    <button class="cat-item" data-cat="catModel" type="button"><span class="ct">模型与服务</span><span class="cd">接口地址、回复拆条、长期记忆</span></button>
-    <button class="cat-item" data-cat="catLook" type="button"><span class="ct">外观与主题</span><span class="cd">颜色、壁纸、主页背景、字号</span></button>
-    <button class="cat-item" data-cat="catProfile" type="button"><span class="ct">资料与性格</span><span class="cd">头像、人设卡</span></button>
-    <button class="cat-item" data-cat="catMisc" type="button"><span class="ct">通用</span><span class="cd">诊断、关于、退出</span></button>
-  </div>
-  <div class="set-cat hidden" id="catProfile">
-  <div class="set-block">
-    <div class="set-label">头像（点一下换图）</div>
-    <div style="display:flex;gap:22px;align-items:center">
-      <div class="av-edit" data-role="me"><div class="avatar me-def" id="avPrevMe"></div><span>我的</span></div>
-      <div class="av-edit" data-role="ai"><div class="avatar" id="avPrevAi"></div><span>哥哥的</span></div>
-    </div>
-    <input type="file" id="avFile" accept="image/*" style="display:none">
-  </div>
-  <div class="set-block">
-    <div class="set-label">人设卡</div>
-    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">这里是望舒的灵魂包，改完保存就生效，不用传包。</div>
-    <textarea class="set-area" id="personaArea" placeholder="还没写人设"></textarea>
-    <button class="set-btn" id="btnSavePersona" style="margin-top:10px">保存人设</button>
-  </div>
-  </div><!-- /catProfile -->
-  <div class="set-cat hidden" id="catModel">
+  <div class="set-sec">模型与服务</div>
   <div class="set-block">
     <div class="set-label">回复拆条</div>
     <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">长=一次一大条，短=拆成几个小气泡。</div>
@@ -766,8 +739,7 @@ body.has-wall .stars{opacity:.75}
     <textarea class="set-area" id="memoryArea" placeholder="还没有记忆摘要"></textarea>
     <button class="set-btn" id="btnSaveMemory" style="margin-top:10px">保存记忆</button>
   </div>
-  </div><!-- /catModel -->
-  <div class="set-cat hidden" id="catLook">
+  <div class="set-sec">外观与主题</div>
   <div class="set-block">
     <div class="set-label">外观</div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -828,8 +800,22 @@ body.has-wall .stars{opacity:.75}
     </div>
     <input type="file" id="wallFile" accept="image/*" style="display:none">
   </div>
-  </div><!-- /catLook -->
-  <div class="set-cat hidden" id="catMisc">
+  <div class="set-sec">资料与性格</div>
+  <div class="set-block">
+    <div class="set-label">头像（点一下换图）</div>
+    <div style="display:flex;gap:22px;align-items:center">
+      <div class="av-edit" data-role="me"><div class="avatar me-def" id="avPrevMe"></div><span>我的</span></div>
+      <div class="av-edit" data-role="ai"><div class="avatar" id="avPrevAi"></div><span>哥哥的</span></div>
+    </div>
+    <input type="file" id="avFile" accept="image/*" style="display:none">
+  </div>
+  <div class="set-block">
+    <div class="set-label">人设卡</div>
+    <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">这里是望舒的灵魂包，改完保存就生效，不用传包。</div>
+    <textarea class="set-area" id="personaArea" placeholder="还没写人设"></textarea>
+    <button class="set-btn" id="btnSavePersona" style="margin-top:10px">保存人设</button>
+  </div>
+  <div class="set-sec">通用</div>
   <div class="set-block">
     <div class="set-label">拖动诊断</div>
     <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">如果悬浮球拖不动，开启后按住球拖一下，屏幕会弹出事件序列（PD/DRAG/UP/CANCEL），下方会记录最近一次，照着打字发我即可。</div>
@@ -843,7 +829,6 @@ body.has-wall .stars{opacity:.75}
     </div>
   </div>
   <button class="set-btn warn" id="btnLogout">退出登录</button>
-  </div><!-- /catMisc -->
 </div>
 
 <!-- v34 消息长按操作 -->
@@ -1661,25 +1646,9 @@ document.addEventListener('click', (e)=>{
 });
 
 /* ───────── 设置 sheet ───────── */
-/* v36.49 入口改为主页右上角悬浮设置按钮；v36.50 全屏界面；v36.56 两级：大类列表↔类内容，返回按钮跟随层级 */
-const SET_CATS=[['catModel','模型与服务'],['catLook','外观与主题'],['catProfile','资料与性格'],['catMisc','通用']];
-function setCatHome(){
-  $('setHome').classList.remove('hidden');
-  SET_CATS.forEach(c=>$(c[0]).classList.add('hidden'));
-  $('fsTitle').textContent='设置';
-}
-function openCat(id){
-  $('setHome').classList.add('hidden');
-  SET_CATS.forEach(c=>$(c[0]).classList.toggle('hidden', c[0]!==id));
-  $('fsTitle').textContent=(SET_CATS.find(c=>c[0]===id)||['','设置'])[1];
-}
-document.querySelectorAll('.cat-item').forEach(b=>b.addEventListener('click',()=>openCat(b.dataset.cat)));
-$('btnSetBack').addEventListener('click', ()=>{
-  if($('setHome').classList.contains('hidden')) setCatHome();  /* 在类内→回大类列表 */
-  else closeSheets();                                          /* 在第一屏→关设置页 */
-});
+/* v36.49 入口改为主页右上角悬浮设置按钮；v36.50 全屏界面；v36.57 大类降为分节标签，单页平铺 */
+$('btnSetBack').addEventListener('click', closeSheets);
 $('hmSettings').addEventListener('click', async ()=>{
-  setCatHome();  /* 每次打开重置到第一屏 */
   $('memoryArea').value = '加载中…';
   $('personaArea').value = '加载中…';
   $('apiBaseInput').value = (localStorage.getItem(LS.apiBase) || '').trim();
