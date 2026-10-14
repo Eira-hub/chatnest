@@ -170,12 +170,8 @@ svg{display:block}
 .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
 .msg-err{margin-top:6px;font-size:13px;color:var(--danger)}
-/* ═══ v36.65 生图：<IMG>标记 → 图片气泡（生成中占位 + 成图 + 失败提示）═══ */
-.img-work{font-size:12.5px;color:var(--text3);padding:7px 2px;display:flex;gap:8px;align-items:center}
-.img-work::before{content:'';width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:imgspin .9s linear infinite;flex:none}
-@keyframes imgspin{to{transform:rotate(360deg)}}
-.gen-img{display:block;max-width:min(280px,78vw);border-radius:14px;margin:2px 0;cursor:zoom-in}
-.img-fail{font-size:12.5px;color:var(--danger);padding:4px 2px;line-height:1.5}
+/* ═══ v36.65/66 生图：<IMG>标记 → 画完直接出图（无占位无过程气泡）；成图=完整消息样式 ═══ */
+.gen-img{display:block;max-width:min(280px,78vw);border-radius:14px;margin:2px 0}
 
 /* ───────── composer v21 · 大圆角磨砂玻璃 ───────── */
 .composer{flex-shrink:0;padding:8px 12px 0;position:relative;z-index:2}
@@ -735,7 +731,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.65</span>
+    <span class="fs-ver">v36.66</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1194,16 +1190,16 @@ async function genImage(prompt){
   if(d.url) return d.url;
   throw new Error('生图返回里没有图');
 }
-function imgMsgNode(prompt){   /* 生成中占位，genImage 完成后替换内容 */
+function imgDoneNode(url){     /* v36.66 画完直接出图：完整消息样式（头像+时间），无占位 */
   const el=document.createElement('div');
-  el.className='msg ai cont';
-  el.innerHTML='<div class="avatar"></div><div class="col"><div class="bubble"><div class="img-work"><span>正在画：'+esc(prompt)+'</span></div></div></div>';
+  el.className='msg ai';
+  el.innerHTML='<div class="avatar">'+avatarSvg('ai')+'</div><div class="col"><div class="bubble"><img class="gen-img" src="'+url+'" alt=""></div><div class="mtime">'+fmtClock()+'</div></div>';
   return el;
 }
-function histImgNode(prompt){  /* 历史消息里的标记：图片不存档，显示占位 */
+function histImgNode(prompt, mt){  /* 历史消息里的标记：图片不存档，占位+完整消息样式 */
   const el=document.createElement('div');
-  el.className='msg ai cont';
-  el.innerHTML='<div class="avatar"></div><div class="col"><div class="bubble"><div class="body" style="color:var(--text3);font-size:12.5px">🖼（画过：'+esc(prompt)+'，重新进入会话不保留图片）</div></div></div>';
+  el.className='msg ai';
+  el.innerHTML='<div class="avatar">'+avatarSvg('ai')+'</div><div class="col"><div class="bubble"><div class="body" style="color:var(--text3);font-size:12.5px">🖼（画过：'+esc(prompt)+'，重新进入会话不保留图片）</div></div><div class="mtime">'+(mt||'')+'</div></div>';
   return el;
 }
 function splitAiText(raw){
@@ -1320,26 +1316,21 @@ function bubbleEl(m){
   const vText=extractVoice(raw);
   const bodyText=vText!==null?vText:raw;
   const frag=document.createDocumentFragment();
-  /* v36.65 历史消息也按 文字/图片标记 顺序渲染（图片不存档，显示占位） */
+  /* v36.66 历史消息同样每段完整样式（头像+时间+间隔）；图片标记显示占位 */
   const segs=parseImgSegs(bodyText);
   const plainText=segs.filter(s=>s.type==='text').map(s=>s.text).join('\n');
-  let first=true, hasImg=false;
+  let first=true;
   segs.forEach(s=>{
     if(s.type==='text'){
       const chunks=splitAiText(s.text);
       chunks.forEach((c,i)=>{
-        frag.appendChild(aiMsgNode(c,{cont:!(first&&i===0), thinking:i===0&&first?(m.thinking||''):'', mid:m.id||'', mtime:'', raw:plainText}));
+        frag.appendChild(aiMsgNode(c,{cont:false, thinking:i===0&&first?(m.thinking||''):'', mid:m.id||'', mtime:mt, raw:plainText}));
       });
       if(chunks.length) first=false;
     }else{
-      frag.appendChild(histImgNode(s.prompt)); first=false; hasImg=true;
+      frag.appendChild(histImgNode(s.prompt, mt)); first=false;
     }
   });
-  const lastNode=frag.lastChild;
-  if(lastNode && lastNode.classList && lastNode.classList.contains('msg') && lastNode.querySelector('.col') && !lastNode.querySelector('.mtime') && mt){
-    const md=document.createElement('div'); md.className='mtime'; md.textContent=mt;
-    lastNode.querySelector('.col').appendChild(md);
-  }
   if(vText) frag.appendChild(voiceMsgNode(vText));
   return frag;
 }
@@ -1603,34 +1594,28 @@ async function send(){
       const vText=extractVoice(xBuf);
       const bodyText=vText!==null?vText:xBuf.trim();
       const frag=document.createDocumentFragment();
-      /* v36.65 按 文字段/图片段 顺序渲染：<IMG>标记 → 生图占位气泡 → 异步成图 */
+      /* v36.66 微信式：AI 回复每段都是完整消息（头像+时间+段间间隔）；<IMG>段无占位，画完直接出图 */
       const segs=parseImgSegs(bodyText);
       const plainText=segs.filter(s=>s.type==='text').map(s=>s.text).join('\n');
+      const clock=fmtClock();
       let first=true;
       segs.forEach(s=>{
         if(s.type==='text'){
           const chunks=splitAiText(s.text);
           chunks.forEach((c,i)=>{
-            frag.appendChild(aiMsgNode(c,{cont:!(first&&i===0), thinking:(first&&i===0)?tBuf:'', mtime:'', raw:plainText}));
+            frag.appendChild(aiMsgNode(c,{cont:false, thinking:(first&&i===0)?tBuf:'', mtime:clock, raw:plainText}));
           });
           if(chunks.length) first=false;
         }else{
-          const node=imgMsgNode(s.prompt);
-          frag.appendChild(node); first=false;
+          first=false;
           genImage(s.prompt).then(url=>{
-            node.querySelector('.bubble').innerHTML='<img class="gen-img" src="'+url+'" alt="">';
+            $('streamInner').appendChild(imgDoneNode(url));
             scrollToBottom();
           }).catch(e=>{
-            node.querySelector('.bubble').innerHTML='<div class="img-fail">画失败：'+esc(e.message||String(e))+'</div>';
-            scrollToBottom();
+            toast('画失败：'+(e.message||String(e)), 2600);
           });
         }
       });
-      const lastNode=frag.lastChild;
-      if(lastNode && lastNode.classList && lastNode.classList.contains('msg') && lastNode.querySelector('.col') && !lastNode.querySelector('.mtime')){
-        const md=document.createElement('div'); md.className='mtime'; md.textContent=fmtClock();
-        lastNode.querySelector('.col').appendChild(md);
-      }
       if(vText) frag.appendChild(voiceMsgNode(vText));
       ab.replaceWith(frag);
     }else{
