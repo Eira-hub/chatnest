@@ -571,12 +571,10 @@ body.has-wall .stars{opacity:.75}
 <!-- ═══ v33 主页（main 一级，勿入 composer）═══ -->
     <!-- ═══ v33 主页 ═══ -->
 <section id="viewHome" class="hidden">
-  <!-- v36.49 主页悬浮设置：圆形旋钮图标，无底板，absolute 随主页内容一起滚 -->
+  <!-- v36.49 主页悬浮设置：fixed 钉屏幕右上角；v36.52 图标=实心扁平齿轮：6 齿 + 中圆镂空（单 path：齿圈 4 段圆弧+12 条斜线，fill-rule evenodd 挖孔） -->
   <button id="hmSettings" type="button" aria-label="设置">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-      <circle cx="12" cy="12" r="8.4"/>
-      <circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/>
-      <path d="M12 3.6v2.6"/>
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" fill-rule="evenodd" d="M13.399 1.077l.626 2.497a8.5 8.5 0 012.351.974l2.212-1.325c.475-.285 1.088-.212 1.482.181l1.223 1.223c.393.394.466 1.007.181 1.482l-1.325 2.212a8.5 8.5 0 01.974 2.351l2.497.626a1 1 0 01.758.97v1.464a1 1 0 01-.758.97l-2.497.626a8.5 8.5 0 01-.974 2.351l1.325 2.212c.285.475.212 1.088-.181 1.482l-1.223 1.223c-.394.393-1.007.466-1.482.181l-2.212-1.325a8.5 8.5 0 01-2.351.974l-.626 2.497a1 1 0 01-.97.758h-1.464a1 1 0 01-.97-.758l-.626-2.497a8.5 8.5 0 01-2.351-.974l-2.212 1.325c-.475.285-1.088.212-1.482-.181l-1.223-1.223c-.393-.394-.466-1.007-.181-1.482l1.325-2.212a8.5 8.5 0 01-.974-2.351l-2.497-.626A1 1 0 011.01 12.7v-1.464a1 1 0 01.758-.97l2.497-.626a8.5 8.5 0 01.974-2.351L3.914 5.077c-.285-.475-.212-1.088.181-1.482L5.318 2.372c.394-.393 1.007-.466 1.482-.181l2.212 1.325a8.5 8.5 0 012.351-.974l.626-2.497a1 1 0 01.97-.758h1.464a1 1 0 01.97.758zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"/>
     </svg>
   </button>
   <div class="hm-hero">
@@ -702,7 +700,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title">设置</span>
-    <span class="fs-ver">v36.51</span>
+    <span class="fs-ver">v36.52</span>
   </div>
   <div class="set-block">
     <div class="set-label">头像（点一下换图）</div>
