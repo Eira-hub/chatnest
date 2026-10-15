@@ -368,6 +368,60 @@ svg{display:block}
 #settingsSheet.sub-on .set-block.sub-on{display:block}
 #settingsSheet.sub-on .set-block.sub-on .sr-head{display:none}
 #settingsSheet.sub-on .set-block.sub-on .sr-body{display:block;padding:6px 0 12px}
+/* ═══ v36.74 MCP服务器管理页（参照 Pudin 截图一比一）═══ */
+#mcpSheet,#mcpEditSheet{top:0;bottom:0;left:0;right:0;width:auto;height:auto;max-height:none;
+  border-radius:0;border:none;box-shadow:none;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 18px calc(env(safe-area-inset-bottom) + 28px);
+  transform:none;opacity:0;pointer-events:none;transition:none}
+#mcpSheet.on,#mcpEditSheet.on{opacity:1;pointer-events:auto}
+#mcpSheet .grip,#mcpEditSheet .grip{display:none}
+#mcpSheet .fs-head,#mcpEditSheet .fs-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;
+  margin:0 -18px 14px;padding:calc(env(safe-area-inset-top) + 12px) 16px 12px 12px;
+  background:var(--panel-solid);border-bottom:1px solid var(--line)}
+.mcp-title{flex:1;text-align:center;font-family:var(--serif);font-size:16.5px;letter-spacing:.12em;color:var(--text)}
+.mcp-icobtn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;
+  color:var(--text2);background:transparent;border:none;cursor:pointer;padding:0}
+.mcp-icobtn:active{transform:scale(.9)}
+.mcp-icobtn.on{color:var(--accent2);background:var(--panel3)}
+.mcp-icobtn.busy svg{animation:mcpspin 1s linear infinite}
+@keyframes mcpspin{to{transform:rotate(360deg)}}
+:root{--mcp-ico-bg:#F4F5F7;--mcp-gt:#3D4656;--mcp-dot-on:#1FA855;--mcp-dot-off:#9AA0AE;
+  --mc-green:#1F9D55;--mc-green-bd:#BFE3CC;--mc-green-bg:#F0FAF4;
+  --mc-red:#C94F4F;--mc-red-bd:#EFC9C9;--mc-red-bg:#FDF3F3;
+  --mc-blue:#3B7BC4;--mc-blue-bd:#C3DAEF;--mc-blue-bg:#F0F7FD;
+  --mc-gray-bd:#CDD1DB;--mc-gray-bg:#F3F4F7}
+[data-theme="dark"]{--mcp-ico-bg:rgba(255,255,255,.07);--mcp-gt:#C9D0E0;--mcp-dot-on:#3ECF7E;--mcp-dot-off:#5A6178;
+  --mc-green:#5BC98A;--mc-green-bd:rgba(91,201,138,.42);--mc-green-bg:rgba(91,201,138,.1);
+  --mc-red:#E08B8B;--mc-red-bd:rgba(224,139,139,.42);--mc-red-bg:rgba(224,139,139,.1);
+  --mc-blue:#8FB8E8;--mc-blue-bd:rgba(143,184,232,.42);--mc-blue-bg:rgba(143,184,232,.1);
+  --mc-gray-bd:rgba(255,255,255,.18);--mc-gray-bg:rgba(255,255,255,.06)}
+.mcp-item{position:relative;display:flex;align-items:center;gap:12px;padding:13px 10px 13px 8px;
+  border-radius:16px;background:var(--panel2);border:1px solid var(--line);margin-bottom:10px;cursor:pointer}
+.mcp-item:active{transform:scale(.985)}
+.mcp-ico{position:relative;width:52px;height:52px;flex:none;border-radius:14px;background:var(--mcp-ico-bg);
+  display:flex;align-items:center;justify-content:center}
+.mcp-gt{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;font-size:17px;color:var(--mcp-gt);letter-spacing:.02em}
+.mcp-dot{position:absolute;right:5px;bottom:5px;width:9px;height:9px;border-radius:50%;background:var(--mcp-dot-off)}
+.mcp-dot.on{background:var(--mcp-dot-on)}
+.mcp-main{flex:1;min-width:0}
+.mcp-name{font-size:15.5px;font-weight:600;color:var(--text);margin-bottom:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mcp-chips{display:flex;flex-wrap:wrap;gap:7px}
+.mchip{font-size:11.5px;padding:3px 10px;border-radius:999px;border:1.5px solid var(--mc-gray-bd);line-height:1.5;white-space:nowrap}
+.mchip.st-on{color:var(--mc-green);border-color:var(--mc-green-bd);background:var(--mc-green-bg)}
+.mchip.st-off{color:var(--mc-red);border-color:var(--mc-red-bd);background:var(--mc-red-bg)}
+.mchip.proto,.mchip.tools{color:var(--mc-blue);border-color:var(--mc-blue-bd);background:var(--mc-blue-bg)}
+.mchip.dis{color:var(--text3);border-color:var(--mc-gray-bd);background:var(--mc-gray-bg)}
+.mcp-item .chev{color:var(--text3);flex:none}
+.mcp-del{position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;
+  background:var(--danger);color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.22);padding:0}
+.mtool{display:flex;align-items:center;gap:10px;padding:10px 2px;border-top:1px solid var(--line)}
+.mtool:first-child{border-top:none}
+.mtool-n{flex:1;min-width:0}
+.mtool-name{font-size:13px;color:var(--text);font-family:ui-monospace,Menlo,Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mtool-desc{font-size:11px;color:var(--text3);margin-top:3px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mtool-tgl{flex:none;font-size:11.5px;padding:4px 13px;border-radius:999px;border:1.5px solid var(--line2);background:none;color:var(--text3);cursor:pointer}
+.mtool-tgl.on{color:var(--accent2);border-color:var(--accent);background:var(--panel3)}
 .m-item{width:100%;display:flex;flex-direction:column;gap:2px;text-align:left;padding:13px 14px;border-radius:13px;margin-bottom:6px;border:1px solid transparent;transition:background .15s}
 .m-item:active,.m-item.on{background:var(--panel3);border-color:rgba(165,185,220,.2)}
 .m-item .mt{font-size:14.5px}
@@ -732,7 +786,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.73</span>
+    <span class="fs-ver">v36.74</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -771,6 +825,10 @@ body.has-wall .stars{opacity:.75}
     <input class="set-input" id="imgModelInput" placeholder="绘图模型名（自己填，如 gpt-image-1）" autocomplete="off" spellcheck="false" style="margin-top:10px">
     <button class="set-btn" id="btnSaveModels" style="margin-top:12px">保存模型设置</button>
   </div>
+  <button class="sr-head" id="btnOpenMcp" type="button" style="border-top:1px solid var(--line)">
+    <span>MCP服务器</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+  </button>
   </div><!-- /组1 模型与服务 -->
   <div class="set-group">
   <div class="set-sec">外观与主题</div>
@@ -870,6 +928,65 @@ body.has-wall .stars{opacity:.75}
   </div>
   </div><!-- /组4 通用 -->
   <button class="set-btn warn" id="btnLogout">退出登录</button>
+</div>
+
+<!-- ═══ v36.74 MCP服务器管理（参照 Pudin 截图一比一还原）═══ -->
+<div class="sheet" id="mcpSheet">
+  <div class="fs-head">
+    <button class="fs-back" id="btnMcpBack" type="button" aria-label="返回">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <span class="mcp-title">MCP服务器</span>
+    <button class="mcp-icobtn" id="btnMcpCheckAll" type="button" aria-label="全部重测" title="全部重测">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7"/><path d="M12 10.5v3.2l2.2 2.2M9.5 3h5M12 3v3.5"/></svg>
+    </button>
+    <button class="mcp-icobtn" id="btnMcpEdit" type="button" aria-label="编辑" title="编辑模式">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+    </button>
+    <button class="mcp-icobtn" id="btnMcpAdd" type="button" aria-label="新建" title="新建服务器">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+  <div id="mcpList"></div>
+  <div id="mcpEmpty" style="display:none;text-align:center;color:var(--text3);font-size:13px;padding:70px 0;letter-spacing:.1em">还没有配置服务器<br>点右上 + 添加一个</div>
+</div>
+
+<div class="sheet" id="mcpEditSheet">
+  <div class="fs-head">
+    <button class="fs-back" id="btnMcpEditBack" type="button" aria-label="返回">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <span class="mcp-title" id="mcpEditTitle">新建服务器</span>
+  </div>
+  <div class="mcp-form">
+    <div class="sub-lab" style="margin-top:2px">名称</div>
+    <input class="set-input" id="mcpFName" placeholder="给服务器起个名" autocomplete="off">
+    <div class="sub-lab">地址 URL</div>
+    <input class="set-input" id="mcpFUrl" placeholder="https://…/mcp 或 …/sse" autocomplete="off" spellcheck="false">
+    <div class="sub-lab">协议</div>
+    <div class="seg" id="segMcpType" style="display:inline-flex">
+      <button class="seg-btn on" data-t="http" type="button">HTTP</button>
+      <button class="seg-btn" data-t="sse" type="button">SSE</button>
+    </div>
+    <div class="sub-lab">Bearer Token</div>
+    <input class="set-input" id="mcpFBearer" type="password" placeholder="鉴权令牌，没有就留空" autocomplete="off">
+    <div class="sub-lab">自定义 Headers（JSON，可选）</div>
+    <textarea class="set-input" id="mcpFHeaders" rows="3" placeholder='{"X-Api-Key":"…"}' spellcheck="false" style="resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px"></textarea>
+    <div class="sub-lab">启用</div>
+    <div class="seg" id="segMcpEnabled" style="display:inline-flex">
+      <button class="seg-btn on" data-e="1" type="button">启用</button>
+      <button class="seg-btn" data-e="0" type="button">禁用</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="set-btn" id="btnMcpTest" style="flex:1">测试连接</button>
+      <button class="set-btn" id="btnMcpSave" style="flex:1.4">保存</button>
+    </div>
+    <div id="mcpToolWrap" style="display:none;margin-top:18px">
+      <div class="sub-lab" style="margin-top:0">工具（点右侧开关启停）</div>
+      <div id="mcpToolList"></div>
+    </div>
+    <button class="set-btn warn" id="btnMcpDel" style="display:none;margin-top:20px;width:100%">删除这个服务器</button>
+  </div>
 </div>
 
 <!-- v34 消息长按操作 -->
@@ -1737,6 +1854,7 @@ function renderModelLabel(){
 function openSheet(id){ $(id).classList.add('on'); $('scrim').classList.add('on'); }
 function closeSheets(){
   $('modelSheet').classList.remove('on'); $('settingsSheet').classList.remove('on'); $('ctxSheet').classList.remove('on');
+  $('mcpSheet').classList.remove('on'); $('mcpEditSheet').classList.remove('on');
   $('scrim').classList.remove('on');
 }
 
@@ -2191,6 +2309,155 @@ $('scrim').addEventListener('click', ()=>{ closeSheets(); });
   if(state.token){ showApp(); boot(); }
   else{ showGate(); const gi=$('gateInput'); setTimeout(()=>{ try{gi.focus();}catch(e){} }, 300); }
 })();
+
+/* ═════════ v36.74 MCP服务器管理（后端 /api/mcp/*）═════════ */
+let mcpServers=[], mcpEditMode=false, mcpEditId=null, mcpEditSrv=null,
+    mcpEditType='http', mcpEditEnabled=1;
+
+function mcpRender(){
+  const L=$('mcpList'); L.innerHTML='';
+  $('mcpEmpty').style.display = mcpServers.length ? 'none':'block';
+  mcpServers.forEach(s=>{
+    const d=document.createElement('div'); d.className='mcp-item';
+    const chips=
+      '<span class="mchip '+(s.connected?'st-on">已连接':'st-off">未连接')+'</span>'+
+      '<span class="mchip proto">'+(s.type==='sse'?'SSE':'HTTP')+'</span>'+
+      '<span class="mchip tools">工具: '+(s.toolCount||0)+'/'+(s.totalTools||0)+'</span>';
+    const dis = s.enabled ? '' : '<div class="mcp-chips" style="margin-top:7px"><span class="mchip dis">已禁用</span></div>';
+    d.innerHTML =
+      '<div class="mcp-ico"><span class="mcp-gt">&gt;_</span><i class="mcp-dot'+(s.connected?' on':'')+'"></i></div>'+
+      '<div class="mcp-main"><div class="mcp-name"></div><div class="mcp-chips">'+chips+'</div>'+dis+'</div>'+
+      '<svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>'+
+      (mcpEditMode ? '<button class="mcp-del" type="button" aria-label="删除">✕</button>' : '');
+    d.querySelector('.mcp-name').textContent = s.name;
+    if(mcpEditMode) d.querySelector('.mcp-del').addEventListener('click', ev=>{ ev.stopPropagation(); mcpDelete(s); });
+    d.addEventListener('click', ()=> mcpOpenEdit(s));
+    L.appendChild(d);
+  });
+}
+async function mcpLoad(){
+  try{ mcpServers=(await api('/api/mcp/servers')).servers||[]; mcpRender(); }
+  catch(e){ toast('MCP列表加载失败：'+e.message,2400); }
+}
+async function mcpCheckAll(btn){
+  btn.classList.add('busy');
+  try{
+    await api('/api/mcp/servers/checkall',{method:'POST',body:{}});
+    await mcpLoad(); toast('全部重测完成',1600);
+  }catch(e){ toast('重测失败：'+e.message,2400); }
+  btn.classList.remove('busy');
+}
+function mcpSyncRow(s){  // 编辑结果同步回主列表
+  const i=mcpServers.findIndex(x=>x.id===s.id);
+  if(i>=0) mcpServers[i]=s; else mcpServers.push(s);
+  mcpRender();
+}
+function mcpOpenEdit(s){
+  mcpEditId = s ? s.id : null;
+  mcpEditSrv = s || null;
+  mcpEditType = (s && s.type==='sse') ? 'sse' : 'http';
+  mcpEditEnabled = (s && !s.enabled) ? 0 : 1;
+  $('mcpEditTitle').textContent = s ? '编辑服务器' : '新建服务器';
+  $('mcpFName').value = s ? s.name : '';
+  $('mcpFUrl').value  = s ? s.url  : '';
+  $('mcpFBearer').value = '';
+  $('mcpFBearer').placeholder = s ? '留空 = 不修改令牌' : '鉴权令牌，没有就留空';
+  $('mcpFHeaders').value = '';
+  $('mcpFHeaders').placeholder = s ? '留空 = 不修改；填 JSON = 整体替换' : '{"X-Api-Key":"…"}';
+  document.querySelectorAll('#segMcpType .seg-btn').forEach(b=>b.classList.toggle('on', b.dataset.t===mcpEditType));
+  document.querySelectorAll('#segMcpEnabled .seg-btn').forEach(b=>b.classList.toggle('on', +b.dataset.e===mcpEditEnabled));
+  mcpRenderTools();
+  $('btnMcpDel').style.display = s ? 'block' : 'none';
+  openSheet('mcpEditSheet');
+}
+function mcpRenderTools(){
+  const wrap=$('mcpToolWrap'), L=$('mcpToolList');
+  const tools=(mcpEditSrv && mcpEditSrv.tools)||[];
+  if(!mcpEditId || !tools.length){ wrap.style.display='none'; L.innerHTML=''; return; }
+  wrap.style.display='block'; L.innerHTML='';
+  tools.forEach(t=>{
+    const r=document.createElement('div'); r.className='mtool';
+    r.innerHTML='<div class="mtool-n"><div class="mtool-name"></div><div class="mtool-desc"></div></div>'+
+      '<button class="mtool-tgl'+(t.enabled?' on':'')+'" type="button">'+(t.enabled?'启用':'停用')+'</button>';
+    r.querySelector('.mtool-name').textContent = t.name;
+    r.querySelector('.mtool-desc').textContent = t.description || '';
+    r.querySelector('.mtool-tgl').addEventListener('click', async ev=>{
+      const btn=ev.currentTarget; btn.disabled=true;
+      const target=!t.enabled;
+      try{
+        const j=await api('/api/mcp/servers/'+mcpEditId+'/tools/toggle',{method:'POST',body:{name:t.name,enabled:target}});
+        const ns=j.server||{}, nt=(ns.tools||[]).find(x=>x.name===t.name);
+        t.enabled = nt ? !!nt.enabled : target; mcpEditSrv.toolCount=ns.toolCount||0;
+        btn.classList.toggle('on',t.enabled); btn.textContent=t.enabled?'启用':'停用';
+        const ms=mcpServers.find(x=>x.id===mcpEditId);
+        if(ms){ const mt=ms.tools.find(x=>x.name===t.name); if(mt) mt.enabled=t.enabled; ms.toolCount=ns.toolCount||0; mcpRender(); }
+      }catch(e){ toast('切换失败：'+e.message,2200); }
+      btn.disabled=false;
+    });
+    L.appendChild(r);
+  });
+}
+function mcpCollectForm(){
+  const name=$('mcpFName').value.trim(), url=$('mcpFUrl').value.trim();
+  if(!name || !url){ toast('名称和地址都要填',2000); return null; }
+  const body={ name, url, type:mcpEditType, enabled:!!mcpEditEnabled };
+  const b=$('mcpFBearer').value;
+  if(b) body.bearer=b;                       // 有值=设置；无值=后端不动
+  const h=$('mcpFHeaders').value.trim();
+  if(h){                                      // 填了才替换 headers
+    try{ body.headers=JSON.parse(h); }catch(e){ toast('Headers 不是合法 JSON',2200); return null; }
+  }
+  return body;
+}
+async function mcpSave(thenCheck){
+  const body=mcpCollectForm(); if(!body) return null;
+  try{
+    const j=await api('/api/mcp/servers',{method:'POST',body:body});
+    mcpEditId=j.server.id; mcpEditSrv=j.server; mcpSyncRow(j.server);
+    if(!thenCheck) toast('已保存',1400);
+  }catch(e){ toast('保存失败：'+e.message,2600); return null; }
+  if(thenCheck){
+    try{
+      const j=await api('/api/mcp/servers/'+mcpEditId+'/check',{method:'POST',body:{}});
+      mcpEditSrv=j.server; mcpSyncRow(j.server); mcpRenderTools();
+      const s=j.server;
+      toast(s.connected ? ('连接成功，工具 '+(s.toolCount||0)+'/'+(s.totalTools||0)) : ('未连接：'+(s.error||'')), 3000);
+    }catch(e){ toast('测试失败：'+e.message,2400); }
+  }
+  return mcpEditId;
+}
+async function mcpDelete(s){
+  if(!confirm('删除「'+s.name+'」？删除后不可恢复')) return;
+  try{
+    await api('/api/mcp/servers/'+s.id,{method:'DELETE'});
+    mcpServers=mcpServers.filter(x=>x.id!==s.id); mcpRender();
+    mcpEditId=null;
+    $('mcpEditSheet').classList.remove('on');
+    toast('已删除',1500);
+  }catch(e){ toast('删除失败：'+e.message,2400); }
+}
+/* 绑定 */
+$('btnOpenMcp').addEventListener('click', ()=>{ mcpLoad(); openSheet('mcpSheet'); });
+$('btnMcpBack').addEventListener('click', closeSheets);
+$('btnMcpCheckAll').addEventListener('click', ev=> mcpCheckAll(ev.currentTarget));
+$('btnMcpEdit').addEventListener('click', ev=>{
+  mcpEditMode=!mcpEditMode;
+  ev.currentTarget.classList.toggle('on', mcpEditMode);
+  mcpRender();
+});
+$('btnMcpAdd').addEventListener('click', ()=> mcpOpenEdit(null));
+$('btnMcpEditBack').addEventListener('click', ()=>{ $('mcpEditSheet').classList.remove('on'); });
+document.querySelectorAll('#segMcpType .seg-btn').forEach(b=>b.addEventListener('click', ()=>{
+  mcpEditType=b.dataset.t;
+  document.querySelectorAll('#segMcpType .seg-btn').forEach(x=>x.classList.toggle('on',x===b));
+}));
+document.querySelectorAll('#segMcpEnabled .seg-btn').forEach(b=>b.addEventListener('click', ()=>{
+  mcpEditEnabled=+b.dataset.e;
+  document.querySelectorAll('#segMcpEnabled .seg-btn').forEach(x=>x.classList.toggle('on',x===b));
+}));
+$('btnMcpTest').addEventListener('click', ()=> mcpSave(true));
+$('btnMcpSave').addEventListener('click', ()=> mcpSave(false));
+$('btnMcpDel').addEventListener('click', ()=>{ if(mcpEditSrv) mcpDelete(mcpEditSrv); });
 </script>
 <script>
 /* v31 外观 */
