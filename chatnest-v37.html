@@ -330,7 +330,8 @@ svg{display:block}
   max-height:0;overflow:hidden;padding:0 10px;opacity:0;
   background:var(--panel-solid);
   border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;box-shadow:var(--shadow);
-  transition:max-height .26s ease,opacity .2s ease,padding .26s ease}
+  /* v37.78 展开高度不再走过渡：max-height/padding 过渡在手机 Edge 偶发起点竞态，卡在半展开（输入框上移一点点、宫格被裁光）；高度瞬时到位只留淡入 */
+  transition:opacity .2s ease}
 .plus-panel.open{max-height:320px;opacity:1;padding:18px 10px calc(env(safe-area-inset-bottom) + 12px)}
 .pp-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none}
 .pp-track::-webkit-scrollbar{display:none}
@@ -1994,10 +1995,9 @@ function setPlus(open){
     plusPanel.classList.add('open');
     if(bar)bar.classList.add('flush');
   }else{
-    plusPanel.style.maxHeight='0px';
     plusPanel.classList.remove('open');
+    plusPanel.style.maxHeight='';
     if(bar)bar.classList.remove('flush');
-    setTimeout(()=>{ if(!plusPanel.classList.contains('open')) plusPanel.style.maxHeight=''; },320);
   }
 }
 $('btnPlus').addEventListener('click', (e)=>{ e.stopPropagation(); setPlus(!plusPanel.classList.contains('open')); });
