@@ -778,7 +778,7 @@ body.has-wall .stars{opacity:.75}
           </div>
         </div>
         <div class="pp-dots" id="ppDots"><span class="on"></span><span></span></div>
-        <div class="pp-ver">ChatNest v37.81</div><!-- 版本戳：发布时同步改这里和设置页"关于"，用于肉眼验证线上版本 -->
+        <div class="pp-ver">ChatNest v37.82</div><!-- 版本戳：发布时同步改这里和设置页"关于"，用于肉眼验证线上版本 -->
       </div>
   </div><!-- /composer -->
 
@@ -956,7 +956,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v37.81<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v37.82<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -2772,6 +2772,10 @@ function showHome(on){
     sec.classList.add('hidden');
     if(stream)stream.classList.remove('hidden');
     if(crow)crow.classList.remove('hidden');
+    /* v37.82 真凶修复：回主页时给加号面板加了 hidden(display:none)，回聊天页这里忘了摘——
+       之后点加号 open/maxHeight 照加但面板不渲染，只见输入框上移一点点；
+       v36 起一直如此，主页往返后必现，刷新重置内存态才恢复 */
+    if(pp)pp.classList.remove('hidden');
   }
 }
 const dock=document.getElementById('dock');
