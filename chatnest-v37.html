@@ -331,6 +331,8 @@ svg{display:block}
   background:var(--panel-solid);
   border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;box-shadow:var(--shadow);
   /* v37.78 展开高度不再走过渡：max-height/padding 过渡在手机 Edge 偶发起点竞态，卡在半展开（输入框上移一点点、宫格被裁光）；高度瞬时到位只留淡入 */
+  /* v37.79 独立合成层：dockbar 是 backdrop-filter 磨砂层，移动端其子元素尺寸突变时偶发不重绘（面板已撑开但画面停旧帧→只见输入框上移、面板空白）；translateZ 强制面板走独立层绕开 */
+  transform:translateZ(0);
   transition:opacity .2s ease}
 .plus-panel.open{max-height:320px;opacity:1;padding:18px 10px calc(env(safe-area-inset-bottom) + 12px)}
 .pp-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none}
@@ -1994,6 +1996,7 @@ function setPlus(open){
     plusPanel.style.maxHeight=Math.max(320,Math.round(window.innerHeight-top))+'px';
     plusPanel.classList.add('open');
     if(bar)bar.classList.add('flush');
+    void plusPanel.offsetHeight;   /* v37.79 强制同步重排重绘，防磨砂层停旧帧 */
   }else{
     plusPanel.classList.remove('open');
     plusPanel.style.maxHeight='';
