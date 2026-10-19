@@ -224,7 +224,20 @@ body{
 .dseg.line{font-size:14px;line-height:1.85;color:var(--text2)}
 .dseg.line b{color:var(--moon);font-weight:700}
 .drama-foot{
-  flex:none;text-align:center;padding:0 24px calc(20px + env(safe-area-inset-bottom));
+  flex:none;display:flex;gap:10px;align-items:center;
+  padding:10px 20px calc(18px + env(safe-area-inset-bottom));
+}
+/* 接龙输入行：与页面底部打字区同风格（透明无框） */
+.drama-foot input{
+  flex:1;min-width:0;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:14px;line-height:1.6;padding:8px 4px;
+  caret-color:var(--accent2);
+}
+.drama-foot input::placeholder{color:var(--text3);opacity:.5}
+.drama-foot input:disabled{opacity:.4}
+.drama-foot button{
+  flex:none;border:1px solid var(--line);background:var(--panel3);color:var(--text3);
+  border-radius:99px;padding:8px 14px;font-size:12px;cursor:pointer;
 }
 .drama-next{font-size:12px;color:var(--text3);letter-spacing:2px;animation:pulse 1.4s infinite}
 @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
@@ -268,10 +281,13 @@ body{
   <div class="typebar"><input id="chatInput" placeholder="…" autocomplete="off"></div>
 </div>
 
-<!-- 剧情幕：段落全由接口下发的剧本数据渲染，壳不持有任何剧情文案 -->
+<!-- 剧情幕：接龙舞台——AI 与玩家轮流即兴演绎，动作/对白均为实时生成，壳零文案 -->
 <div class="drama" id="drama">
   <div class="drama-scroll" id="dramaScroll"></div>
-  <div class="drama-foot"><span class="drama-next" id="dramaNext">▸ ▸ ▸</span></div>
+  <div class="drama-foot">
+    <input id="dramaInput" placeholder="…" autocomplete="off">
+    <button id="dramaEnd">✕</button>
+  </div>
 </div>
 
 <script>
@@ -417,73 +433,78 @@ function arrive(who,n){
   const btn=document.getElementById('btnRoll'); if(btn)btn.disabled=false;
 }
 function demoDrama(type){
-  openDrama([
-    /* 演示剧本：全占位数据，真剧本（含动作描写/对白）由接口下发 */
-    {kind:'action',text:'（动作描写 · 占位 · 剧本由接口下发 · 触发类型 '+type+'）'},
-    {kind:'line',who:state.players[1].name,text:'（对白 · 占位）'},
-    {kind:'action',text:'（动作描写 · 占位）'},
-    {kind:'line',who:state.players[0].name,text:'（对白 · 占位）'},
-  ],()=>{
+  /* 接龙舞台演示：AI 开场段为占位回包，之后轮到玩家续写；
+     真实对接时 AI 段落由对话接口（游戏场景提示）实时生成 */
+  openDrama(()=>{
+    pushSeg('action','（AI 动作描写 · 占位回包 · 触发类型 '+type+'）',null,true);
+    pushSeg('line','（AI 对白 · 占位回包）',state.players[1].name,true);
+  },()=>{
     addMsg('me','（演示 · 剧情落幕回执占位）',state.players[0].name);
   });
 }
 
-/* ═══ 剧情幕（全屏演绎舞台 · 剧本由接口下发） ═══
-   剧本格式: [{kind:'action'|'line', who?, text}]  — 全部是数据，零文案 */
+/* ═══ 剧情幕（接龙舞台 · 你和 AI 轮流即兴演绎） ═══
+   段落两种：action=动作描写(旁白，无署名) / line=对白(署名)
+   全部文字都是运行时生成（AI 回包 / 玩家输入），壳零文案 */
 const drama=document.getElementById('drama'),
       dramaScroll=document.getElementById('dramaScroll'),
-      dramaNext=document.getElementById('dramaNext');
-let dScript=[],dIdx=0,dTyping=null;
-function openDrama(script,onEnd){
-  dScript=script||[]; dIdx=0; drama._onEnd=onEnd||null;
-  dramaScroll.innerHTML='';
-  drama.classList.add('show');
-  playSeg();
-}
-function playSeg(){
-  if(dIdx>=dScript.length){ closeDrama(); return; }
-  const seg=dScript[dIdx];
+      dramaInput=document.getElementById('dramaInput'),
+      dramaEnd=document.getElementById('dramaEnd');
+let dTyping=null;
+function pushSeg(kind,text,who,typewriter){
   const el=document.createElement('div');
-  el.className='dseg '+seg.kind;
-  if(seg.kind==='line'&&seg.who){
-    const b=document.createElement('b'); b.textContent=seg.who;   /* 署名=数据 */
+  el.className='dseg '+kind;
+  if(kind==='line'&&who){
+    const b=document.createElement('b'); b.textContent=who;   /* 署名=数据 */
     el.appendChild(b);
     el.appendChild(document.createTextNode('：'));
   }
   const span=document.createElement('span');
   el.appendChild(span);
   dramaScroll.appendChild(el);
-  dramaScroll.scrollTop=dramaScroll.scrollHeight;
-  let i=0; const full=String(seg.text||'');
-  clearInterval(dTyping);
-  dTyping=setInterval(()=>{           /* 打字机：逐字浮现，内容永远当数据 */
-    i++;
-    span.textContent=full.slice(0,i);
-    dramaScroll.scrollTop=dramaScroll.scrollHeight;
-    if(i>=full.length){ clearInterval(dTyping); dTyping=null; }
-  },26);
-  drama._cur=el;
-}
-function advanceDrama(){
-  const seg=dScript[dIdx];
-  if(seg&&dTyping){                   /* 打字未完→点击补全 */
-    clearInterval(dTyping); dTyping=null;
-    const sp=drama._cur.querySelector('span');
-    if(sp)sp.textContent=String(seg.text||'');
-    return;
+  if(typewriter){
+    let i=0; const full=String(text||'');
+    dramaInput.disabled=true;
+    clearInterval(dTyping);
+    dTyping=setInterval(()=>{          /* 打字机：AI 正在写 */
+      i++;
+      span.textContent=full.slice(0,i);
+      dramaScroll.scrollTop=dramaScroll.scrollHeight;
+      if(i>=full.length){ clearInterval(dTyping); dTyping=null; dramaInput.disabled=false; }
+    },26);
+  }else{
+    span.textContent=String(text||'');
   }
-  dIdx++;
-  if(dIdx>=dScript.length) closeDrama();
-  else playSeg();
+  dramaScroll.scrollTop=dramaScroll.scrollHeight;
+  return span;
+}
+function openDrama(aiOpening,onEnd){
+  drama._onEnd=onEnd||null;
+  dramaScroll.innerHTML='';
+  drama.classList.add('show');
+  dramaInput.disabled=true;
+  (aiOpening||function(){})();       /* AI 开场（真实对接=请求对话接口） */
 }
 function closeDrama(){
   clearInterval(dTyping); dTyping=null;
   drama.classList.remove('show');
   dramaScroll.innerHTML='';
+  dramaInput.value=''; dramaInput.disabled=false;
   const cb=drama._onEnd; drama._onEnd=null;
   if(cb)cb();
 }
-drama.addEventListener('click',advanceDrama);
+function dramaSend(){
+  const v=dramaInput.value.trim(); if(!v||dTyping)return;
+  pushSeg('line',v,state.players[0].name,false);   /* 玩家续写：对白/动作自定 */
+  dramaInput.value='';
+  /* AI 接龙：真实对接=把剧情上下文发给对话接口，这里占位回包 */
+  setTimeout(()=>{
+    pushSeg('action','（AI 动作描写 · 占位回包）',null,true);
+    pushSeg('line','（AI 对白 · 占位回包）',state.players[1].name,true);
+  },500);
+}
+dramaInput.addEventListener('keydown',e=>{ if(e.key==='Enter')dramaSend(); });
+dramaEnd.addEventListener('click',e=>{ e.stopPropagation(); closeDrama(); });
 
 /* ═══ 内嵌对话流（棋盘下方空白 · 纯文字行，无气泡） ═══
    荷官/我方/事件/系统 = 四种颜色行；发送者署名由接口下发（占位 P1/P2） */
