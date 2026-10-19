@@ -185,6 +185,7 @@ body{
 .bg-photo-dim{position:fixed;inset:0;z-index:-1;background:var(--bg-dim);display:none}
 /* 底部空白 = 打字处：全宽透明，无框无线无按钮，文字贴左，光标落在空白里 */
 .typebar{flex:none;padding:0 26px 16px}
+.typebar form{display:block;margin:0}
 .typebar input{
   display:block;width:100%;background:transparent;border:none;outline:none;
   color:var(--text);font-size:14px;line-height:1.7;padding:8px 2px;
@@ -229,6 +230,7 @@ body{
 }
 .drama-inputs{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 /* 双输入口：动作(斜体旁白) / 台词(正常)，均透明无框 */
+.drama-inputs form{display:block;margin:0;min-width:0}
 .drama-inputs input{
   display:block;width:100%;background:transparent;border:none;outline:none;
   color:var(--text);font-size:14px;line-height:1.6;padding:6px 4px;
@@ -283,7 +285,7 @@ body{
 <div class="main">
   <div class="stage"><div class="board" id="board"></div></div>
   <div class="talklog" id="evLog"></div>
-  <div class="typebar"><input id="chatInput" placeholder="…" autocomplete="off"></div>
+  <div class="typebar"><form id="typeForm"><input id="chatInput" placeholder="…" autocomplete="off"></form></div>
 </div>
 
 <!-- 剧情幕：接龙舞台——AI 与玩家轮流即兴演绎，动作/对白均为实时生成，壳零文案 -->
@@ -291,8 +293,8 @@ body{
   <div class="drama-scroll" id="dramaScroll"></div>
   <div class="drama-foot">
     <div class="drama-inputs">
-      <div class="act"><input id="dramaAct" placeholder="…" autocomplete="off"></div>
-      <div class="say"><input id="dramaInput" placeholder="…" autocomplete="off"></div>
+      <form class="act" id="dramaActForm"><input id="dramaAct" placeholder="…" autocomplete="off"></form>
+      <form class="say" id="dramaSayForm"><input id="dramaInput" placeholder="…" autocomplete="off"></form>
     </div>
     <button id="dramaEnd">✕</button>
   </div>
@@ -521,8 +523,9 @@ function dramaSend(){
     pushSeg('line','（AI 对白 · 占位回包）',state.players[1].name,true);
   },500);
 }
-dramaAct.addEventListener('keydown',e=>{ if(e.key==='Enter')dramaActSend(); });
-dramaInput.addEventListener('keydown',e=>{ if(e.key==='Enter')dramaSend(); });
+/* 手机键盘"发送/Go"不走 Enter 事件 → 用 form submit 兜底（Enter 亦触发 submit） */
+document.getElementById('dramaActForm').addEventListener('submit',e=>{ e.preventDefault(); dramaActSend(); });
+document.getElementById('dramaSayForm').addEventListener('submit',e=>{ e.preventDefault(); dramaSend(); });
 dramaEnd.addEventListener('click',e=>{ e.stopPropagation(); closeDrama(); });
 
 /* ═══ 内嵌对话流（棋盘下方空白 · 纯文字行，无气泡） ═══
@@ -608,7 +611,7 @@ document.addEventListener('click',e=>{
 renderBoard();
 evLog=document.getElementById('evLog');
 
-/* 聊天输入：事件委托绑定（中心面板由 renderBoard 动态生成） */
+/* 聊天输入：form submit 兜底手机键盘"发送/Go"键 */
 function sendChat(){
   const inp=document.getElementById('chatInput'); if(!inp)return;
   const v=inp.value.trim(); if(!v)return;
@@ -616,10 +619,7 @@ function sendChat(){
   inp.value='';
   setTimeout(()=>addMsg('host','（回包占位 · 接口未接入）',state.players[1].name),600);
 }
-document.addEventListener('click',e=>{ if(e.target.id==='chatSend')sendChat(); });
-document.addEventListener('keydown',e=>{
-  if(e.target.id==='chatInput'&&e.key==='Enter')sendChat();
-});
+document.getElementById('typeForm').addEventListener('submit',e=>{ e.preventDefault(); sendChat(); });
 
 /* 演示占位消息：内容为中性占位符，非游戏文案 */
 addMsg('sys','— 演示模式 · 消息流未接入接口 —');
