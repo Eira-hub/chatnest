@@ -106,7 +106,13 @@ body{
 .coin-card .coins{font-weight:700;color:var(--moon);font-variant-numeric:tabular-nums}
 /* ── 主区：棋盘 + 聊天栏 ── */
 .main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;z-index:1}
-.stage{flex:1;display:flex;align-items:center;justify-content:center;padding:14px 18px 72px;min-width:0}
+.stage{flex:none;display:flex;justify-content:center;padding:14px 18px 6px;min-width:0}
+/* 聊天记录：棋盘下方空白，纯文字行直接铺在背景上（无框无面板） */
+.talklog{
+  flex:1;min-height:0;overflow-y:auto;
+  display:flex;flex-direction:column;gap:6px;
+  padding:8px 28px 4px;
+}
 /* 棋盘：6x6 外圈 = 20 格，磨砂玻璃面板 */
 .board{
   --sz:78px;
@@ -141,16 +147,15 @@ body{
 }
 .pawn.bounce{animation:pbounce .5s}
 @keyframes pbounce{0%{transform:scale(1)}40%{transform:scale(1.7) translateY(-6px)}100%{transform:scale(1)}}
-/* 中心事件面板：骰子+掷骰+内嵌对话流（纯文字行，无气泡）+输入行 */
+/* 中心面板：只管游戏（骰子+掷骰），聊天在棋盘下方空白 */
 .center-panel{
   grid-area:2/2/6/6;
   border-radius:16px;background:var(--panel);border:1px solid var(--line);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  display:flex;flex-direction:column;align-items:stretch;gap:10px;
-  padding:14px 16px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:16px;text-align:center;
 }
 .dice{
-  align-self:center;
   width:64px;height:64px;border-radius:16px;
   background:var(--dice-bg);color:var(--dice-fg);
   font-size:30px;font-weight:900;
@@ -164,12 +169,7 @@ body{
   50%{transform:rotate(190deg) scale(.94)}75%{transform:rotate(285deg) scale(1.1)}
   100%{transform:rotate(360deg) scale(1)}
 }
-/* 内嵌对话流：纯文字行，颜色区分角色（内容由接口下发） */
-.ev-log{
-  flex:1;min-height:0;overflow-y:auto;
-  display:flex;flex-direction:column;gap:6px;text-align:left;
-  padding:2px 4px;
-}
+/* 聊天文字行：颜色区分角色，内容由接口下发 */
 .line{font-size:13px;line-height:1.65;color:var(--text2);word-break:break-all}
 .line.me{color:var(--text)}
 .line.sys{color:var(--text3);font-size:11.5px;text-align:center}
@@ -247,6 +247,7 @@ body{
 
 <div class="main">
   <div class="stage"><div class="board" id="board"></div></div>
+  <div class="talklog" id="evLog"></div>
   <div class="typebar"><input id="chatInput" placeholder="…" autocomplete="off"></div>
 </div>
 
@@ -322,8 +323,7 @@ function renderBoard(){
   cp.style.gridArea='2/2/6/6';
   cp.innerHTML=`
     <div class="dice" id="dice">?</div>
-    <button class="btn-roll" id="btnRoll">掷骰</button>
-    <div class="ev-log" id="evLog"></div>`;
+    <button class="btn-roll" id="btnRoll">掷骰</button>`;
   boardEl.appendChild(cp);
 
   state.cells.forEach((c,i)=>{
