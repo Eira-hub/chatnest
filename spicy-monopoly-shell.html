@@ -224,17 +224,22 @@ body{
 .dseg.line{font-size:14px;line-height:1.85;color:var(--text2)}
 .dseg.line b{color:var(--moon);font-weight:700}
 .drama-foot{
-  flex:none;display:flex;gap:10px;align-items:center;
+  flex:none;display:flex;gap:12px;align-items:flex-end;
   padding:10px 20px calc(18px + env(safe-area-inset-bottom));
 }
-/* 接龙输入行：与页面底部打字区同风格（透明无框） */
-.drama-foot input{
-  flex:1;min-width:0;background:transparent;border:none;outline:none;
-  color:var(--text);font-size:14px;line-height:1.6;padding:8px 4px;
+.drama-inputs{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+/* 双输入口：动作(斜体旁白) / 台词(正常)，均透明无框 */
+.drama-inputs input{
+  display:block;width:100%;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:14px;line-height:1.6;padding:6px 4px;
   caret-color:var(--accent2);
 }
-.drama-foot input::placeholder{color:var(--text3);opacity:.5}
-.drama-foot input:disabled{opacity:.4}
+.drama-inputs input::placeholder{color:var(--text3);opacity:.5}
+.drama-inputs input:disabled{opacity:.4}
+.drama-inputs .act input{
+  font-style:italic;color:var(--text2);
+  caret-color:var(--text3);
+}
 .drama-foot button{
   flex:none;border:1px solid var(--line);background:var(--panel3);color:var(--text3);
   border-radius:99px;padding:8px 14px;font-size:12px;cursor:pointer;
@@ -285,7 +290,10 @@ body{
 <div class="drama" id="drama">
   <div class="drama-scroll" id="dramaScroll"></div>
   <div class="drama-foot">
-    <input id="dramaInput" placeholder="…" autocomplete="off">
+    <div class="drama-inputs">
+      <div class="act"><input id="dramaAct" placeholder="…" autocomplete="off"></div>
+      <div class="say"><input id="dramaInput" placeholder="…" autocomplete="off"></div>
+    </div>
     <button id="dramaEnd">✕</button>
   </div>
 </div>
@@ -449,8 +457,10 @@ function demoDrama(type){
 const drama=document.getElementById('drama'),
       dramaScroll=document.getElementById('dramaScroll'),
       dramaInput=document.getElementById('dramaInput'),
+      dramaAct=document.getElementById('dramaAct'),
       dramaEnd=document.getElementById('dramaEnd');
 let dTyping=null;
+function setInputs(dis){ dramaInput.disabled=dis; dramaAct.disabled=dis; }
 function pushSeg(kind,text,who,typewriter){
   const el=document.createElement('div');
   el.className='dseg '+kind;
@@ -464,13 +474,13 @@ function pushSeg(kind,text,who,typewriter){
   dramaScroll.appendChild(el);
   if(typewriter){
     let i=0; const full=String(text||'');
-    dramaInput.disabled=true;
+    setInputs(true);
     clearInterval(dTyping);
     dTyping=setInterval(()=>{          /* 打字机：AI 正在写 */
       i++;
       span.textContent=full.slice(0,i);
       dramaScroll.scrollTop=dramaScroll.scrollHeight;
-      if(i>=full.length){ clearInterval(dTyping); dTyping=null; dramaInput.disabled=false; }
+      if(i>=full.length){ clearInterval(dTyping); dTyping=null; setInputs(false); }
     },26);
   }else{
     span.textContent=String(text||'');
@@ -482,27 +492,36 @@ function openDrama(aiOpening,onEnd){
   drama._onEnd=onEnd||null;
   dramaScroll.innerHTML='';
   drama.classList.add('show');
-  dramaInput.disabled=true;
+  setInputs(true);
   (aiOpening||function(){})();       /* AI 开场（真实对接=请求对话接口） */
 }
 function closeDrama(){
   clearInterval(dTyping); dTyping=null;
   drama.classList.remove('show');
   dramaScroll.innerHTML='';
-  dramaInput.value=''; dramaInput.disabled=false;
+  dramaInput.value=''; dramaAct.value='';
+  setInputs(false);
   const cb=drama._onEnd; drama._onEnd=null;
   if(cb)cb();
 }
+function dramaActSend(){
+  /* 动作口：玩家旁白，可连发铺垫，不触发 AI 回合 */
+  const v=dramaAct.value.trim(); if(!v||dTyping)return;
+  pushSeg('action',v,null,false);
+  dramaAct.value='';
+}
 function dramaSend(){
+  /* 台词口：说完话=回合结束，她来接 */
   const v=dramaInput.value.trim(); if(!v||dTyping)return;
-  pushSeg('line',v,state.players[0].name,false);   /* 玩家续写：对白/动作自定 */
+  pushSeg('line',v,state.players[0].name,false);
   dramaInput.value='';
-  /* AI 接龙：真实对接=把剧情上下文发给对话接口，这里占位回包 */
+  /* AI 接龙：真实对接=剧情上下文发给对话接口，返回动作+台词；此处占位回包 */
   setTimeout(()=>{
     pushSeg('action','（AI 动作描写 · 占位回包）',null,true);
     pushSeg('line','（AI 对白 · 占位回包）',state.players[1].name,true);
   },500);
 }
+dramaAct.addEventListener('keydown',e=>{ if(e.key==='Enter')dramaActSend(); });
 dramaInput.addEventListener('keydown',e=>{ if(e.key==='Enter')dramaSend(); });
 dramaEnd.addEventListener('click',e=>{ e.stopPropagation(); closeDrama(); });
 
