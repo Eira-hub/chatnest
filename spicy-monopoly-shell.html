@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Spicy Monopoly · Shell</title>
+<!-- ═══════════════════════════════════════════════════════════════
+  spicy-monopoly 网页前端壳（纯壳 · 假数据渲染 · 未接接口）
+  ─────────────────────────────────────────────────────────────
+  铁律（平台合规）：
+  · 本文件零游戏文案硬编码——任务卡、格子描述、身份卡、任何库内容
+    一律不写进代码；所有内容展示位均为数据占位，等接口下发后渲染。
+  · 代码中出现的类型键（start/task/truth/shop/card/mystery/jail/duel/normal）
+    仅为布局机制的枚举标识，非游戏文案。
+  · 接口层 API.* 目前为空实现；对接时按哥哥的接口约定文档填充，
+    页面渲染只认数据，不认任何写死的字。
+  ═══════════════════════════════════════════════════════════════ -->
+<style>
+/* ═══ ChatNest·星夜小筑 同源设计变量（浅色为默认 + data-theme 暗色） ═══ */
+:root{
+  --fs:15px;
+  --bg0:#EEF1F7;--bg1:#F3F5FA;--bg2:#E7EBF3;
+  --panel:rgba(255,255,255,.74);--panel2:rgba(30,40,80,.05);--panel3:rgba(30,40,80,.09);
+  --panel-solid:#F6F8FC;
+  --line:rgba(30,40,80,.12);--line2:rgba(30,40,80,.19);
+  --text:#16181D;--text2:#565C6E;--text3:#8A90A2;
+  --accent:#7C8BC9;--accent2:#4A57A5;--moon:#9C7B46;--danger:#C05656;
+  --user-b1:#F2EDE7;--user-b2:#E7E0D8;--user-fg:#1B1C22;
+  --ai-b:rgba(255,255,255,.66);--ai-line:rgba(30,40,80,.14);
+  --shadow:0 8px 28px rgba(40,60,120,.13);
+  --ease:cubic-bezier(.22,.8,.3,1);
+  /* 棋盘类型色 · 低饱和夜空系（布局机制枚举配色，非游戏文案） */
+  --t-start:#5BB8A0;--t-task:#D97A7A;--t-truth:#D98BA5;--t-shop:#C9A25E;
+  --t-card:#4A57A5;--t-mystery:#7C8BC9;--t-jail:#9BA1B8;--t-duel:#C97B5B;--t-normal:#AEB6D8;
+  --cell-bg:rgba(255,255,255,.62);
+  --board-bg:linear-gradient(145deg,rgba(255,255,255,.5),rgba(231,235,243,.35));
+  --dice-bg:linear-gradient(145deg,#FDFCFB,#E7E0D8);--dice-fg:#1B1C22;
+  --pawn-ring:rgba(255,255,255,.9);
+  --star:rgba(40,60,120,.16);
+}
+[data-theme="dark"]{
+  --bg0:#050508;--bg1:#08090F;--bg2:#0D0F18;
+  --panel:rgba(18,24,48,.78);--panel2:rgba(255,255,255,.05);--panel3:rgba(255,255,255,.08);
+  --panel-solid:#111731;
+  --line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.16);
+  --text:#E9EBF4;--text2:#9BA1B8;--text3:#626A85;
+  --accent:#A5B9DC;--accent2:#CBD8EF;--moon:#E3C89E;--danger:#D97A7A;
+  --user-b1:#F2EDE7;--user-b2:#E7E0D8;--user-fg:#1B1C22;
+  --ai-b:rgba(12,13,18,.42);--ai-line:rgba(255,255,255,.22);
+  --shadow:0 8px 28px rgba(0,0,0,.38);
+  --t-start:#4E9C88;--t-task:#B05F5F;--t-truth:#B06F8C;--t-shop:#A98A50;
+  --t-card:#5A66B8;--t-mystery:#6E7FB5;--t-jail:#6E7488;--t-duel:#B06A4E;--t-normal:#2A3352;
+  --cell-bg:rgba(30,40,80,.35);
+  --board-bg:linear-gradient(145deg,rgba(17,23,49,.6),rgba(8,9,15,.5));
+  --dice-bg:linear-gradient(145deg,#F2EDE7,#D8CFBF);--dice-fg:#1B1C22;
+  --pawn-ring:rgba(255,255,255,.85);
+  --star:rgba(255,255,255,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none;max-width:100%}
+body{
+  background:var(--bg0);color:var(--text);
+  font-family:-apple-system,system-ui,'PingFang SC','HarmonyOS Sans SC',sans-serif;
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:background .3s;
+}
+/* 星点背景（纯装饰） */
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 22%,var(--star) 50%,transparent 51%),
+    radial-gradient(1px 1px at 34% 8%,var(--star) 50%,transparent 51%),
+    radial-gradient(2px 2px at 58% 30%,var(--star) 50%,transparent 51%),
+    radial-gradient(1px 1px at 78% 14%,var(--star) 50%,transparent 51%),
+    radial-gradient(1.5px 1.5px at 90% 42%,var(--star) 50%,transparent 51%),
+    radial-gradient(1px 1px at 22% 68%,var(--star) 50%,transparent 51%),
+    radial-gradient(2px 2px at 66% 78%,var(--star) 50%,transparent 51%),
+    radial-gradient(1px 1px at 44% 88%,var(--star) 50%,transparent 51%);
+}
+/* ── 顶栏：局信息 + 金币状态 ── */
+.topbar{
+  display:flex;align-items:center;gap:14px;position:relative;z-index:2;
+  padding:10px 18px;border-bottom:1px solid var(--line);
+  background:var(--panel);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);flex:none;
+}
+.brand{font-weight:800;letter-spacing:.5px;font-size:15px;color:var(--text2)}
+.brand b{color:var(--accent2)}
+.round-pill{
+  font-size:12.5px;color:var(--text2);background:var(--panel3);
+  border:1px solid var(--line);border-radius:99px;padding:4px 12px;
+  font-variant-numeric:tabular-nums;
+}
+.theme-btn{
+  border:1px solid var(--line);background:var(--panel3);color:var(--text2);
+  border-radius:99px;width:32px;height:32px;cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;transition:transform .3s var(--ease);
+}
+.theme-btn:active{transform:rotate(30deg)}
+.coin-group{margin-left:auto;display:flex;gap:10px}
+.coin-card{
+  display:flex;align-items:center;gap:8px;
+  background:var(--panel3);border:1px solid var(--line);border-radius:12px;
+  padding:6px 14px;font-size:14px;
+}
+.coin-card .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.coin-card .pname{color:var(--text2);font-size:12.5px}
+.coin-card .coins{font-weight:700;color:var(--moon);font-variant-numeric:tabular-nums}
+/* ── 主区：棋盘 + 聊天栏 ── */
+.main{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;z-index:1}
+.stage{flex:none;display:flex;justify-content:center;padding:14px 18px 6px;min-width:0}
+/* 聊天记录：棋盘下方空白，纯文字行直接铺在背景上（无框无面板） */
+.talklog{
+  flex:1;min-height:0;overflow-y:auto;
+  display:flex;flex-direction:column;gap:6px;
+  padding:8px 28px 4px;
+}
+/* 棋盘：6x6 外圈 = 20 格，磨砂玻璃面板 */
+.board{
+  --sz:78px;
+  display:grid;grid-template-columns:repeat(6,var(--sz));grid-template-rows:repeat(6,var(--sz));
+  gap:8px;padding:14px;border-radius:22px;
+  background:var(--board-bg);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.cell{
+  position:relative;border-radius:12px;overflow:visible;
+  background:var(--cell-bg);border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:box-shadow .3s var(--ease),border-color .3s,filter .3s;
+}
+/* 类型标识：角上一颗小点（色取类型变量），格子本体保持素净玻璃 */
+.cell::before{
+  content:'';position:absolute;top:6px;left:6px;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--cbg,var(--t-normal));opacity:.85;
+}
+.cell .no{font-size:10.5px;color:var(--text);opacity:.55;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.cell .tag{font-size:9.5px;color:var(--text);opacity:.7;margin-top:2px;letter-spacing:.5px}
+.cell.owned{border-color:var(--own,#fff);box-shadow:inset 0 0 0 2px var(--own,#fff)}
+.cell.cur{box-shadow:0 0 0 2px var(--accent2),0 6px 18px var(--panel3)}
+.cell .pawns{position:absolute;inset:auto 3px 3px auto;display:flex;gap:3px}
+.pawn{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid var(--pawn-ring);box-shadow:0 2px 8px rgba(0,0,0,.25);
+  transition:transform .28s cubic-bezier(.34,1.56,.64,1);
+}
+.pawn.bounce{animation:pbounce .5s}
+@keyframes pbounce{0%{transform:scale(1)}40%{transform:scale(1.7) translateY(-6px)}100%{transform:scale(1)}}
+/* 中心面板：只管游戏（骰子+掷骰），聊天在棋盘下方空白 */
+.center-panel{
+  grid-area:2/2/6/6;
+  border-radius:16px;background:var(--panel);border:1px solid var(--line);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:16px;text-align:center;
+}
+.dice{
+  width:64px;height:64px;border-radius:16px;
+  background:var(--dice-bg);color:var(--dice-fg);
+  font-size:30px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow);
+  font-variant-numeric:tabular-nums;
+}
+.dice.rolling{animation:roll .62s cubic-bezier(.36,.07,.19,.97)}
+@keyframes roll{
+  0%{transform:rotate(0) scale(1)}25%{transform:rotate(95deg) scale(1.12)}
+  50%{transform:rotate(190deg) scale(.94)}75%{transform:rotate(285deg) scale(1.1)}
+  100%{transform:rotate(360deg) scale(1)}
+}
+/* 聊天文字行：颜色区分角色，内容由接口下发 */
+.line{font-size:13px;line-height:1.65;color:var(--text2);word-break:break-all}
+.line b{color:var(--text);font-weight:600}   /* 发送者署名（名字由接口下发） */
+.line.me{color:var(--text)}
+.line.sys{color:var(--text3);font-size:11.5px;text-align:center}
+.line.event{color:var(--accent2);font-size:12.5px;text-align:center}
+/* 自定义背景图层：图片在最底，主题色罩保证可读性（罩色随主题切换） */
+:root{--bg-dim:rgba(238,241,247,.58)}
+[data-theme="dark"]{--bg-dim:rgba(10,14,30,.55)}
+.bg-photo{
+  position:fixed;inset:0;z-index:-2;
+  background-position:center;background-size:cover;background-repeat:no-repeat;
+}
+.bg-photo-dim{position:fixed;inset:0;z-index:-1;background:var(--bg-dim);display:none}
+/* 底部空白 = 打字处：全宽透明，无框无线无按钮，文字贴左，光标落在空白里 */
+.typebar{flex:none;padding:0 26px 16px}
+.typebar input{
+  display:block;width:100%;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:14px;line-height:1.7;padding:8px 2px;
+  caret-color:var(--accent2);
+}
+.typebar input::placeholder{color:var(--text3);opacity:.5}
+.btn-roll{
+  border:none;cursor:pointer;border-radius:99px;
+  padding:13px 42px;font-size:16px;font-weight:800;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:var(--shadow);
+  transition:transform .15s var(--ease),opacity .2s;
+  letter-spacing:2px;
+}
+.btn-roll:active{transform:scale(.95)}
+.btn-roll:disabled{opacity:.45;cursor:not-allowed}
+/* ── 卡牌弹窗 ── */
+.modal-mask{
+  position:fixed;inset:0;background:rgba(30,40,80,.28);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;z-index:50;
+  opacity:0;pointer-events:none;transition:opacity .22s;
+}
+[data-theme="dark"] .modal-mask{background:rgba(0,0,0,.55)}
+.modal-mask.show{opacity:1;pointer-events:auto}
+.card-modal{
+  width:min(400px,88vw);border-radius:20px;overflow:hidden;
+  background:var(--panel-solid);border:1px solid var(--line);
+  transform:translateY(24px) scale(.96);transition:transform .25s var(--ease);
+  box-shadow:var(--shadow);
+}
+.modal-mask.show .card-modal{transform:none}
+.card-top{
+  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+}
+.card-top .ct{font-weight:800;font-size:16px;color:#fff}
+.card-top .lv{
+  font-size:11px;background:rgba(255,255,255,.22);color:#fff;
+  border-radius:99px;padding:3px 10px;font-variant-numeric:tabular-nums;
+}
+.card-body{padding:22px 20px;font-size:14px;line-height:1.9;color:var(--text2);min-height:110px}
+.card-foot{display:flex;gap:10px;padding:0 20px 20px}
+.card-foot button{
+  flex:1;border:none;border-radius:12px;padding:12px;cursor:pointer;
+  font-size:14px;font-weight:700;
+}
+.btn-a{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-b{background:var(--panel3);color:var(--text2);border:1px solid var(--line)!important}
+/* 窄屏：棋盘缩放 + 顶栏紧凑化（防横向溢出） */
+@media (max-width:860px){
+  .board{--sz:min(12vw,56px);gap:4px;padding:8px}
+  .stage{padding:8px 8px 12px}
+  .center-panel{padding:10px 12px;gap:8px}
+  .dice{width:52px;height:52px;font-size:24px}
+  .btn-roll{padding:9px 28px;font-size:14px}
+  .topbar{gap:8px;padding:8px 12px}
+  .brand{font-size:0}
+  .brand b{font-size:13px}
+  .round-pill{display:none}
+  .theme-btn{padding:7px 9px;font-size:13px}
+  .coin-group{gap:6px}
+  .coin-card{padding:5px 9px;gap:5px}
+  .coin-card .pname{display:none}
+  .coin-card .coins{font-size:11.5px}
+  .talklog{padding:6px 14px 2px}
+  .typebar{padding:0 14px 12px}
+}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<header class="topbar">
+  <div class="brand"><b>SPICY</b> MONOPOLY</div>
+  <div class="round-pill" id="roundPill">— / —</div>
+  <button class="theme-btn" id="themeBtn" title="主题">☾</button>
+  <button class="theme-btn" id="bgBtn" title="自定义背景">🖼</button>
+  <button class="theme-btn" id="bgClear" title="恢复默认背景" style="display:none">✕</button>
+  <input type="file" id="bgFile" accept="image/*" style="position:fixed;left:-9999px;top:0;opacity:0">
+  <div class="coin-group" id="coinGroup"></div>
+</header>
+
+<div class="main">
+  <div class="stage"><div class="board" id="board"></div></div>
+  <div class="talklog" id="evLog"></div>
+  <div class="typebar"><input id="chatInput" placeholder="…" autocomplete="off"></div>
+</div>
+
+<!-- 卡牌弹窗：标题/强度/描述全部由数据注入，壳不持有任何文案 -->
+<div class="modal-mask" id="modalMask">
+  <div class="card-modal">
+    <div class="card-top">
+      <div class="ct" id="cardTitle">—</div>
+      <div class="lv" id="cardLevel">—</div>
+    </div>
+    <div class="card-body" id="cardBody">—</div>
+    <div class="card-foot">
+      <button class="btn-b" id="cardAlt">—</button>
+      <button class="btn-a" id="cardOk">—</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+  数据层（全部为演示假数据 · 严禁在壳内写死任何游戏内容）
+  ─────────────────────────────────────────────────────────
+  对接原则：cells/players/chat 的 label、desc、icon、name 等一切
+  展示字段一律由接口下发；本文件只保留渲染与交互骨架。
+  API 对象为预留挂载点，等接口约定文档后填充实现。
+  ═══════════════════════════════════════════════════════════ */
+const API = {
+  base: 'https://spicy-monopoly.lol',   // 接口基地址（按约定替换）
+  // TODO(对接): newGame / roll / state / action —— 等接口约定文档
+};
+
+/* 假数据：类型枚举仅为布局演示；label/icon 置 null → 渲染为序号占位 */
+const state = {
+  gameId: null,
+  gameLength: 24,
+  round: 1,
+  turnOf: 0,                       // 0/1 = 玩家索引
+  cells: Array.from({length:20},(_,i)=>({
+    type: mockType(i),             // 布局演示用的类型枚举
+    label: null, icon: null,       // ★ 内容占位：一律接口下发
+    owner: (i===3||i===11) ? 0 : (i===7 ? 1 : null),
+  })),
+  players: [
+    { name:'P1', color:'#4cc9f0', coins:123, cell:0, dsc:'—' },
+    { name:'P2', color:'#ff6d9d', coins:87,  cell:5, dsc:'—' },
+  ],
+};
+function mockType(i){
+  const seq = ['start','task','truth','task','normal','shop',
+               'task','card','mystery','task','truth','task',
+               'normal','shop','duel','task','card','jail','mystery','task'];
+  return seq[i] || 'normal';
+}
+
+/* ═══ 渲染 ═══ */
+const boardEl = document.getElementById('board');
+const TYPE_CLS = {start:'t-start',task:'t-task',truth:'t-truth',shop:'t-shop',
+                  card:'t-card',mystery:'t-mystery',jail:'t-jail',duel:'t-duel',normal:'t-normal'};
+
+/* 20 格 → 6x6 外圈坐标：底边(0-5)→左边(6-9)→顶边(10-15)→右边(16-19) */
+function cellRC(i){
+  if(i<=5)  return [5, 5-i];
+  if(i<=9)  return [4-(i-6), 0];
+  if(i<=15) return [0, i-10];
+  return [i-16+1, 5];
+}
+
+function renderBoard(){
+  boardEl.innerHTML='';
+  /* 中心面板 */
+  const cp=document.createElement('div');
+  cp.className='center-panel';
+  cp.style.gridArea='2/2/6/6';
+  cp.innerHTML=`
+    <div class="dice" id="dice">?</div>
+    <button class="btn-roll" id="btnRoll">掷骰</button>`;
+  boardEl.appendChild(cp);
+
+  state.cells.forEach((c,i)=>{
+    const [r,col]=cellRC(i);
+    const el=document.createElement('div');
+    el.className='cell'+(c.owner!=null?' owned':'');
+    el.style.gridArea=`${r+1}/${col+1}`;
+    /* 格色走主题变量：--t-{type} 由浅/暗两套 CSS 自动切换 */
+    el.style.setProperty('--cbg',`var(--${TYPE_CLS[c.type]||'t-normal'})`);
+    el.style.setProperty('--own', c.owner!=null?state.players[c.owner].color:'');
+    el.dataset.idx=i;
+    /* 内容占位：label/icon 为空 → 只渲染序号（不写任何描述性文字） */
+    el.innerHTML=`<div class="no">${String(i+1).padStart(2,'0')}</div>`+
+                 (c.label?`<div class="tag"></div>`:'');
+    const pw=document.createElement('div'); pw.className='pawns'; el.appendChild(pw);
+    boardEl.appendChild(el);
+  });
+  placeAllPawns();
+  renderRound(); renderCoins();
+}
+
+function placePawn(pi,animate){
+  const p=state.players[pi];
+  const cell=boardEl.querySelector(`.cell[data-idx="${p.cell}"]`);
+  if(!cell)return;
+  cell.querySelector('.pawns').querySelectorAll(`[data-p="${pi}"]`).forEach(n=>n.remove());
+  const pn=document.createElement('div');
+  pn.className='pawn'+(animate?' bounce':'');
+  pn.dataset.p=pi;
+  pn.style.background=p.color;
+  cell.querySelector('.pawns').appendChild(pn);
+  boardEl.querySelectorAll('.cell.cur').forEach(x=>x.classList.remove('cur'));
+  cell.classList.add('cur');
+}
+function placeAllPawns(){ state.players.forEach((_,i)=>placePawn(i,false)); }
+
+function renderCoins(){
+  document.getElementById('coinGroup').innerHTML = state.players.map(p=>`
+    <div class="coin-card">
+      <span class="dot" style="background:${p.color}"></span>
+      <span class="pname"></span>
+      <span class="coins">🪙 ${p.coins}</span>
+    </div>`).join('');
+  /* 玩家名等接口下发后填充，壳内不写名 */
+  const names=document.querySelectorAll('#coinGroup .pname');
+  names.forEach((n,i)=>{ n.textContent=state.players[i].name; });
+}
+function renderRound(){
+  document.getElementById('roundPill').textContent=
+    `R ${state.round} / ${state.gameLength}`;
+}
+
+/* ═══ 假交互演示（壳自嗨用，对接后整段替换） ═══ */
+function demoRoll(){
+  const btn=document.getElementById('btnRoll'); if(!btn)return;
+  btn.disabled=true;
+  const dice=document.getElementById('dice');
+  dice.textContent='?'; dice.classList.remove('rolling'); void dice.offsetWidth;
+  dice.classList.add('rolling');
+  const n=1+Math.floor(Math.random()*6);
+  setTimeout(()=>{
+    dice.textContent=n;
+    const who=state.turnOf, p=state.players[who];
+    const from=p.cell, target=(from+n)%20;
+    /* 逐步走格动画：from+1 … target */
+    let step=from;
+    const walk=setInterval(()=>{
+      step=(step+1)%20;
+      p.cell=step; placePawn(who,true);
+      if(step===target){ clearInterval(walk); arrive(who,n); }
+    },130);
+  },640);
+}
+function arrive(who,n){
+  const p=state.players[who];
+  const cell=state.cells[p.cell];
+  /* 事件行占位：真实文案等接口 */
+  addMsg('event','掷出 '+n+' · 落第 '+(p.cell+1)+' 格 · 事件内容由接口下发');
+  /* 任务/卡牌类格子演示弹窗（占位数据） */
+  if(['task','truth','card'].includes(cell.type)) setTimeout(()=>demoCard(cell.type),450);
+  state.turnOf=1-state.turnOf;
+  renderRound();
+  const btn=document.getElementById('btnRoll'); if(btn)btn.disabled=false;
+}
+function demoCard(type){
+  openCard({
+    /* 弹窗内容全占位：标题/描述/按钮文案在真实对接时均由接口渲染 */
+    title:'['+type.toUpperCase()+']',
+    level:'LV —',
+    body:'（卡面内容占位 · 此区域由接口数据渲染，壳内不持有任何游戏文案）',
+    ok:'确认', alt:'—',
+    onOk:()=>{ addMsg('me','（演示 · 确认后的事件回执占位）',state.players[0].name); },
+  });
+}
+
+/* ═══ 卡牌弹窗 ═══ */
+const mask=document.getElementById('modalMask');
+function openCard(d){
+  document.getElementById('cardTitle').textContent=d.title;
+  document.getElementById('cardLevel').textContent=d.level;
+  document.getElementById('cardBody').textContent=d.body;
+  const ok=document.getElementById('cardOk'), alt=document.getElementById('cardAlt');
+  ok.textContent=d.ok; alt.textContent=d.alt;
+  ok.onclick=()=>{ closeCard(); d.onOk&&d.onOk(); };
+  alt.onclick=()=>{ closeCard(); d.onAlt&&d.onAlt(); };
+  mask.classList.add('show');
+}
+function closeCard(){ mask.classList.remove('show'); }
+mask.addEventListener('click',e=>{ if(e.target===mask) closeCard(); });
+
+/* ═══ 内嵌对话流（棋盘下方空白 · 纯文字行，无气泡） ═══
+   荷官/我方/事件/系统 = 四种颜色行；发送者署名由接口下发（占位 P1/P2） */
+let evLog=null;
+function addMsg(kind,text,who){
+  if(!evLog)return;                 /* 棋盘尚未渲染时忽略 */
+  const m=document.createElement('div');
+  m.className='line '+kind;
+  if(who){
+    const b=document.createElement('b');
+    b.textContent=who;              /* textContent 防注入：名字永远当数据 */
+    m.appendChild(b);
+    m.appendChild(document.createTextNode('：'+text));
+  }else{
+    m.textContent=text;             /* textContent 防注入：内容永远当数据 */
+  }
+  evLog.appendChild(m);
+  evLog.scrollTop=evLog.scrollHeight;
+}
+
+/* 事件委托：掷骰按钮（renderBoard 每次重建中心面板） */
+document.addEventListener('click',e=>{
+  if(e.target.id==='btnRoll') demoRoll();
+});
+
+/* ═══ 主题（ChatNest 同款双主题 · 偏好存本地） ═══ */
+(function(){
+  let pref=null;
+  try{ pref=localStorage.getItem('sm_theme'); }catch(e){}
+  const sysDark=matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches;
+  const apply=t=>{
+    document.documentElement.setAttribute('data-theme',t);
+    document.getElementById('themeBtn').textContent = t==='dark' ? '☀' : '☾';
+  };
+  apply(pref || (sysDark?'dark':'light'));
+  document.getElementById('themeBtn').addEventListener('click',()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const nxt=cur==='dark'?'light':'dark';
+    apply(nxt);
+    try{ localStorage.setItem('sm_theme',nxt); }catch(e){}
+  });
+})();
+
+/* ═══ 自定义背景图（仅存本浏览器 localStorage，不上传） ═══ */
+(function(){
+  const KEY='sm_bg';
+  const photo=document.createElement('div'); photo.className='bg-photo';
+  const dim=document.createElement('div');   dim.className='bg-photo-dim';
+  document.body.prepend(photo,dim);
+  const btn=document.getElementById('bgBtn'),
+        clr=document.getElementById('bgClear'),
+        file=document.getElementById('bgFile');
+  function apply(v){
+    photo.style.backgroundImage=v?('url('+v+')'):'';
+    dim.style.display=v?'block':'none';
+    clr.style.display=v?'':'none';
+  }
+  try{ apply(localStorage.getItem(KEY)); }catch(e){}
+  /* 选图 → canvas 压到 1920 宽 JPEG，避免撑爆 localStorage */
+  btn.addEventListener('click',()=>file.click());
+  file.addEventListener('change',()=>{
+    const f=file.files&&file.files[0]; file.value=''; if(!f)return;
+    const img=new Image();
+    img.onload=()=>{
+      const r=Math.min(1,1920/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(img.width*r));
+      c.height=Math.max(1,Math.round(img.height*r));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      const data=c.toDataURL('image/jpeg',.85);
+      try{ localStorage.setItem(KEY,data); apply(data); }
+      catch(e){ /* 存不下（图太大）则本次会话生效，不落盘 */ apply(data); }
+    };
+    img.src=URL.createObjectURL(f);
+  });
+  clr.addEventListener('click',()=>{
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    apply(null);
+  });
+})();
+
+renderBoard();
+evLog=document.getElementById('evLog');
+
+/* 聊天输入：事件委托绑定（中心面板由 renderBoard 动态生成） */
+function sendChat(){
+  const inp=document.getElementById('chatInput'); if(!inp)return;
+  const v=inp.value.trim(); if(!v)return;
+  addMsg('me',v,state.players[0].name);
+  inp.value='';
+  setTimeout(()=>addMsg('host','（回包占位 · 接口未接入）',state.players[1].name),600);
+}
+document.addEventListener('click',e=>{ if(e.target.id==='chatSend')sendChat(); });
+document.addEventListener('keydown',e=>{
+  if(e.target.id==='chatInput'&&e.key==='Enter')sendChat();
+});
+
+/* 演示占位消息：内容为中性占位符，非游戏文案 */
+addMsg('sys','— 演示模式 · 消息流未接入接口 —');
+addMsg('host','（荷官消息占位 · 接口下发后渲染）',state.players[1].name);
+addMsg('me','（玩家消息占位）',state.players[0].name);
+</script>
+</body>
+</html>
