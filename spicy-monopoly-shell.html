@@ -119,9 +119,15 @@ body{
 }
 .cell{
   position:relative;border-radius:12px;overflow:visible;
-  background:var(--cbg,var(--t-normal));border:1px solid var(--line);
+  background:var(--cell-bg);border:1px solid var(--line);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   transition:box-shadow .3s var(--ease),border-color .3s,filter .3s;
+}
+/* 类型标识：角上一颗小点（色取类型变量），格子本体保持素净玻璃 */
+.cell::before{
+  content:'';position:absolute;top:6px;left:6px;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--cbg,var(--t-normal));opacity:.85;
 }
 .cell .no{font-size:10.5px;color:var(--text);opacity:.55;letter-spacing:1px;font-variant-numeric:tabular-nums}
 .cell .tag{font-size:9.5px;color:var(--text);opacity:.7;margin-top:2px;letter-spacing:.5px}
