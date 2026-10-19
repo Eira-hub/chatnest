@@ -2795,6 +2795,10 @@ function renderHomeCards(){
 }
 window.renderHomeCards=renderHomeCards;
 window.renderHome=renderHome;
+/* ── v38.1 视图同步（治主页分裂）：旧实现 homeShown/exploreShown 守卫短路，标志位与 DOM
+   一旦脱同步，再点主页/探索就什么都不做 → 聊天流与主页同屏（上半聊天下半主页）、布局塌陷露壁纸。
+   改为每次调用无条件全量同步 DOM（toggle + 考虑另一视图状态），幂等自愈；
+   v37.82 加号面板 hidden 摘挂行为保持：flat 视图时藏，回聊天时摘。 ── */
 let homeShown=false;
 function showHome(on){
   const sec=document.getElementById('viewHome');
@@ -2805,23 +2809,12 @@ function showHome(on){
   const crow=comp?comp.querySelector('.composer-row'):null;
   const pp=document.getElementById('plusPanel');
   if(on)try{renderHome();}catch(err){}
-  if(on&&!homeShown){
-    homeShown=true;
-    sec.classList.remove('hidden');
-    if(stream)stream.classList.add('hidden');
-    if(crow)crow.classList.add('hidden');
-    if(pp&&!pp.classList.contains('hidden'))pp.classList.add('hidden');
-    if(splash&&!splash.classList.contains('hidden'))splash.classList.add('hidden');
-  }else if(!on&&homeShown){
-    homeShown=false;
-    sec.classList.add('hidden');
-    if(stream)stream.classList.remove('hidden');
-    if(crow)crow.classList.remove('hidden');
-    /* v37.82 真凶修复：回主页时给加号面板加了 hidden(display:none)，回聊天页这里忘了摘——
-       之后点加号 open/maxHeight 照加但面板不渲染，只见输入框上移一点点；
-       v36 起一直如此，主页往返后必现，刷新重置内存态才恢复 */
-    if(pp)pp.classList.remove('hidden');
-  }
+  homeShown=!!on;
+  sec.classList.toggle('hidden',!on);
+  if(stream)stream.classList.toggle('hidden',!!(on||exploreShown));
+  if(crow)crow.classList.toggle('hidden',!!(on||exploreShown));
+  if(pp)pp.classList.toggle('hidden',!!on);
+  if(on&&splash&&!splash.classList.contains('hidden'))splash.classList.add('hidden');
 }
 /* ── v38 探索页（游戏房列表）：与主页同层 flat 视图，横条毛玻璃卡露背景 ── */
 let exploreShown=false;
@@ -2835,20 +2828,12 @@ function showExplore(on){
   const crow=comp?comp.querySelector('.composer-row'):null;
   const splash=document.getElementById('splash');
   const pp=document.getElementById('plusPanel');
-  if(on&&!exploreShown){
-    exploreShown=true;
-    sec.classList.remove('hidden');
-    if(stream)stream.classList.add('hidden');
-    if(crow)crow.classList.add('hidden');
-    if(splash&&!splash.classList.contains('hidden'))splash.classList.add('hidden');
-    if(pp&&!pp.classList.contains('hidden'))pp.classList.add('hidden');
-  }else if(!on&&exploreShown){
-    exploreShown=false;
-    sec.classList.add('hidden');
-    if(stream)stream.classList.remove('hidden');
-    if(crow)crow.classList.remove('hidden');
-    if(pp)pp.classList.remove('hidden');
-  }
+  exploreShown=!!on;
+  sec.classList.toggle('hidden',!on);
+  if(stream)stream.classList.toggle('hidden',!!(on||homeShown));
+  if(crow)crow.classList.toggle('hidden',!!(on||homeShown));
+  if(pp)pp.classList.toggle('hidden',!!on);
+  if(on&&splash&&!splash.classList.contains('hidden'))splash.classList.add('hidden');
 }
 window.showExplore=showExplore;
 const dock=document.getElementById('dock');
@@ -2857,7 +2842,7 @@ function syncDock(v){
   document.documentElement.setAttribute('data-sync',String(v));
 }
 /* v34 newConv / openConv 会调用：把界面切回聊天并同步 Dock 高亮（切回聊天必须脱离 flat，否则输入框被摘出渲染层） */
-window.syncChatView=function(){ setDockFlat(false); syncDock('chat'); showHome(false); };
+window.syncChatView=function(){ setDockFlat(false); syncDock('chat'); showHome(false); showExplore(false); };   /* v38.1 补 showExplore(false)：newConv/openConv 可在探索页开着时触发，漏藏会分裂 */
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
 /* ── v36.46 展开=纯垂直沉落：任何 rotateY 在下方灭点的透视里右缘都会从深处向上浮出（上升感根源），
