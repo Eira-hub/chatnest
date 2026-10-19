@@ -141,18 +141,19 @@ body{
 }
 .pawn.bounce{animation:pbounce .5s}
 @keyframes pbounce{0%{transform:scale(1)}40%{transform:scale(1.7) translateY(-6px)}100%{transform:scale(1)}}
-/* 中心事件面板 */
+/* 中心事件面板：骰子+掷骰+内嵌对话流（纯文字行，无气泡）+输入行 */
 .center-panel{
   grid-area:2/2/6/6;
   border-radius:16px;background:var(--panel);border:1px solid var(--line);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-  padding:16px;text-align:center;
+  display:flex;flex-direction:column;align-items:stretch;gap:10px;
+  padding:14px 16px;text-align:center;
 }
 .dice{
-  width:72px;height:72px;border-radius:16px;
+  align-self:center;
+  width:64px;height:64px;border-radius:16px;
   background:var(--dice-bg);color:var(--dice-fg);
-  font-size:34px;font-weight:900;
+  font-size:30px;font-weight:900;
   display:flex;align-items:center;justify-content:center;
   box-shadow:var(--shadow);
   font-variant-numeric:tabular-nums;
@@ -163,10 +164,25 @@ body{
   50%{transform:rotate(190deg) scale(.94)}75%{transform:rotate(285deg) scale(1.1)}
   100%{transform:rotate(360deg) scale(1)}
 }
-.ev-title{font-size:14px;color:var(--text2)}
-.ev-body{
-  max-width:340px;font-size:13px;color:var(--text3);line-height:1.7;
-  padding:0 8px;word-break:break-all;
+/* 内嵌对话流：纯文字行，颜色区分角色（内容由接口下发） */
+.ev-log{
+  flex:1;min-height:0;overflow-y:auto;
+  display:flex;flex-direction:column;gap:6px;text-align:left;
+  padding:2px 4px;
+}
+.line{font-size:13px;line-height:1.65;color:var(--text2);word-break:break-all}
+.line.me{color:var(--text)}
+.line.sys{color:var(--text3);font-size:11.5px;text-align:center}
+.line.event{color:var(--accent2);font-size:12.5px;text-align:center}
+.ev-input{flex:none;display:flex;gap:8px}
+.ev-input input{
+  flex:1;min-width:0;background:var(--panel3);border:1px solid var(--line);border-radius:12px;
+  color:var(--text);padding:9px 13px;font-size:13px;outline:none;
+}
+.ev-input input:focus{border-color:var(--accent)}
+.ev-input button{
+  flex:none;border:none;border-radius:12px;padding:0 16px;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:700;
 }
 .btn-roll{
   border:none;cursor:pointer;border-radius:99px;
@@ -178,58 +194,6 @@ body{
 }
 .btn-roll:active{transform:scale(.95)}
 .btn-roll:disabled{opacity:.45;cursor:not-allowed}
-.turn-hint{font-size:11.5px;color:var(--text3)}
-/* ── 聊天区：单行 HUD 条（最新消息+输入框常驻一行，历史为浮层） ── */
-.chat{
-  flex:none;position:relative;
-  border-top:1px solid var(--line);background:var(--panel);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-}
-.chat-bar{
-  display:flex;align-items:center;gap:10px;
-  padding:9px 16px calc(9px + env(safe-area-inset-bottom));
-}
-.chat-bar .avatar{
-  width:32px;height:32px;border-radius:50%;flex:none;cursor:pointer;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;
-}
-.chat-latest{
-  flex:1;min-width:0;font-size:13px;color:var(--text2);cursor:pointer;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.chat-bar input{
-  flex:none;width:250px;background:var(--panel3);border:1px solid var(--line);border-radius:16px;
-  color:var(--text);padding:9px 14px;font-size:13.5px;outline:none;
-}
-.chat-bar input:focus{border-color:var(--accent)}
-.chat-bar button#chatSend{
-  flex:none;border:none;border-radius:16px;padding:9px 18px;cursor:pointer;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:700;
-}
-/* 历史气泡浮层：点击头像/最新消息弹出，悬浮于棋盘上方，不挤压布局 */
-.chat-history{
-  position:absolute;left:12px;right:12px;bottom:calc(100% + 10px);
-  max-height:300px;border-radius:16px;overflow-y:auto;
-  background:var(--panel-solid);border:1px solid var(--line);
-  box-shadow:var(--shadow);
-  display:none;z-index:30;
-}
-.chat.open .chat-history{display:block;animation:histUp .25s var(--ease)}
-@keyframes histUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.chat-log{padding:14px 16px;display:flex;flex-direction:column;gap:9px}
-.msg{max-width:56%;padding:8px 13px;border-radius:16px;font-size:13.5px;line-height:1.65}
-/* 气泡配色同 ChatNest：我方米白纸感 / 荷官玻璃 */
-.msg.me{
-  align-self:flex-end;background:linear-gradient(135deg,var(--user-b1),var(--user-b2));
-  color:var(--user-fg);border:1px solid var(--user-line,transparent);
-  border-bottom-right-radius:6px;
-}
-.msg.host{
-  align-self:flex-start;background:var(--ai-b);border:1px solid var(--ai-line);
-  border-bottom-left-radius:6px;
-}
-.msg.sys{align-self:center;background:none;color:var(--text3);font-size:11.5px;padding:2px}
 /* ── 卡牌弹窗 ── */
 .modal-mask{
   position:fixed;inset:0;background:rgba(30,40,80,.28);backdrop-filter:blur(8px);
@@ -262,17 +226,13 @@ body{
 }
 .btn-a{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
 .btn-b{background:var(--panel3);color:var(--text2);border:1px solid var(--line)!important}
-/* 窄屏：HUD 条内输入框收窄，气泡放宽 */
+/* 窄屏：中心面板压缩，骰子按钮变小 */
 @media (max-width:860px){
   .board{--sz:min(13.5vw,56px);gap:5px;padding:9px}
   .stage{padding:8px 8px 20px}
-  .chat-bar{padding:8px 12px calc(8px + env(safe-area-inset-bottom));gap:8px}
-  .chat-bar input{width:150px;padding:8px 12px}
-  .chat-bar button#chatSend{padding:8px 14px}
-  .msg{max-width:78%}
-  .center-panel{gap:8px}
-  .dice{width:56px;height:56px;font-size:26px}
-  .btn-roll{padding:10px 30px;font-size:14px}
+  .center-panel{padding:10px 12px;gap:8px}
+  .dice{width:52px;height:52px;font-size:24px}
+  .btn-roll{padding:9px 28px;font-size:14px}
   .coin-card .pname{display:none}
 }
 </style>
@@ -290,16 +250,6 @@ body{
 <div class="main">
   <div class="stage"><div class="board" id="board"></div></div>
 </div>
-
-<aside class="chat" id="chatPanel">
-  <div class="chat-history" id="chatHistory"><div class="chat-log" id="chatLog"></div></div>
-  <div class="chat-bar">
-    <div class="avatar" id="chatToggle">?</div>
-    <div class="chat-latest" id="chatLatest">（荷官消息占位）</div>
-    <input id="chatInput" placeholder="…" autocomplete="off">
-    <button id="chatSend">➤</button>
-  </div>
-</aside>
 
 <!-- 卡牌弹窗：标题/强度/描述全部由数据注入，壳不持有任何文案 -->
 <div class="modal-mask" id="modalMask">
@@ -373,10 +323,12 @@ function renderBoard(){
   cp.style.gridArea='2/2/6/6';
   cp.innerHTML=`
     <div class="dice" id="dice">?</div>
-    <div class="ev-title" id="evTitle">—</div>
-    <div class="ev-body" id="evBody">（事件区域 · 内容等待接口下发）</div>
     <button class="btn-roll" id="btnRoll">掷骰</button>
-    <div class="turn-hint" id="turnHint">—</div>`;
+    <div class="ev-log" id="evLog"></div>
+    <div class="ev-input">
+      <input id="chatInput" placeholder="…" autocomplete="off">
+      <button id="chatSend">➤</button>
+    </div>`;
   boardEl.appendChild(cp);
 
   state.cells.forEach((c,i)=>{
@@ -427,8 +379,6 @@ function renderCoins(){
 function renderRound(){
   document.getElementById('roundPill').textContent=
     `R ${state.round} / ${state.gameLength}`;
-  document.getElementById('turnHint').textContent=
-    state.turnOf===0 ? '— · —' : '— · —';   /* 回合提示等接口文案 */
 }
 
 /* ═══ 假交互演示（壳自嗨用，对接后整段替换） ═══ */
@@ -455,10 +405,8 @@ function demoRoll(){
 function arrive(who,n){
   const p=state.players[who];
   const cell=state.cells[p.cell];
-  /* 事件面板占位：真实文案等接口 */
-  document.getElementById('evTitle').textContent='— · —';
-  document.getElementById('evBody').textContent=
-    '（事件占位：掷出 '+n+' · 踩至第 '+(p.cell+1)+' 格 · 类型 '+cell.type+' · 内容由接口下发）';
+  /* 事件行占位：真实文案等接口 */
+  addMsg('event','掷出 '+n+' · 落第 '+(p.cell+1)+' 格 · 事件内容由接口下发');
   /* 任务/卡牌类格子演示弹窗（占位数据） */
   if(['task','truth','card'].includes(cell.type)) setTimeout(()=>demoCard(cell.type),450);
   state.turnOf=1-state.turnOf;
@@ -491,44 +439,17 @@ function openCard(d){
 function closeCard(){ mask.classList.remove('show'); }
 mask.addEventListener('click',e=>{ if(e.target===mask) closeCard(); });
 
-/* ═══ 聊天区（壳演示 · 消息流等接口） ═══ */
-const log=document.getElementById('chatLog');
-const latest=document.getElementById('chatLatest');
+/* ═══ 内嵌对话流（中心面板 · 纯文字行，无气泡） ═══
+   荷官/我方/事件/系统 = 四种颜色行，全部纯文字，内容由接口下发 */
+let evLog=null;
 function addMsg(kind,text){
+  if(!evLog)return;                 /* 棋盘尚未渲染时忽略 */
   const m=document.createElement('div');
-  m.className='msg '+kind;
+  m.className='line '+kind;
   m.textContent=text;               /* textContent 防注入：内容永远当数据 */
-  log.appendChild(m);
-  log.scrollTop=log.scrollHeight;
-  /* 主行只同步最新一条（系统行不上主行） */
-  if(kind!=='sys'){ latest.textContent=text; }
+  evLog.appendChild(m);
+  evLog.scrollTop=evLog.scrollHeight;
 }
-/* 演示占位消息：内容为中性占位符，非游戏文案 */
-addMsg('sys','— 演示模式 · 消息流未接入接口 —');
-addMsg('host','（荷官消息占位 · 接口下发后渲染）');
-addMsg('me','（玩家消息占位）');
-
-/* 历史浮层开关：点头像或最新消息 */
-function toggleHistory(){ document.getElementById('chatPanel').classList.toggle('open'); }
-document.getElementById('chatToggle').addEventListener('click',toggleHistory);
-latest.addEventListener('click',toggleHistory);
-document.addEventListener('click',e=>{
-  /* 点浮层与 HUD 条之外收起 */
-  if(!e.target.closest('.chat-history')&&!e.target.closest('.chat-bar')&&
-     document.getElementById('chatPanel').classList.contains('open'))
-    document.getElementById('chatPanel').classList.remove('open');
-});
-
-document.getElementById('chatSend').addEventListener('click',()=>{
-  const inp=document.getElementById('chatInput');
-  const v=inp.value.trim(); if(!v)return;
-  addMsg('me',v); inp.value='';
-  /* TODO(对接): 发送至对话接口，回包渲染荷官消息 */
-  setTimeout(()=>addMsg('host','（回包占位 · 接口未接入）'),600);
-});
-document.getElementById('chatInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter')document.getElementById('chatSend').click();
-});
 
 /* 事件委托：掷骰按钮（renderBoard 每次重建中心面板） */
 document.addEventListener('click',e=>{
@@ -554,6 +475,24 @@ document.addEventListener('click',e=>{
 })();
 
 renderBoard();
+evLog=document.getElementById('evLog');
+
+/* 聊天输入：事件委托绑定（中心面板由 renderBoard 动态生成） */
+function sendChat(){
+  const inp=document.getElementById('chatInput'); if(!inp)return;
+  const v=inp.value.trim(); if(!v)return;
+  addMsg('me',v); inp.value='';
+  setTimeout(()=>addMsg('host','（回包占位 · 接口未接入）'),600);
+}
+document.addEventListener('click',e=>{ if(e.target.id==='chatSend')sendChat(); });
+document.addEventListener('keydown',e=>{
+  if(e.target.id==='chatInput'&&e.key==='Enter')sendChat();
+});
+
+/* 演示占位消息：内容为中性占位符，非游戏文案 */
+addMsg('sys','— 演示模式 · 消息流未接入接口 —');
+addMsg('host','（荷官消息占位 · 接口下发后渲染）');
+addMsg('me','（玩家消息占位）');
 </script>
 </body>
 </html>
