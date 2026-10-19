@@ -175,6 +175,14 @@ body{
 .line.me{color:var(--text)}
 .line.sys{color:var(--text3);font-size:11.5px;text-align:center}
 .line.event{color:var(--accent2);font-size:12.5px;text-align:center}
+/* 自定义背景图层：图片在最底，主题色罩保证可读性（罩色随主题切换） */
+:root{--bg-dim:rgba(238,241,247,.58)}
+[data-theme="dark"]{--bg-dim:rgba(10,14,30,.55)}
+.bg-photo{
+  position:fixed;inset:0;z-index:-2;
+  background-position:center;background-size:cover;background-repeat:no-repeat;
+}
+.bg-photo-dim{position:fixed;inset:0;z-index:-1;background:var(--bg-dim);display:none}
 /* 底部空白 = 打字处：全宽透明，无框无线无按钮，文字贴左，光标落在空白里 */
 .typebar{flex:none;padding:0 26px 16px}
 .typebar input{
@@ -243,6 +251,9 @@ body{
   <div class="brand"><b>SPICY</b> MONOPOLY</div>
   <div class="round-pill" id="roundPill">— / —</div>
   <button class="theme-btn" id="themeBtn" title="主题">☾</button>
+  <button class="theme-btn" id="bgBtn" title="自定义背景">🖼</button>
+  <button class="theme-btn" id="bgClear" title="恢复默认背景" style="display:none">✕</button>
+  <input type="file" id="bgFile" accept="image/*" hidden>
   <div class="coin-group" id="coinGroup"></div>
 </header>
 
@@ -474,6 +485,44 @@ document.addEventListener('click',e=>{
     const nxt=cur==='dark'?'light':'dark';
     apply(nxt);
     try{ localStorage.setItem('sm_theme',nxt); }catch(e){}
+  });
+})();
+
+/* ═══ 自定义背景图（仅存本浏览器 localStorage，不上传） ═══ */
+(function(){
+  const KEY='sm_bg';
+  const photo=document.createElement('div'); photo.className='bg-photo';
+  const dim=document.createElement('div');   dim.className='bg-photo-dim';
+  document.body.prepend(photo,dim);
+  const btn=document.getElementById('bgBtn'),
+        clr=document.getElementById('bgClear'),
+        file=document.getElementById('bgFile');
+  function apply(v){
+    photo.style.backgroundImage=v?('url('+v+')'):'';
+    dim.style.display=v?'block':'none';
+    clr.style.display=v?'':'none';
+  }
+  try{ apply(localStorage.getItem(KEY)); }catch(e){}
+  /* 选图 → canvas 压到 1920 宽 JPEG，避免撑爆 localStorage */
+  btn.addEventListener('click',()=>file.click());
+  file.addEventListener('change',()=>{
+    const f=file.files&&file.files[0]; file.value=''; if(!f)return;
+    const img=new Image();
+    img.onload=()=>{
+      const r=Math.min(1,1920/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(img.width*r));
+      c.height=Math.max(1,Math.round(img.height*r));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      const data=c.toDataURL('image/jpeg',.85);
+      try{ localStorage.setItem(KEY,data); apply(data); }
+      catch(e){ /* 存不下（图太大）则本次会话生效，不落盘 */ apply(data); }
+    };
+    img.src=URL.createObjectURL(f);
+  });
+  clr.addEventListener('click',()=>{
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    apply(null);
   });
 })();
 
