@@ -330,7 +330,10 @@ svg{display:block}
   max-height:0;overflow:hidden;padding:0 10px;opacity:0;
   background:var(--panel-solid);
   border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;box-shadow:var(--shadow);
-  transition:max-height .26s ease,opacity .2s ease,padding .26s ease}
+  /* v37.78 展开高度不再走过渡：max-height/padding 过渡在手机 Edge 偶发起点竞态，卡在半展开（输入框上移一点点、宫格被裁光）；高度瞬时到位只留淡入 */
+  /* v37.79 独立合成层：dockbar 是 backdrop-filter 磨砂层，移动端其子元素尺寸突变时偶发不重绘（面板已撑开但画面停旧帧→只见输入框上移、面板空白）；translateZ 强制面板走独立层绕开 */
+  transform:translateZ(0);
+  transition:opacity .2s ease}
 .plus-panel.open{max-height:320px;opacity:1;padding:18px 10px calc(env(safe-area-inset-bottom) + 12px)}
 .pp-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none}
 .pp-track::-webkit-scrollbar{display:none}
@@ -342,6 +345,7 @@ svg{display:block}
 .pp-dots{display:flex;justify-content:center;gap:6px;padding-top:13px}
 .pp-dots span{width:6px;height:6px;border-radius:50%;background:var(--line);transition:background .2s ease}
 .pp-dots span.on{background:var(--text3)}
+.pp-ver{font-size:10px;color:var(--text3);text-align:center;padding-top:5px;opacity:.7}
 
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--panel-solid);border:1px solid var(--line);border-bottom:none;
   border-radius:22px 22px 0 0;padding:10px 18px calc(env(safe-area-inset-bottom) + 18px);
@@ -518,24 +522,25 @@ body.has-wall .stars{opacity:.75}
 #viewHome .hm-slogan{font-family:var(--serif);font-size:15px;letter-spacing:.34em;text-indent:.34em;color:var(--hm-fg);background:none;border:0;cursor:pointer;margin-top:24px;text-shadow:var(--hm-ts)}
 /* ═══ 主页卡片 ═══ */
 #viewHome .hm-cards{padding:22px 0 calc(126px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;text-align:left}
-/* ═══ v38 探索页（游戏房列表）═══ */
+/* ═══ v38 探索页（游戏房列表 · 横条卡）═══ */
 #viewExplore{flex:1;overflow-y:auto;position:relative;color:#fff;-webkit-tap-highlight-color:transparent}
 #viewExplore .ex-wrap{padding:20px 16px calc(126px + env(safe-area-inset-bottom))}
 #viewExplore .ex-title{font-size:26px;font-weight:800;letter-spacing:.5px;text-shadow:0 1px 10px rgba(0,0,0,.22)}
 #viewExplore .ex-sub{margin-top:4px;font-size:12.5px;opacity:.72}
-#viewExplore .ex-grid{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px}
-#viewExplore .ex-card{position:relative;overflow:hidden;text-align:left;padding:0;border-radius:var(--r-panel);border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.16);box-shadow:0 6px 22px rgba(0,0,0,.14);cursor:pointer;transition:transform .18s ease,box-shadow .18s ease;color:inherit;font:inherit}
-#viewExplore.hm-light .ex-card{background:rgba(255,255,255,.52);border-color:rgba(255,255,255,.68);box-shadow:0 6px 22px rgba(40,60,120,.12)}
-#viewExplore .ex-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.2)}
-#viewExplore .ex-banner{height:86px;display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(135deg,#1f4d3f,#0d2b23);border-bottom:1px solid rgba(255,255,255,.14)}
-#viewExplore .ex-banner .ex-dice{width:32px;height:32px;flex:none}
-#viewExplore .ex-banner-t{font-size:15px;font-weight:800;letter-spacing:3px;color:#f4d68a;text-shadow:0 1px 6px rgba(0,0,0,.4)}
-#viewExplore .ex-banner-soon{background:repeating-linear-gradient(45deg,rgba(255,255,255,.06) 0 10px,transparent 10px 20px)}
-#viewExplore .ex-banner-soon .ex-banner-t{color:rgba(255,255,255,.5)}
-#viewExplore .ex-body{padding:11px 12px 12px}
-#viewExplore .ex-name{font-size:15px;font-weight:700}
-#viewExplore .ex-desc{margin-top:3px;font-size:11.5px;opacity:.75;line-height:1.5}
-#viewExplore .ex-go{margin-top:9px;font-size:12px;font-weight:700;color:#f4d68a;opacity:.92}
+#viewExplore .ex-list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+#viewExplore .ex-row{display:flex;align-items:stretch;overflow:hidden;text-align:left;padding:0;border-radius:var(--r-panel);border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.16);box-shadow:0 6px 22px rgba(0,0,0,.14);cursor:pointer;color:inherit;font:inherit;transition:transform .18s ease,box-shadow .18s ease}
+#viewExplore.hm-light .ex-row{background:rgba(255,255,255,.52);border-color:rgba(255,255,255,.68);box-shadow:0 6px 22px rgba(40,60,120,.12)}
+#viewExplore .ex-row:active{transform:scale(.985)}
+#viewExplore .ex-rbanner{width:96px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,#1f4d3f,#0d2b23);border-right:1px solid rgba(255,255,255,.12)}
+#viewExplore .ex-rbanner svg{width:26px;height:26px}
+#viewExplore .ex-rbanner span{font-size:11px;font-weight:700;letter-spacing:2px;color:#f4d68a}
+#viewExplore .ex-rbanner-soon{background:repeating-linear-gradient(45deg,rgba(255,255,255,.06) 0 10px,transparent 10px 20px)}
+#viewExplore .ex-rbanner-soon span{color:rgba(255,255,255,.5);font-size:16px}
+#viewExplore .ex-rbody{flex:1;min-width:0;padding:13px}
+#viewExplore .ex-rname{font-size:15.5px;font-weight:700}
+#viewExplore .ex-rdesc{margin-top:3px;font-size:12px;opacity:.75;line-height:1.5}
+#viewExplore .ex-rarrow{align-self:center;padding:0 14px;font-size:22px;opacity:.45}
+#viewHome .hm-card{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-panel);padding:14px 15px;box-shadow:0 6px 22px rgba(0,0,0,.14)}
 #viewHome.hm-light .hm-card{background:rgba(255,255,255,.52);border-color:rgba(255,255,255,.68);box-shadow:0 6px 22px rgba(40,60,120,.12)}
 #viewHome .hm-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 #viewHome .hm-card-title{font-size:12px;letter-spacing:.2em;opacity:.8;font-family:var(--serif)}
@@ -753,30 +758,28 @@ body.has-wall .stars{opacity:.75}
     <input type="file" id="homeBgFile" accept="image/*" hidden>
   </div>
 </section>
-<!-- ═══ v38 探索（游戏房列表）═══ -->
+<!-- ═══ v38 探索（游戏房列表 · 横条卡）═══ -->
 <section id="viewExplore" class="hidden">
   <div class="ex-wrap">
-    <div class="ex-head">
-      <div class="ex-title">探索</div>
-      <div class="ex-sub">游戏房 · 和 TA 一起玩</div>
-    </div>
-    <div class="ex-grid">
-      <button class="ex-card" id="exCardMonopoly" type="button">
-        <div class="ex-banner">
-          <svg class="ex-dice" viewBox="0 0 24 24" fill="none" stroke="#f4d68a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.35" fill="#f4d68a" stroke="none"/><circle cx="15.4" cy="8.6" r="1.35" fill="#f4d68a" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="#f4d68a" stroke="none"/><circle cx="8.6" cy="15.4" r="1.35" fill="#f4d68a" stroke="none"/><circle cx="15.4" cy="15.4" r="1.35" fill="#f4d68a" stroke="none"/></svg>
-          <span class="ex-banner-t">大富翁</span>
+    <div class="ex-title">探索</div>
+    <div class="ex-sub">游戏房 · 和 TA 一起玩</div>
+    <div class="ex-list">
+      <button class="ex-row" type="button" data-game="monopoly">
+        <div class="ex-rbanner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f4d68a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.35" fill="#f4d68a" stroke="none"/><circle cx="15.4" cy="8.6" r="1.35" fill="#f4d68a" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="#f4d68a" stroke="none"/><circle cx="8.6" cy="15.4" r="1.35" fill="#f4d68a" stroke="none"/><circle cx="15.4" cy="15.4" r="1.35" fill="#f4d68a" stroke="none"/></svg>
+          <span>大富翁</span>
         </div>
-        <div class="ex-body">
-          <div class="ex-name">大富翁</div>
-          <div class="ex-desc">双人桌 · 掷骰买房，输的人等着受罚</div>
-          <div class="ex-go">进入对局 →</div>
+        <div class="ex-rbody">
+          <div class="ex-rname">大富翁</div>
+          <div class="ex-rdesc">双人桌 · 掷骰买房，输的人等着受罚</div>
         </div>
+        <div class="ex-rarrow">›</div>
       </button>
-      <div class="ex-card ex-soon" aria-disabled="true">
-        <div class="ex-banner ex-banner-soon"><span class="ex-banner-t">?</span></div>
-        <div class="ex-body">
-          <div class="ex-name" style="opacity:.6">更多玩法</div>
-          <div class="ex-desc">装修中 · 敬请期待</div>
+      <div class="ex-row" aria-disabled="true">
+        <div class="ex-rbanner ex-rbanner-soon"><span>?</span></div>
+        <div class="ex-rbody">
+          <div class="ex-rname" style="opacity:.6">更多玩法</div>
+          <div class="ex-rdesc">装修中 · 敬请期待</div>
         </div>
       </div>
     </div>
@@ -820,6 +823,7 @@ body.has-wall .stars{opacity:.75}
           </div>
         </div>
         <div class="pp-dots" id="ppDots"><span class="on"></span><span></span></div>
+        <div class="pp-ver">ChatNest v37.82</div><!-- 版本戳：发布时同步改这里和设置页"关于"，用于肉眼验证线上版本 -->
       </div>
   </div><!-- /composer -->
 
@@ -996,7 +1000,8 @@ body.has-wall .stars{opacity:.75}
   <div class="set-block">
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
-      ChatNest · 星夜小筑 v35<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
+      ChatNest · 星夜小筑 v37.82<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -2039,14 +2044,33 @@ function setPlus(open){
     plusPanel.style.maxHeight=Math.max(320,Math.round(window.innerHeight-top))+'px';
     plusPanel.classList.add('open');
     if(bar)bar.classList.add('flush');
+    void plusPanel.offsetHeight;   /* v37.79 强制同步重排重绘，防磨砂层停旧帧 */
+    /* v37.80 自愈：220ms 后复查，若面板高度仍塌陷（<100px）抖一帧可见性强制重绘并重设高度 */
+    setTimeout(function(){
+      if(plusPanel.classList.contains('open') && plusPanel.offsetHeight<100){
+        plusPanel.style.visibility='hidden';
+        void plusPanel.offsetHeight;
+        plusPanel.style.visibility='';
+        const top2=plusPanel.getBoundingClientRect().top;
+        plusPanel.style.maxHeight=Math.max(320,Math.round(window.innerHeight-top2))+'px';
+        void plusPanel.offsetHeight;
+      }
+    },220);
   }else{
-    plusPanel.style.maxHeight='0px';
     plusPanel.classList.remove('open');
+    plusPanel.style.maxHeight='';
     if(bar)bar.classList.remove('flush');
-    setTimeout(()=>{ if(!plusPanel.classList.contains('open')) plusPanel.style.maxHeight=''; },320);
   }
 }
-$('btnPlus').addEventListener('click', (e)=>{ e.stopPropagation(); setPlus(!plusPanel.classList.contains('open')); });
+/* v37.80 防手机 Edge 偶发同点双 click：250ms 内只认一次，防"开了又立刻被关" */
+let plusLock=0;
+$('btnPlus').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const now=Date.now();
+  if(now-plusLock<250) return;
+  plusLock=now;
+  setPlus(!plusPanel.classList.contains('open'));
+});
 plusPanel.addEventListener('click', (e)=>{
   const b=e.target.closest('button');
   if(!b) return;
@@ -2793,9 +2817,13 @@ function showHome(on){
     sec.classList.add('hidden');
     if(stream)stream.classList.remove('hidden');
     if(crow)crow.classList.remove('hidden');
+    /* v37.82 真凶修复：回主页时给加号面板加了 hidden(display:none)，回聊天页这里忘了摘——
+       之后点加号 open/maxHeight 照加但面板不渲染，只见输入框上移一点点；
+       v36 起一直如此，主页往返后必现，刷新重置内存态才恢复 */
+    if(pp)pp.classList.remove('hidden');
   }
 }
-/* ── v38 探索页（游戏房列表）：与主页同层 flat 视图，毛玻璃卡露背景 ── */
+/* ── v38 探索页（游戏房列表）：与主页同层 flat 视图，横条毛玻璃卡露背景 ── */
 let exploreShown=false;
 function showExplore(on){
   const sec=document.getElementById('viewExplore');
@@ -2806,17 +2834,20 @@ function showExplore(on){
   const comp=document.querySelector('.composer');
   const crow=comp?comp.querySelector('.composer-row'):null;
   const splash=document.getElementById('splash');
+  const pp=document.getElementById('plusPanel');
   if(on&&!exploreShown){
     exploreShown=true;
     sec.classList.remove('hidden');
     if(stream)stream.classList.add('hidden');
     if(crow)crow.classList.add('hidden');
     if(splash&&!splash.classList.contains('hidden'))splash.classList.add('hidden');
+    if(pp&&!pp.classList.contains('hidden'))pp.classList.add('hidden');
   }else if(!on&&exploreShown){
     exploreShown=false;
     sec.classList.add('hidden');
     if(stream)stream.classList.remove('hidden');
     if(crow)crow.classList.remove('hidden');
+    if(pp)pp.classList.remove('hidden');
   }
 }
 window.showExplore=showExplore;
@@ -2882,8 +2913,6 @@ if(dock){
     else{ syncDock(v); toast('「'+(names[v]||v)+'」还在装修，先占个位',2200); setDock(true); setDockFlat(true); }
   }));
 }
-/* v38 探索卡：大富翁 → 游戏壳 */
-(()=>{ const ec=document.getElementById('exCardMonopoly'); if(ec)ec.addEventListener('click',()=>{ location.href='spicy-monopoly-shell.html'; }); })();
 /* ───────── v36 水珠悬浮球：iOS18 液态玻璃 Dock ───────── */
 if(dock){
   const ball=document.getElementById('dockBall');
