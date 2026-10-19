@@ -174,16 +174,14 @@ body{
 .line.me{color:var(--text)}
 .line.sys{color:var(--text3);font-size:11.5px;text-align:center}
 .line.event{color:var(--accent2);font-size:12.5px;text-align:center}
-/* 棋盘下方裸打字区：无框无按钮，光标直接落在页面上，回车发送 */
-.typebar{flex:none;display:flex;justify-content:center;padding:2px 16px 10px}
+/* 底部空白 = 打字处：全宽透明，无框无线无按钮，文字贴左，光标落在空白里 */
+.typebar{flex:none;padding:0 26px 16px}
 .typebar input{
-  width:min(560px,86%);background:transparent;border:none;outline:none;
-  color:var(--text);font-size:14px;line-height:1.6;padding:4px 6px;
-  border-bottom:1px solid transparent;transition:border-color .2s;
+  display:block;width:100%;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:14px;line-height:1.7;padding:8px 2px;
   caret-color:var(--accent2);
 }
-.typebar input:focus{border-bottom-color:var(--line)}
-.typebar input::placeholder{color:var(--text3);opacity:.55}
+.typebar input::placeholder{color:var(--text3);opacity:.5}
 .btn-roll{
   border:none;cursor:pointer;border-radius:99px;
   padding:13px 42px;font-size:16px;font-weight:800;color:#fff;
