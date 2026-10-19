@@ -36,7 +36,7 @@
   --board-bg:linear-gradient(145deg,rgba(255,255,255,.5),rgba(231,235,243,.35));
   --dice-bg:linear-gradient(145deg,#FDFCFB,#E7E0D8);--dice-fg:#1B1C22;
   --pawn-ring:rgba(255,255,255,.9);
-  --star:rgba(40,60,120,.10);
+  --star:rgba(40,60,120,.16);
 }
 [data-theme="dark"]{
   --bg0:#050508;--bg1:#08090F;--bg2:#0D0F18;
@@ -54,7 +54,7 @@
   --board-bg:linear-gradient(145deg,rgba(17,23,49,.6),rgba(8,9,15,.5));
   --dice-bg:linear-gradient(145deg,#F2EDE7,#D8CFBF);--dice-fg:#1B1C22;
   --pawn-ring:rgba(255,255,255,.85);
-  --star:rgba(255,255,255,.06);
+  --star:rgba(255,255,255,.10);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -106,12 +106,12 @@ body{
 .coin-card .coins{font-weight:700;color:var(--moon);font-variant-numeric:tabular-nums}
 /* ── 主区：棋盘 + 聊天栏 ── */
 .main{flex:1;display:flex;min-height:0;position:relative;z-index:1}
-.stage{flex:1;display:flex;align-items:center;justify-content:center;padding:18px;min-width:0}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;padding:14px 18px 72px;min-width:0}
 /* 棋盘：6x6 外圈 = 20 格，磨砂玻璃面板 */
 .board{
-  --sz:78px;
+  --sz:88px;
   display:grid;grid-template-columns:repeat(6,var(--sz));grid-template-rows:repeat(6,var(--sz));
-  gap:8px;padding:14px;border-radius:22px;
+  gap:9px;padding:14px;border-radius:22px;
   background:var(--board-bg);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border:1px solid var(--line);
