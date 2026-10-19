@@ -463,7 +463,16 @@ const drama=document.getElementById('drama'),
       dramaEnd=document.getElementById('dramaEnd');
 let dTyping=null;
 function setInputs(dis){ dramaInput.disabled=dis; dramaAct.disabled=dis; }
+/* 舞台记录持久化：整局游戏内累积（落幕/刷新不清），新开一局时由接口侧调 clearDramaLog() */
+const DLOG_KEY='sm_drama_log';
+let dLog=[];
+try{ dLog=JSON.parse(localStorage.getItem(DLOG_KEY)||'[]'); }catch(e){ dLog=[]; }
+function saveDLog(){ try{ localStorage.setItem(DLOG_KEY,JSON.stringify(dLog)); }catch(e){} }
+function clearDramaLog(){  /* 对接点：新游戏局开始时调用 */
+  dLog=[]; saveDLog();
+}
 function pushSeg(kind,text,who,typewriter){
+  dLog.push({kind:kind,who:who||null,text:String(text||'')}); saveDLog();
   const el=document.createElement('div');
   el.className='dseg '+kind;
   if(kind==='line'&&who){
@@ -493,14 +502,24 @@ function pushSeg(kind,text,who,typewriter){
 function openDrama(aiOpening,onEnd){
   drama._onEnd=onEnd||null;
   dramaScroll.innerHTML='';
+  /* 先铺本局历史记录（直读无打字机），新剧情接在后面 */
+  dLog.forEach(s=>{
+    const el=document.createElement('div'); el.className='dseg '+s.kind;
+    if(s.kind==='line'&&s.who){
+      const b=document.createElement('b'); b.textContent=s.who;
+      el.appendChild(b); el.appendChild(document.createTextNode('：'));
+    }
+    const sp=document.createElement('span'); sp.textContent=s.text||'';
+    el.appendChild(sp); dramaScroll.appendChild(el);
+  });
+  dramaScroll.scrollTop=dramaScroll.scrollHeight;
   drama.classList.add('show');
   setInputs(true);
   (aiOpening||function(){})();       /* AI 开场（真实对接=请求对话接口） */
 }
 function closeDrama(){
   clearInterval(dTyping); dTyping=null;
-  drama.classList.remove('show');
-  dramaScroll.innerHTML='';
+  drama.classList.remove('show');    /* 记录保留在 dLog/存储，下次进幕恢复 */
   dramaInput.value=''; dramaAct.value='';
   setInputs(false);
   const cb=drama._onEnd; drama._onEnd=null;
