@@ -201,38 +201,33 @@ body{
 }
 .btn-roll:active{transform:scale(.95)}
 .btn-roll:disabled{opacity:.45;cursor:not-allowed}
-/* ── 卡牌弹窗 ── */
-.modal-mask{
-  position:fixed;inset:0;background:rgba(30,40,80,.28);backdrop-filter:blur(8px);
-  display:flex;align-items:center;justify-content:center;z-index:50;
-  opacity:0;pointer-events:none;transition:opacity .22s;
+/* ── 剧情幕：全屏演绎舞台（剧本由接口下发，壳零文案）──
+   action=动作描写(旁白) / line=对白(署名)，逐段推进+打字机 */
+.drama{
+  position:fixed;inset:0;z-index:40;
+  background:rgba(12,16,34,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  display:none;flex-direction:column;
+  cursor:pointer;user-select:none;-webkit-user-select:none;
 }
-[data-theme="dark"] .modal-mask{background:rgba(0,0,0,.55)}
-.modal-mask.show{opacity:1;pointer-events:auto}
-.card-modal{
-  width:min(400px,88vw);border-radius:20px;overflow:hidden;
-  background:var(--panel-solid);border:1px solid var(--line);
-  transform:translateY(24px) scale(.96);transition:transform .25s var(--ease);
-  box-shadow:var(--shadow);
+.drama.show{display:flex;animation:dramaIn .35s var(--ease)}
+@keyframes dramaIn{from{opacity:0}to{opacity:1}}
+.drama-scroll{
+  flex:1;overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-end;
+  gap:14px;padding:48px 24px 24px;
 }
-.modal-mask.show .card-modal{transform:none}
-.card-top{
-  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
+.drama .dseg{max-width:680px;width:100%;margin:0 auto;opacity:0;animation:segIn .3s var(--ease) forwards}
+@keyframes segIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.dseg.action{
+  text-align:center;font-style:italic;font-size:13.5px;line-height:1.9;
+  color:var(--text3);
 }
-.card-top .ct{font-weight:800;font-size:16px;color:#fff}
-.card-top .lv{
-  font-size:11px;background:rgba(255,255,255,.22);color:#fff;
-  border-radius:99px;padding:3px 10px;font-variant-numeric:tabular-nums;
+.dseg.line{font-size:14px;line-height:1.85;color:var(--text2)}
+.dseg.line b{color:var(--moon);font-weight:700}
+.drama-foot{
+  flex:none;text-align:center;padding:0 24px calc(20px + env(safe-area-inset-bottom));
 }
-.card-body{padding:22px 20px;font-size:14px;line-height:1.9;color:var(--text2);min-height:110px}
-.card-foot{display:flex;gap:10px;padding:0 20px 20px}
-.card-foot button{
-  flex:1;border:none;border-radius:12px;padding:12px;cursor:pointer;
-  font-size:14px;font-weight:700;
-}
-.btn-a{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
-.btn-b{background:var(--panel3);color:var(--text2);border:1px solid var(--line)!important}
+.drama-next{font-size:12px;color:var(--text3);letter-spacing:2px;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
 /* 窄屏：棋盘缩放 + 顶栏紧凑化（防横向溢出） */
 @media (max-width:860px){
   .board{--sz:min(12vw,56px);gap:4px;padding:8px}
@@ -273,19 +268,10 @@ body{
   <div class="typebar"><input id="chatInput" placeholder="…" autocomplete="off"></div>
 </div>
 
-<!-- 卡牌弹窗：标题/强度/描述全部由数据注入，壳不持有任何文案 -->
-<div class="modal-mask" id="modalMask">
-  <div class="card-modal">
-    <div class="card-top">
-      <div class="ct" id="cardTitle">—</div>
-      <div class="lv" id="cardLevel">—</div>
-    </div>
-    <div class="card-body" id="cardBody">—</div>
-    <div class="card-foot">
-      <button class="btn-b" id="cardAlt">—</button>
-      <button class="btn-a" id="cardOk">—</button>
-    </div>
-  </div>
+<!-- 剧情幕：段落全由接口下发的剧本数据渲染，壳不持有任何剧情文案 -->
+<div class="drama" id="drama">
+  <div class="drama-scroll" id="dramaScroll"></div>
+  <div class="drama-foot"><span class="drama-next" id="dramaNext">▸ ▸ ▸</span></div>
 </div>
 
 <script>
@@ -424,37 +410,80 @@ function arrive(who,n){
   const cell=state.cells[p.cell];
   /* 事件行占位：真实文案等接口 */
   addMsg('event','掷出 '+n+' · 落第 '+(p.cell+1)+' 格 · 事件内容由接口下发');
-  /* 任务/卡牌类格子演示弹窗（占位数据） */
-  if(['task','truth','card'].includes(cell.type)) setTimeout(()=>demoCard(cell.type),450);
+  /* 任务/剧情类格子演示：全屏剧情幕（真剧本由接口下发） */
+  if(['task','truth','card'].includes(cell.type)) setTimeout(()=>demoDrama(cell.type),450);
   state.turnOf=1-state.turnOf;
   renderRound();
   const btn=document.getElementById('btnRoll'); if(btn)btn.disabled=false;
 }
-function demoCard(type){
-  openCard({
-    /* 弹窗内容全占位：标题/描述/按钮文案在真实对接时均由接口渲染 */
-    title:'['+type.toUpperCase()+']',
-    level:'LV —',
-    body:'（卡面内容占位 · 此区域由接口数据渲染，壳内不持有任何游戏文案）',
-    ok:'确认', alt:'—',
-    onOk:()=>{ addMsg('me','（演示 · 确认后的事件回执占位）',state.players[0].name); },
+function demoDrama(type){
+  openDrama([
+    /* 演示剧本：全占位数据，真剧本（含动作描写/对白）由接口下发 */
+    {kind:'action',text:'（动作描写 · 占位 · 剧本由接口下发 · 触发类型 '+type+'）'},
+    {kind:'line',who:state.players[1].name,text:'（对白 · 占位）'},
+    {kind:'action',text:'（动作描写 · 占位）'},
+    {kind:'line',who:state.players[0].name,text:'（对白 · 占位）'},
+  ],()=>{
+    addMsg('me','（演示 · 剧情落幕回执占位）',state.players[0].name);
   });
 }
 
-/* ═══ 卡牌弹窗 ═══ */
-const mask=document.getElementById('modalMask');
-function openCard(d){
-  document.getElementById('cardTitle').textContent=d.title;
-  document.getElementById('cardLevel').textContent=d.level;
-  document.getElementById('cardBody').textContent=d.body;
-  const ok=document.getElementById('cardOk'), alt=document.getElementById('cardAlt');
-  ok.textContent=d.ok; alt.textContent=d.alt;
-  ok.onclick=()=>{ closeCard(); d.onOk&&d.onOk(); };
-  alt.onclick=()=>{ closeCard(); d.onAlt&&d.onAlt(); };
-  mask.classList.add('show');
+/* ═══ 剧情幕（全屏演绎舞台 · 剧本由接口下发） ═══
+   剧本格式: [{kind:'action'|'line', who?, text}]  — 全部是数据，零文案 */
+const drama=document.getElementById('drama'),
+      dramaScroll=document.getElementById('dramaScroll'),
+      dramaNext=document.getElementById('dramaNext');
+let dScript=[],dIdx=0,dTyping=null;
+function openDrama(script,onEnd){
+  dScript=script||[]; dIdx=0; drama._onEnd=onEnd||null;
+  dramaScroll.innerHTML='';
+  drama.classList.add('show');
+  playSeg();
 }
-function closeCard(){ mask.classList.remove('show'); }
-mask.addEventListener('click',e=>{ if(e.target===mask) closeCard(); });
+function playSeg(){
+  if(dIdx>=dScript.length){ closeDrama(); return; }
+  const seg=dScript[dIdx];
+  const el=document.createElement('div');
+  el.className='dseg '+seg.kind;
+  if(seg.kind==='line'&&seg.who){
+    const b=document.createElement('b'); b.textContent=seg.who;   /* 署名=数据 */
+    el.appendChild(b);
+    el.appendChild(document.createTextNode('：'));
+  }
+  const span=document.createElement('span');
+  el.appendChild(span);
+  dramaScroll.appendChild(el);
+  dramaScroll.scrollTop=dramaScroll.scrollHeight;
+  let i=0; const full=String(seg.text||'');
+  clearInterval(dTyping);
+  dTyping=setInterval(()=>{           /* 打字机：逐字浮现，内容永远当数据 */
+    i++;
+    span.textContent=full.slice(0,i);
+    dramaScroll.scrollTop=dramaScroll.scrollHeight;
+    if(i>=full.length){ clearInterval(dTyping); dTyping=null; }
+  },26);
+  drama._cur=el;
+}
+function advanceDrama(){
+  const seg=dScript[dIdx];
+  if(seg&&dTyping){                   /* 打字未完→点击补全 */
+    clearInterval(dTyping); dTyping=null;
+    const sp=drama._cur.querySelector('span');
+    if(sp)sp.textContent=String(seg.text||'');
+    return;
+  }
+  dIdx++;
+  if(dIdx>=dScript.length) closeDrama();
+  else playSeg();
+}
+function closeDrama(){
+  clearInterval(dTyping); dTyping=null;
+  drama.classList.remove('show');
+  dramaScroll.innerHTML='';
+  const cb=drama._onEnd; drama._onEnd=null;
+  if(cb)cb();
+}
+drama.addEventListener('click',advanceDrama);
 
 /* ═══ 内嵌对话流（棋盘下方空白 · 纯文字行，无气泡） ═══
    荷官/我方/事件/系统 = 四种颜色行；发送者署名由接口下发（占位 P1/P2） */
