@@ -863,7 +863,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v38.5</span>
+    <span class="fs-ver">v38.6</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -2852,7 +2852,12 @@ if(new URLSearchParams(location.search).get('view')==='explore'){
     /* 吞掉启动流程的第一次「回聊天」调用，防 boot 的 newConv/openConv 把探索页踢掉 */
     let armed=true; const _scv=window.syncChatView;
     window.syncChatView=function(){ if(armed){ armed=false; return; } if(_scv)_scv(); };
-    const go=()=>{ try{ syncDock('explore'); showHome(false); showExplore(true); setDock(true); setDockFlat(true); }catch(e){} };
+    const go=()=>{ try{
+      syncDock('explore'); showHome(false); showExplore(true); setDock(true); setDockFlat(true);
+      /* 一次性回跳：落定后立刻抹掉 view 参数，刷新/重开恢复默认聊天页首页 */
+      const u=new URL(location.href); u.searchParams.delete('view');
+      try{ history.replaceState(null,'',u.pathname+u.search); }catch(e){}
+    }catch(e){} };
     const t=setInterval(()=>{
       const g=document.getElementById('gate');
       if(g&&g.classList.contains('hidden')){ clearInterval(t); go(); }
