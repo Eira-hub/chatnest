@@ -566,12 +566,14 @@ function dramaActSend(){
   const v=dramaAct.value.trim(); if(!v||dTyping)return;
   pushSeg('action',v,null,false);
   dramaAct.value='';
+  if(API.code) API.say(v,'stage_action').catch(()=>{});
 }
 function dramaSend(){
   /* 台词口：说完话=回合结束，她来接 */
   const v=dramaInput.value.trim(); if(!v||dTyping)return;
   pushSeg('line',v,state.players[0].name,false);
   dramaInput.value='';
+  if(API.code){ API.say(v,'stage_line').catch(()=>{}); return; }
   /* AI 接龙：真实对接=剧情上下文发给对话接口，返回动作+台词；此处占位回包 */
   setTimeout(()=>{
     pushSeg('action','（AI 动作描写 · 占位回包）',null,true);
