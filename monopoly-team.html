@@ -333,6 +333,12 @@ function checkStart(){
     $('sysLine').textContent='双方就绪 · 开桌后由接口拉起对局（演示）';
   }
 }
+function resetRoom(){
+  $('codeRow').innerHTML='';
+  cinputs.forEach(x=>x.value='');
+  $('joinGo').disabled=true;
+  resetSeats();
+}
 /* ═══ 加入房间（演示：输满 4 位即可入座）═══ */
 const cinputs=[...$('codeInputs').querySelectorAll('input')];
 cinputs.forEach((inp,i)=>{
@@ -366,8 +372,10 @@ $('joinGo').addEventListener('click',()=>{
 $('copyBtn').addEventListener('click',()=>{
   const code=[...$('codeRow').children].map(x=>x.textContent).join('');
   const done=()=>{ $('copyBtn').textContent='已复制 ✓'; setTimeout(()=>$('copyBtn').textContent='复制给 TA',1400); };
-  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done,done);
-  else done();
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done,done);
+    else done();
+  }catch(e){ done(); }
 });
 </script>
 </body>
