@@ -1187,6 +1187,10 @@ async function boot(){
     }else{
       newConv();
     }
+    /* v38.3 从大富翁退出回跳：URL 带 view=explore 时启动后直接落探索页 */
+    if(new URLSearchParams(location.search).get('view')==='explore'){
+      syncDock('explore'); showHome(false); showExplore(true); setDock(true); setDockFlat(true);
+    }
   }catch(e){
     toast(e.message||'启动失败');
   }
@@ -2874,7 +2878,7 @@ if(dock){
   }));
 }
 /* v38 探索卡：大富翁 → 游戏壳 */
-(()=>{ const ec=document.getElementById('exCardMonopoly'); if(ec)ec.addEventListener('click',()=>{ location.href='spicy-monopoly-shell.html?v=2'; }); })();
+(()=>{ const ec=document.getElementById('exCardMonopoly'); if(ec)ec.addEventListener('click',()=>{ location.href='spicy-monopoly-shell.html?v=3'; }); })();
 /* ───────── v36 水珠悬浮球：iOS18 液态玻璃 Dock ───────── */
 if(dock){
   const ball=document.getElementById('dockBall');
