@@ -344,10 +344,97 @@ body{
   展示字段一律由接口下发；本文件只保留渲染与交互骨架。
   API 对象为预留挂载点，等接口约定文档后填充实现。
   ═══════════════════════════════════════════════════════════ */
+/* ═══ API 层 v14（已接 spicy-dealer 游戏房后端）═══
+   轮询房间=聊天流+荷官整形 game_state；掷骰=action 代理引擎；聊天=房间 chat 流 */
 const API = {
-  base: 'https://spicy-monopoly.lol',   // 接口基地址（按约定替换）
-  // TODO(对接): newGame / roll / state / action —— 等接口约定文档
+  base: 'https://game.eira0716.dpdns.org',
+  code: new URLSearchParams(location.search).get('code') || (function(){ try{ return localStorage.getItem('lastRoomCode')||''; }catch(e){ return ''; } })(),
+  lastChatId: 0, timer: null, live: false,
+  req(path, opt){
+    return fetch(this.base + path, opt).then(r => r.json().catch(()=>({})).then(j => {
+      if(!r.ok) throw Object.assign(new Error(j.message||('http_'+r.status)), {code:j.error});
+      return j;
+    }));
+  },
+  start(){
+    if(!this.code || this.timer) return;
+    const tick = async () => {
+      try{
+        const room = await this.req('/api/game/room/'+encodeURIComponent(this.code)+'?after_chat_id='+this.lastChatId);
+        onRoom(room);
+      }catch(e){}
+    };
+    tick(); this.timer = setInterval(tick, 2000);
+  },
+  roll(){ return this.req('/api/game/room/'+encodeURIComponent(this.code)+'/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'roll'})}); },
+  say(text, type, from){
+    return this.req('/api/game/room/'+encodeURIComponent(this.code)+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:from||'宝宝',role:'human',type:type||'text',text:String(text||'')})});
+  },
 };
+function onRoom(room){
+  if(room.status!=='playing' && room.status!=='ended'){
+    if(!API.live){ API.live=true; addMsg('sys','— 已连上游戏房 · 等荷官开局 —'); }
+    return;
+  }
+  if(!API.live){ API.live=true; addMsg('sys','— 已连上游戏房 —'); }
+  (room.chat||[]).forEach(c=>{ API.lastChatId=Math.max(API.lastChatId,c.id); onChatMsg(c); });
+  if(room.game_state && room.game_state.payload) applyEngine(room.game_state.payload);
+}
+function onChatMsg(c){
+  const fromName = c.from==='Orion' ? 'Orion' : (c.from==='dealer' ? '荷官' : (state.players[1]&&state.players[1].name) || 'Orion');
+  if(c.type==='game_event'){ addMsg('event', c.text); return; }
+  if(c.type==='text'){ addMsg(c.from==='宝宝'?'me':'host', c.text, c.from==='宝宝'?state.players[0].name:fromName); return; }
+  if(c.type==='stage_action' || c.type==='stage_line'){
+    const kind = c.type==='stage_action' ? 'action' : 'line';
+    const who = c.type==='stage_line' ? fromName : null;
+    const dramaEl = document.getElementById('drama');
+    const seg = () => pushSeg(kind, c.text, who, true);
+    if(dramaEl && dramaEl.classList.contains('show')) seg();
+    else openDrama(seg, null);
+    return;
+  }
+}
+/* 荷官整形 payload → 壳渲染结构（players 顺序固定 [宝宝, Orion]） */
+function applyEngine(p){
+  if(Array.isArray(p.players) && p.players.length>=2){
+    state.players = p.players.map((pl,i)=>({
+      name: pl.name || state.players[i].name,
+      color: state.players[i] ? state.players[i].color : (i===0?'#4cc9f0':'#ff6d9d'),
+      coins: (pl.coins!=null)?pl.coins:0,
+      cell: (pl.cell!=null)?pl.cell:0,
+      dsc: pl.task || '—',
+    }));
+    if(p.cells && Array.isArray(p.cells) && p.cells.length===state.cells.length){
+      p.cells.forEach((c,i)=>{ if(c && 'owner' in c) state.cells[i].owner = c.owner; });
+    }
+  }
+  if(p.turn){ const idx=state.players.findIndex(x=>x.name===p.turn); if(idx>=0) state.turnOf=idx; }
+  if(p.round) state.round = p.round;
+  if(p.dice!=null){ const dice=document.querySelector('.dice'); if(dice){ dice.textContent=p.dice; dice.classList.remove('rolling'); } }
+  try{ renderBoard(); placeAllPawns(); renderCoins(); renderRound(); }catch(e){}
+  const btn=document.getElementById('btnRoll');
+  if(btn){
+    const cur=state.players[state.turnOf];
+    btn.disabled = !(cur && cur.name==='宝宝');
+    btn.textContent = (cur && cur.name==='宝宝') ? '掷骰' : '等哥哥掷…';
+  }
+}
+/* 掷骰真实版：action 代理引擎，响应 payload 直接渲染（无 code 退回演示） */
+async function realRoll(){
+  const btn=document.getElementById('btnRoll'); if(btn)btn.disabled=true;
+  if(!API.code){ demoRoll(); return; }
+  try{
+    const j = await API.roll();
+    if(j && j.payload){
+      const dice=j.payload.dice!=null?j.payload.dice:(j.payload.result&&j.payload.result.dice);
+      if(dice!=null){ const diceEl=document.querySelector('.dice'); if(diceEl){ diceEl.classList.add('rolling'); setTimeout(()=>{ diceEl.textContent=dice; diceEl.classList.remove('rolling'); },500); } }
+      applyEngine(j.payload);
+    } else if(btn) btn.disabled=false;
+  }catch(e){
+    addMsg('event','掷骰失败：'+(e.message||'接口打盹了'));
+    if(btn)btn.disabled=false;
+  }
+}
 
 /* 假数据：类型枚举仅为布局演示；label/icon 置 null → 渲染为序号占位 */
 const state = {
@@ -566,12 +653,14 @@ function dramaActSend(){
   const v=dramaAct.value.trim(); if(!v||dTyping)return;
   pushSeg('action',v,null,false);
   dramaAct.value='';
+  if(API.code) API.say(v,'stage_action').catch(()=>{});
 }
 function dramaSend(){
   /* 台词口：说完话=回合结束，她来接 */
   const v=dramaInput.value.trim(); if(!v||dTyping)return;
   pushSeg('line',v,state.players[0].name,false);
   dramaInput.value='';
+  if(API.code){ API.say(v,'stage_line').catch(()=>{}); return; }
   /* AI 接龙：真实对接=剧情上下文发给对话接口，返回动作+台词；此处占位回包 */
   setTimeout(()=>{
     pushSeg('action','（AI 动作描写 · 占位回包）',null,true);
@@ -604,7 +693,7 @@ function addMsg(kind,text,who){
 
 /* 事件委托：掷骰按钮（renderBoard 每次重建中心面板） */
 document.addEventListener('click',e=>{
-  if(e.target.id==='btnRoll') demoRoll();
+  if(e.target.id==='btnRoll') realRoll();
 });
 
 /* ═══ 主题（ChatNest 同款双主题 · 偏好存本地） ═══ */
@@ -672,14 +761,14 @@ function sendChat(){
   const v=inp.value.trim(); if(!v)return;
   addMsg('me',v,state.players[0].name);
   inp.value='';
-  setTimeout(()=>addMsg('host','（回包占位 · 接口未接入）',state.players[1].name),600);
+  if(API.code) API.say(v).catch(()=>addMsg('event','消息没发出去，接口打盹了'));
+  else setTimeout(()=>addMsg('host','（回包占位 · 接口未接入）',state.players[1].name),600);
 }
 document.getElementById('typeForm').addEventListener('submit',e=>{ e.preventDefault(); sendChat(); });
 
-/* 演示占位消息：内容为中性占位符，非游戏文案 */
-addMsg('sys','— 演示模式 · 消息流未接入接口 —');
-addMsg('host','（荷官消息占位 · 接口下发后渲染）',state.players[1].name);
-addMsg('me','（玩家消息占位）',state.players[0].name);
+/* 对接启动：带 code 即轮询房间；无 code 留演示占位 */
+if(API.code) API.start();
+else addMsg('sys','— 演示模式 · 未带房码 —');
 
 /* ═══ 返回键：先弹确认，确认后才回星夜小筑 ═══ */
 (function(){
@@ -687,7 +776,11 @@ addMsg('me','（玩家消息占位）',state.players[0].name);
   document.getElementById('exitBtn').addEventListener('click',()=>{ mask.classList.add('show'); });
   mask.addEventListener('click',e=>{ if(e.target===mask) mask.classList.remove('show'); });
   document.getElementById('exitNo').addEventListener('click',()=>{ mask.classList.remove('show'); });
-  document.getElementById('exitYes').addEventListener('click',()=>{ location.href='chatnest-v38.html?view=explore'; });
+  /* v38.8 在星夜小筑 iframe 内时：通知父页掀掉游戏层（返回大页）；独立打开时兜底跳回 */
+  document.getElementById('exitYes').addEventListener('click',()=>{
+    try{ if(window.parent&&window.parent!==window){ window.parent.postMessage({type:'smExit'},'*'); return; } }catch(e){}
+    location.href='chatnest-v38.html';
+  });
 })();
 </script>
 </body>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Spicy Monopoly · 组队</title>
+<!-- ═══════════════════════════════════════════════════════════
+  大富翁 · 组队开桌页（独立预览版 · 未接接口）
+  ─────────────────────────────────────────────────────────
+  · 设计体系与 spicy-monopoly-shell.html 同源（ChatNest·星夜小筑变量）
+  · 双人桌：一个房主位 + 一个受邀位
+  · 房间码/入座/准备/开桌均为前端演示流，对接点见 API 注释
+  ═══════════════════════════════════════════════════════════ -->
+<style>
+:root{
+  --bg0:#EEF1F7;--bg1:#F3F5FA;--bg2:#E7EBF3;
+  --panel:rgba(255,255,255,.74);--panel2:rgba(30,40,80,.05);--panel3:rgba(30,40,80,.09);
+  --panel-solid:#F6F8FC;
+  --line:rgba(30,40,80,.12);--line2:rgba(30,40,80,.19);
+  --text:#16181D;--text2:#565C6E;--text3:#8A90A2;
+  --accent:#7C8BC9;--accent2:#4A57A5;--moon:#9C7B46;--danger:#C05656;
+  --p1:#4cc9f0;--p2:#ff6d9d;
+  --shadow:0 8px 28px rgba(40,60,120,.13);
+  --ease:cubic-bezier(.22,.8,.3,1);
+  --star:rgba(40,60,120,.16);
+}
+[data-theme="dark"]{
+  --bg0:#050508;--bg1:#08090F;--bg2:#0D0F18;
+  --panel:rgba(18,24,48,.78);--panel2:rgba(255,255,255,.05);--panel3:rgba(255,255,255,.08);
+  --panel-solid:#111731;
+  --line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.16);
+  --text:#E9EBF4;--text2:#9BA1B8;--text3:#626A85;
+  --accent:#A5B9DC;--accent2:#CBD8EF;--moon:#E3C89E;--danger:#D97A7A;
+  --shadow:0 8px 28px rgba(0,0,0,.38);
+  --star:rgba(255,255,255,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{
+  background:var(--bg0);color:var(--text);
+  font-family:-apple-system,system-ui,'PingFang SC','HarmonyOS Sans SC',sans-serif;
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:background .3s;
+}
+/* 星点背景 */
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 22%,var(--star) 50%,transparent 51%),
+    radial-gradient(1px 1px at 34% 8%,var(--star) 50%,transparent 51%),
+    radial-gradient(2px 2px at 58% 30%,var(--star) 50%,transparent 51%),
+    radial-gradient(1px 1px at 78% 14%,var(--star) 50%,transparent 51%),
+    radial-gradient(1.5px 1.5px at 90% 42%,var(--star) 50%,transparent 51%),
+    radial-gradient(1px 1px at 22% 68%,var(--star) 50%,transparent 51%),
+    radial-gradient(2px 2px at 66% 78%,var(--star) 50%,transparent 51%),
+    radial-gradient(1px 1px at 44% 88%,var(--star) 50%,transparent 51%);
+}
+/* ── 顶栏 ── */
+.topbar{
+  display:flex;align-items:center;gap:14px;position:relative;z-index:2;
+  padding:10px 18px;border-bottom:1px solid var(--line);
+  background:var(--panel);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);flex:none;
+}
+.brand{font-weight:800;letter-spacing:.5px;font-size:15px;color:var(--text2)}
+.brand b{color:var(--accent2)}
+.theme-btn{
+  border:1px solid var(--line);background:var(--panel3);color:var(--text2);
+  border-radius:99px;width:32px;height:32px;cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;transition:transform .3s var(--ease);
+}
+.theme-btn:active{transform:rotate(30deg)}
+/* ── 主区 ── */
+.main{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:18px;padding:24px 22px calc(22px + env(safe-area-inset-bottom));position:relative;z-index:1}
+.title-cn{font-size:21px;font-weight:800;letter-spacing:4px}
+.title-sub{font-size:12px;color:var(--text3);letter-spacing:.24em;margin-top:-10px}
+/* ── 选择视图：创建 / 加入 ── */
+.pick{display:flex;flex-direction:column;gap:14px;width:min(84vw,320px)}
+.pick-card{
+  border:1px solid var(--line);background:var(--panel);border-radius:20px;
+  padding:20px 18px;cursor:pointer;text-align:left;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:var(--shadow);transition:transform .18s var(--ease);
+}
+.pick-card:active{transform:scale(.97)}
+.pick-card h2{font-size:16px;font-weight:800;display:flex;align-items:center;gap:10px}
+.pick-card h2 .ico{width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:16px}
+.pick-card p{margin-top:8px;font-size:12.5px;line-height:1.6;color:var(--text2)}
+/* ── 房间视图 ── */
+.room{width:min(86vw,340px);display:none;flex-direction:column;gap:14px}
+.room.on{display:flex}
+.room-card{
+  border:1px solid var(--line);background:var(--panel);border-radius:22px;
+  padding:20px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.room-label{font-size:11.5px;letter-spacing:.3em;color:var(--text3)}
+.code-row{display:flex;gap:9px}
+.code-chip{
+  width:46px;height:56px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--moon);
+  background:var(--panel3);border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
+}
+.copy-btn{
+  border:1px solid var(--line);background:var(--panel3);color:var(--text2);
+  border-radius:99px;padding:7px 18px;font-size:12px;cursor:pointer;transition:transform .15s var(--ease);
+}
+.copy-btn:active{transform:scale(.94)}
+.wait-hint{font-size:12px;color:var(--text3);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+/* ── 玩家槽位 ── */
+.seats{display:flex;flex-direction:column;gap:10px;width:min(86vw,340px)}
+.seat{
+  display:flex;align-items:center;gap:13px;
+  border:1px solid var(--line);background:var(--panel);border-radius:18px;
+  padding:14px 16px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  transition:border-color .3s;
+}
+.seat.empty{border-style:dashed;cursor:pointer}
+.seat.empty:active{transform:scale(.98)}
+.seat .pawn{width:22px;height:22px;border-radius:50%;flex:none;border:2px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.seat .who{flex:1;min-width:0}
+.seat .name{font-size:14.5px;font-weight:700}
+.seat .st{font-size:11.5px;color:var(--text3);margin-top:2px}
+.seat.ready{border-color:var(--accent2)}
+.seat .rk{font-size:11px;font-weight:700;color:#fff;border-radius:99px;padding:4px 10px;flex:none}
+.rk-wait{background:var(--panel3);color:var(--text3)!important;border:1px solid var(--line)}
+.rk-ok{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+/* ── 底部动作 ── */
+.acts{display:flex;gap:11px;width:min(86vw,340px)}
+.btn{
+  flex:1;border:none;cursor:pointer;border-radius:99px;
+  padding:14px 0;font-size:15px;font-weight:800;letter-spacing:3px;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:var(--shadow);transition:transform .15s var(--ease),opacity .25s;
+}
+.btn:active{transform:scale(.95)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:var(--panel3);color:var(--text2);border:1px solid var(--line);box-shadow:none;font-weight:600;letter-spacing:1px}
+/* ── 加入：房间码输入 ── */
+.join{width:min(86vw,340px);display:none;flex-direction:column;gap:14px;align-items:center}
+.join.on{display:flex}
+.code-inputs{display:flex;gap:9px}
+.code-inputs input{
+  width:46px;height:56px;border-radius:13px;border:1px solid var(--line);
+  background:var(--panel3);color:var(--text);text-align:center;
+  font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;outline:none;
+  caret-color:var(--accent2);transition:border-color .2s;
+}
+.code-inputs input:focus{border-color:var(--accent2)}
+.back-link{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;letter-spacing:1px}
+/* ── 提示行（演示占位信息） ── */
+.sys-line{font-size:11.5px;color:var(--text3);text-align:center;min-height:16px;letter-spacing:.06em}
+/* 窄屏微调 */
+@media (max-width:380px){
+  .code-chip,.code-inputs input{width:40px;height:50px;font-size:22px}
+  .title-cn{font-size:19px}
+}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<header class="topbar">
+  <button class="theme-btn" id="backBtn" title="返回">‹</button>
+  <div class="brand"><b>SPICY</b> MONOPOLY</div>
+  <button class="theme-btn" id="themeBtn" title="主题" style="margin-left:auto">☾</button>
+</header>
+
+<div class="main">
+  <div class="title-cn">组队开桌</div>
+  <div class="title-sub">DOUBLE TABLE</div>
+
+  <!-- 选择：创建 / 加入 -->
+  <div class="pick" id="pickView">
+    <div class="pick-card" id="pickCreate">
+      <h2><span class="ico">＋</span>创建房间</h2>
+      <p>开一桌双人局，把房间码发给 TA，TA 输码即入座。</p>
+    </div>
+    <div class="pick-card" id="pickJoin">
+      <h2><span class="ico">↳</span>加入房间</h2>
+      <p>拿到 TA 发来的房间码，输入后直接坐上牌桌。</p>
+    </div>
+  </div>
+
+  <!-- 加入：输房间码 -->
+  <div class="join" id="joinView">
+    <div class="room-label">输入房间码</div>
+    <div class="code-inputs" id="codeInputs">
+      <input maxlength="1" inputmode="text" autocomplete="off">
+      <input maxlength="1" inputmode="text" autocomplete="off">
+      <input maxlength="1" inputmode="text" autocomplete="off">
+      <input maxlength="1" inputmode="text" autocomplete="off">
+    </div>
+    <div class="acts" style="margin-top:2px">
+      <button class="btn ghost" id="joinBack">换一边</button>
+      <button class="btn" id="joinGo" disabled>入座</button>
+    </div>
+  </div>
+
+  <!-- 房间：房码 + 槽位 -->
+  <div class="room" id="roomView">
+    <div class="room-card">
+      <div class="room-label">房间码</div>
+      <div class="code-row" id="codeRow"></div>
+      <div style="display:flex;gap:9px">
+        <button class="copy-btn" id="chatInviteBtn">聊天邀请</button>
+        <button class="copy-btn" id="copyBtn">复制给 TA</button>
+      </div>
+      <div class="wait-hint" id="waitHint">等待 TA 入座…</div>
+    </div>
+
+    <div class="seats">
+      <div class="seat" id="seatMe">
+        <span class="pawn" style="background:var(--p2)"></span>
+        <span class="who"><span class="name">我</span><div class="st" id="seatMeSt">房主 · 未准备</div></span>
+        <span class="rk rk-wait" id="seatMeRk">未准备</span>
+      </div>
+      <div class="seat empty" id="seatTa">
+        <span class="pawn" style="background:var(--panel3);border-style:dashed"></span>
+        <span class="who"><span class="name" style="color:var(--text3)">空位</span><div class="st">点一下演示 TA 入座</div></span>
+        <span class="rk rk-wait">虚位</span>
+      </div>
+    </div>
+
+    <div class="acts">
+      <button class="btn ghost" id="roomExit">退房</button>
+      <button class="btn" id="readyBtn" disabled>准备</button>
+    </div>
+    <div class="sys-line" id="sysLine">— 接口已接 · 等待开局 —</div>
+  </div>
+</div>
+
+<script>
+/* ═══ 对接层 v8：spicy-dealer 游戏房后端（已接）═══
+   建房=POST /api/invite · 入座=POST .../join · 房态=GET 轮询 · 开桌=cn_team_start */
+const DEALER='https://game.eira0716.dpdns.org';
+let myRoom=null, pollTimer=null, lastChatId=0;
+async function dFetch(path,opt){
+  const r=await fetch(DEALER+path,opt);
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(j.message||('http_'+r.status)),{code:j.error});
+  return j;
+}
+function stopPoll(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+function startPoll(code){
+  stopPoll();
+  const tick=async()=>{
+    try{ const room=await dFetch('/api/game/room/'+encodeURIComponent(code)+'?after_chat_id='+lastChatId); renderRoom(room); }
+    catch(e){ $('sysLine').textContent='信号有点抖，重试中…'; }
+  };
+  tick(); pollTimer=setInterval(tick,2000);
+}
+function renderRoom(room){
+  const names=(room.members||[]).map(m=>m.name);
+  const meName=names.includes('宝宝')?'宝宝':(names[0]||'宝宝');
+  const taName=names.filter(n=>n!==meName)[0];
+  if(taName){
+    $('seatTa').classList.remove('empty');
+    $('seatTa').querySelector('.pawn').style.background='var(--p1)';
+    $('seatTa').querySelector('.pawn').style.borderStyle='solid';
+    $('seatTa').querySelector('.name').textContent=taName;
+    $('seatTa').querySelector('.st').textContent='已入座';
+    $('waitHint').style.display='none';
+  }
+  if(room.status==='playing'){ $('sysLine').textContent='对局已开始'; teamPost({type:'cn_team_start',code:room.room_id}); stopPoll(); return; }
+  if(room.status==='ready'&&names.length>=2){
+    $('readyBtn').disabled=false; $('readyBtn').textContent='开 桌';
+    $('sysLine').textContent='双方就绪 · 点开桌进入对局';
+  }else{
+    $('readyBtn').disabled=true; $('readyBtn').textContent='准备';
+    $('sysLine').textContent=taName?'等荷官确认开局…':'等待 TA 入座…';
+  }
+  (room.chat||[]).forEach(c=>{ lastChatId=Math.max(lastChatId,c.id); if(c.type==='game_event') $('sysLine').textContent=c.text; });
+}
+const $=id=>document.getElementById(id);
+
+/* ═══ 主题（同 shell · 偏好存本地）═══ */
+(function(){
+  let pref=null; try{ pref=localStorage.getItem('sm_theme'); }catch(e){}
+  const sysDark=matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches;
+  const apply=t=>{ document.documentElement.setAttribute('data-theme',t);
+    $('themeBtn').textContent = t==='dark' ? '☀' : '☾'; };
+  apply(pref || (sysDark?'dark':'light'));
+  $('themeBtn').addEventListener('click',()=>{
+    const nxt=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+    apply(nxt); try{ localStorage.setItem('sm_theme',nxt); }catch(e){}
+  });
+})();
+
+/* ═══ 视图切换 ═══ */
+function show(view){
+  $('pickView').style.display = view==='pick' ? 'flex' : 'none';
+  $('joinView').classList.toggle('on', view==='join');
+  $('roomView').classList.toggle('on', view==='room');
+}
+$('pickCreate').addEventListener('click',()=>{ createRoom(); });
+$('pickJoin').addEventListener('click',()=>{ show('join'); setTimeout(()=>$('codeInputs').querySelector('input').focus(),80); });
+$('joinBack').addEventListener('click',()=>show('pick'));
+$('roomExit').addEventListener('click',()=>{ resetRoom(); show('pick'); });
+$('backBtn').addEventListener('click',()=>{
+  if($('roomView').classList.contains('on')||$('joinView').classList.contains('on')) show('pick');
+  /* 嵌入星夜小筑时：通知父页收起组队层回探索页 */
+  else if(window.parent!==window) parent.postMessage({type:'cn_team_back'},'*');
+  else if(history.length>1) history.back();
+});
+/* ═══ 嵌入态：向父页（星夜小筑）发消息 ═══ */
+function teamPost(msg){
+  try{ if(window.parent!==window) parent.postMessage(msg,'*'); }catch(e){}
+}
+
+/* ═══ 创建房间（真接口：邀请即建房）═══ */
+let myRole='host';
+function makeCode(){
+  const pool='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s='';
+  for(let i=0;i<4;i++) s+=pool[Math.floor(Math.random()*pool.length)];
+  return s;
+}
+function renderCode(code){
+  $('codeRow').innerHTML = code.split('').map(c=>`<div class="code-chip">${c}</div>`).join('');
+}
+async function createRoom(tries){
+  tries=tries||0;
+  const code=makeCode();
+  try{
+    await dFetch('/api/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'monopoly',code,from:'宝宝'})});
+  }catch(e){
+    if(e.code==='code_taken'&&tries<3) return createRoom(tries+1);
+    $('sysLine').textContent='接口打盹了，再点一次试试';
+    return;
+  }
+  myRole='host'; myRoom=code;
+  renderCode(code); resetSeats(); show('room'); startPoll(code);
+}
+function resetSeats(){
+  $('seatTa').classList.add('empty');
+  $('seatTa').querySelector('.name').textContent='空位';
+  $('seatTa').querySelector('.name').style.color='var(--text3)';
+  $('seatTa').querySelector('.st').textContent='点一下演示 TA 入座';
+  $('seatTa').querySelector('.pawn').style.background='var(--panel3)';
+  $('seatTa').querySelector('.pawn').style.borderStyle='dashed';
+  $('seatTa').querySelector('.rk').textContent='虚位'; $('seatTa').querySelector('.rk').className='rk rk-wait';
+  $('seatMe').querySelector('.st').textContent = myRole==='host' ? '房主 · 未准备' : '受邀 · 未准备';
+  $('seatMe').querySelector('.rk').textContent='未准备'; $('seatMe').querySelector('.rk').className='rk rk-wait';
+  $('seatMe').classList.remove('ready');
+  $('waitHint').textContent='等待 TA 入座…'; $('waitHint').style.display='';
+  $('readyBtn').disabled = myRole!=='host';   /* 演示：房主先操作 */
+  $('readyBtn').textContent='准备';
+  taReady=false; meReady=false;
+}
+/* ═══ TA 入座：由轮询驱动（renderRoom），不再点空位演示 ═══ */
+$('readyBtn').addEventListener('click',()=>{
+  if($('readyBtn').disabled)return;
+  /* 双方就绪后点 = 开桌：通知父页拉起游戏层（真实开局由荷官侧完成） */
+  if($('readyBtn').textContent.indexOf('开')>-1){ teamPost({type:'cn_team_start',code:myRoom}); return; }
+});
+/* ═══ 聊天邀请：请父页在聊天流里发邀请卡片（用组队页同一个房码）═══ */
+$('chatInviteBtn').addEventListener('click',()=>{
+  const code=[...$('codeRow').children].map(x=>x.textContent).join('');
+  teamPost({type:'cn_team_chat_invite', code});
+  $('chatInviteBtn').textContent='已发到聊天 ✓';
+  setTimeout(()=>$('chatInviteBtn').textContent='聊天邀请',1400);
+});
+function resetRoom(){
+  stopPoll(); myRoom=null; lastChatId=0;
+  $('codeRow').innerHTML='';
+  cinputs.forEach(x=>x.value='');
+  $('joinGo').disabled=true;
+  resetSeats();
+}
+/* ═══ 加入房间（演示：输满 4 位即可入座）═══ */
+const cinputs=[...$('codeInputs').querySelectorAll('input')];
+cinputs.forEach((inp,i)=>{
+  inp.addEventListener('input',()=>{
+    inp.value=inp.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,1);
+    if(inp.value&&i<3)cinputs[i+1].focus();
+    $('joinGo').disabled = !cinputs.every(x=>x.value);
+  });
+  inp.addEventListener('keydown',e=>{ if(e.key==='Backspace'&&!inp.value&&i>0)cinputs[i-1].focus(); });
+});
+$('joinGo').addEventListener('click',async()=>{
+  const code=cinputs.map(x=>x.value).join('');
+  if(!/^[A-Z0-9]{4}$/.test(code)) return;
+  try{
+    await dFetch('/api/game/room/'+encodeURIComponent(code));
+    await dFetch('/api/game/room/'+encodeURIComponent(code)+'/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'宝宝'})});
+  }catch(e){
+    const old=$('joinGo').textContent;
+    $('joinGo').textContent = e.code==='room_not_found' ? '房码无效' : '入座失败';
+    setTimeout(()=>$('joinGo').textContent=old,1500);
+    return;
+  }
+  myRole='guest'; myRoom=code;
+  renderCode(code); resetSeats(); show('room'); startPoll(code);
+});
+
+/* ═══ 复制房码 ═══ */
+$('copyBtn').addEventListener('click',()=>{
+  const code=[...$('codeRow').children].map(x=>x.textContent).join('');
+  const done=()=>{ $('copyBtn').textContent='已复制 ✓'; setTimeout(()=>$('copyBtn').textContent='复制给 TA',1400); };
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done,done);
+    else done();
+  }catch(e){ done(); }
+});
+</script>
+</body>
+</html>

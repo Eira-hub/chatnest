@@ -330,7 +330,10 @@ svg{display:block}
   max-height:0;overflow:hidden;padding:0 10px;opacity:0;
   background:var(--panel-solid);
   border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;box-shadow:var(--shadow);
-  transition:max-height .26s ease,opacity .2s ease,padding .26s ease}
+  /* v37.78 展开高度不再走过渡：max-height/padding 过渡在手机 Edge 偶发起点竞态，卡在半展开（输入框上移一点点、宫格被裁光）；高度瞬时到位只留淡入 */
+  /* v37.79 独立合成层：dockbar 是 backdrop-filter 磨砂层，移动端其子元素尺寸突变时偶发不重绘（面板已撑开但画面停旧帧→只见输入框上移、面板空白）；translateZ 强制面板走独立层绕开 */
+  transform:translateZ(0);
+  transition:opacity .2s ease}
 .plus-panel.open{max-height:320px;opacity:1;padding:18px 10px calc(env(safe-area-inset-bottom) + 12px)}
 .pp-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none}
 .pp-track::-webkit-scrollbar{display:none}
@@ -342,6 +345,7 @@ svg{display:block}
 .pp-dots{display:flex;justify-content:center;gap:6px;padding-top:13px}
 .pp-dots span{width:6px;height:6px;border-radius:50%;background:var(--line);transition:background .2s ease}
 .pp-dots span.on{background:var(--text3)}
+.pp-ver{font-size:10px;color:var(--text3);text-align:center;padding-top:5px;opacity:.7}
 
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--panel-solid);border:1px solid var(--line);border-bottom:none;
   border-radius:22px 22px 0 0;padding:10px 18px calc(env(safe-area-inset-bottom) + 18px);
@@ -349,6 +353,35 @@ svg{display:block}
 .sheet.on{transform:none}
 .sheet .grip{width:38px;height:4px;border-radius:4px;background:rgba(255,255,255,.16);margin:4px auto 14px}
 .sheet h3{font-family:var(--serif);font-size:15px;font-weight:500;letter-spacing:.1em;color:var(--text2);margin-bottom:12px;text-align:center}
+/* ═══ v38.9 一起玩：游戏列表弹层 + 房间邀请卡片（长方形 · 大圆角）═══ */
+.gs-list{display:flex;flex-direction:column;gap:10px}
+.gs-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  border:1px solid var(--line);background:var(--panel2);border-radius:18px;padding:12px 14px;
+  cursor:pointer;font:inherit;color:inherit;transition:transform .15s var(--ease)}
+.gs-item:active{transform:scale(.98)}
+.gs-ico{width:42px;height:42px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#faf6ea,#efe8d6)}
+.gs-ico svg{width:22px;height:22px}
+.gs-name{font-size:14.5px;font-weight:700;color:var(--text);display:block}
+.gs-desc{font-size:11.5px;color:var(--text3);margin-top:2px}
+.gs-arrow{margin-left:auto;font-size:20px;color:var(--text3);opacity:.5}
+.gs-more{border:1px dashed var(--line);border-radius:18px;padding:14px;text-align:center;
+  font-size:12px;color:var(--text3);letter-spacing:.14em}
+.inv-card{width:min(236px,62vw);border-radius:24px;overflow:hidden;
+  background:var(--panel-solid);border:1px solid var(--line);box-shadow:var(--shadow)}
+.inv-head{display:flex;align-items:center;gap:10px;padding:8px 14px 6px}
+.inv-ico{width:31px;height:31px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#faf6ea,#efe8d6)}
+.inv-ico svg{width:17px;height:17px}
+.inv-game{font-size:13.5px;font-weight:800;color:var(--text)}
+.inv-sub{font-size:8.5px;letter-spacing:.22em;color:var(--text3);margin-top:1px}
+.inv-codes{display:flex;gap:6px;justify-content:center;padding:2px 14px 9px}
+.inv-codes span{width:33px;height:35px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--moon);
+  background:var(--panel2);border:1px solid var(--line)}
+.inv-st{border-top:1px solid var(--line);padding:5px 14px 7px;text-align:center;
+  font-size:11px;color:var(--text3);animation:invPulse 1.6s infinite}
+@keyframes invPulse{0%,100%{opacity:.4}50%{opacity:1}}
 /* ═══ v36.55 设置页=全屏独立页面：点开即整页设置，无过渡动画（v36.51 悬浮面板方案废弃）═══ */
 #settingsSheet{top:0;bottom:0;left:0;right:0;width:auto;height:auto;max-height:none;
   border-radius:0;border:none;box-shadow:none;
@@ -518,24 +551,30 @@ body.has-wall .stars{opacity:.75}
 #viewHome .hm-slogan{font-family:var(--serif);font-size:15px;letter-spacing:.34em;text-indent:.34em;color:var(--hm-fg);background:none;border:0;cursor:pointer;margin-top:24px;text-shadow:var(--hm-ts)}
 /* ═══ 主页卡片 ═══ */
 #viewHome .hm-cards{padding:22px 0 calc(126px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;text-align:left}
-/* ═══ v38 探索页（游戏房列表）═══ */
+/* ═══ v38 探索页（游戏房列表 · 横条卡）═══ */
 #viewExplore{flex:1;overflow-y:auto;position:relative;color:#fff;-webkit-tap-highlight-color:transparent}
 #viewExplore .ex-wrap{padding:20px 16px calc(126px + env(safe-area-inset-bottom))}
-#viewExplore .ex-title{font-size:26px;font-weight:800;letter-spacing:.5px;text-shadow:0 1px 10px rgba(0,0,0,.22)}
-#viewExplore .ex-sub{margin-top:4px;font-size:12.5px;opacity:.72}
-#viewExplore .ex-grid{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px}
-#viewExplore .ex-card{position:relative;overflow:hidden;text-align:left;padding:0;border-radius:var(--r-panel);border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.16);box-shadow:0 6px 22px rgba(0,0,0,.14);cursor:pointer;transition:transform .18s ease,box-shadow .18s ease;color:inherit;font:inherit}
-#viewExplore.hm-light .ex-card{background:rgba(255,255,255,.52);border-color:rgba(255,255,255,.68);box-shadow:0 6px 22px rgba(40,60,120,.12)}
-#viewExplore .ex-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.2)}
-#viewExplore .ex-banner{height:86px;display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(135deg,#e9edfb,#d6dcf3);border-bottom:1px solid rgba(90,100,160,.16)}
-#viewExplore .ex-banner .ex-dice{width:32px;height:32px;flex:none}
-#viewExplore .ex-banner-t{font-size:15px;font-weight:800;letter-spacing:3px;color:#5a6394;text-shadow:none}
-#viewExplore .ex-banner-soon{background:repeating-linear-gradient(45deg,rgba(90,99,148,.07) 0 10px,transparent 10px 20px),linear-gradient(135deg,#e9edfb,#d6dcf3)}
-#viewExplore .ex-banner-soon .ex-banner-t{color:rgba(90,99,148,.55)}
-#viewExplore .ex-body{padding:11px 12px 12px}
-#viewExplore .ex-name{font-size:15px;font-weight:700}
-#viewExplore .ex-desc{margin-top:3px;font-size:11.5px;opacity:.75;line-height:1.5}
-#viewExplore .ex-go{margin-top:9px;font-size:12px;font-weight:700;color:#5a6394;opacity:.92}
+#viewExplore .ex-title{font-size:26px;font-weight:800;letter-spacing:.5px;color:#16161c;text-shadow:none}
+#viewExplore .ex-sub{margin-top:4px;font-size:12.5px;color:#2a2a32;opacity:.8}
+#viewExplore .ex-list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+/* ═══ v38.8 大富翁子页：全屏游戏层（iframe 盖在探索页上，退出即掀掉露出大页）═══ */
+#gameFrame,#teamFrame{position:fixed;inset:0;z-index:80;background:var(--bg0);animation:gfin .3s var(--ease)}
+#gameFrame.hidden,#teamFrame.hidden{display:none}
+#gameFrame iframe,#teamFrame iframe{width:100%;height:100%;border:none;display:block}
+@keyframes gfin{from{opacity:0}to{opacity:1}}
+#viewExplore .ex-row{display:flex;align-items:stretch;overflow:hidden;text-align:left;padding:0;border-radius:var(--r-panel);border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.66);box-shadow:0 6px 22px rgba(0,0,0,.14);cursor:pointer;color:inherit;font:inherit;transition:transform .18s ease,box-shadow .18s ease}
+#viewExplore.hm-light .ex-row{background:rgba(255,255,255,.72);border-color:rgba(0,0,0,.08);box-shadow:0 6px 22px rgba(40,60,120,.12)}
+#viewExplore .ex-row:active{transform:scale(.985)}
+#viewExplore .ex-rbanner{width:96px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:linear-gradient(160deg,#faf8f2,#f1ede2);border-right:1px solid rgba(120,105,80,.16)}
+#viewExplore .ex-rbanner svg{width:26px;height:26px}
+#viewExplore .ex-rbanner span{font-size:11px;font-weight:700;letter-spacing:2px;color:#6f6352}
+#viewExplore .ex-rbanner-soon{background:repeating-linear-gradient(45deg,rgba(111,99,82,.08) 0 10px,transparent 10px 20px),linear-gradient(160deg,#faf8f2,#f1ede2)}
+#viewExplore .ex-rbanner-soon span{color:rgba(111,99,82,.55);font-size:16px}
+#viewExplore .ex-rbody{flex:1;min-width:0;padding:13px}
+#viewExplore .ex-rname{font-size:15.5px;font-weight:700;color:#101014}
+#viewExplore .ex-rdesc{margin-top:3px;font-size:12px;opacity:.72;line-height:1.5;color:#1c1c22}
+#viewExplore .ex-rarrow{align-self:center;padding:0 14px;font-size:22px;opacity:.4;color:#101014}
+#viewHome .hm-card{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-panel);padding:14px 15px;box-shadow:0 6px 22px rgba(0,0,0,.14)}
 #viewHome.hm-light .hm-card{background:rgba(255,255,255,.52);border-color:rgba(255,255,255,.68);box-shadow:0 6px 22px rgba(40,60,120,.12)}
 #viewHome .hm-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 #viewHome .hm-card-title{font-size:12px;letter-spacing:.2em;opacity:.8;font-family:var(--serif)}
@@ -753,30 +792,28 @@ body.has-wall .stars{opacity:.75}
     <input type="file" id="homeBgFile" accept="image/*" hidden>
   </div>
 </section>
-<!-- ═══ v38 探索（游戏房列表）═══ -->
+<!-- ═══ v38 探索（游戏房列表 · 横条卡）═══ -->
 <section id="viewExplore" class="hidden">
   <div class="ex-wrap">
-    <div class="ex-head">
-      <div class="ex-title">探索</div>
-      <div class="ex-sub">游戏房 · 和 TA 一起玩</div>
-    </div>
-    <div class="ex-grid">
-      <button class="ex-card" id="exCardMonopoly" type="button">
-        <div class="ex-banner">
-          <svg class="ex-dice" viewBox="0 0 24 24" fill="none" stroke="#5a6394" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.35" fill="#5a6394" stroke="none"/><circle cx="15.4" cy="8.6" r="1.35" fill="#5a6394" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="#5a6394" stroke="none"/><circle cx="8.6" cy="15.4" r="1.35" fill="#5a6394" stroke="none"/><circle cx="15.4" cy="15.4" r="1.35" fill="#5a6394" stroke="none"/></svg>
-          <span class="ex-banner-t">大富翁</span>
+    <div class="ex-title">探索</div>
+    <div class="ex-sub">游戏房 · 和 TA 一起玩</div>
+    <div class="ex-list">
+      <button class="ex-row" type="button" data-game="monopoly">
+        <div class="ex-rbanner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#6f6352" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.35" fill="#6f6352" stroke="none"/><circle cx="15.4" cy="8.6" r="1.35" fill="#6f6352" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="#6f6352" stroke="none"/><circle cx="8.6" cy="15.4" r="1.35" fill="#6f6352" stroke="none"/><circle cx="15.4" cy="15.4" r="1.35" fill="#6f6352" stroke="none"/></svg>
+          <span>大富翁</span>
         </div>
-        <div class="ex-body">
-          <div class="ex-name">大富翁</div>
-          <div class="ex-desc">双人桌 · 掷骰买房，输的人等着受罚</div>
-          <div class="ex-go">进入对局 →</div>
+        <div class="ex-rbody">
+          <div class="ex-rname">大富翁</div>
+          <div class="ex-rdesc">双人桌·成人版，输的人等着受罚</div>
         </div>
+        <div class="ex-rarrow">›</div>
       </button>
-      <div class="ex-card ex-soon" aria-disabled="true">
-        <div class="ex-banner ex-banner-soon"><span class="ex-banner-t">?</span></div>
-        <div class="ex-body">
-          <div class="ex-name" style="opacity:.6">更多玩法</div>
-          <div class="ex-desc">装修中 · 敬请期待</div>
+      <div class="ex-row" aria-disabled="true">
+        <div class="ex-rbanner ex-rbanner-soon"><span>?</span></div>
+        <div class="ex-rbody">
+          <div class="ex-rname" style="opacity:.6">更多玩法</div>
+          <div class="ex-rdesc">装修中 · 敬请期待</div>
         </div>
       </div>
     </div>
@@ -804,16 +841,16 @@ body.has-wall .stars{opacity:.75}
         <div class="pp-track" id="ppTrack">
           <div class="pp-page">
             <button class="pp-item" data-name="相册"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="8.4" cy="10" r="1.5" fill="var(--plus-ico)" stroke="none"/><path d="M3.5 16.4l4.6-4 3.6 3.1 3.4-2.9 5.2 4.2"/></svg></span><span class="pp-lab">相册</span></button>
-            <button class="pp-item" data-name="拍摄"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.2" width="18" height="12.8" rx="3.2"/><circle cx="12" cy="13.4" r="3.4"/><path d="M8.8 7.2l1.3-2.2h3.8l1.3 2.2"/></svg></span><span class="pp-lab">拍摄</span></button>
+            <button class="pp-item" data-name="拍摄"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.2" width="18" height="12.8" rx="3.2"/><circle cx="12" cy="13.4" r="3.4"/><path d="M8.8 7.2l1.3-2.2h3.8l1.3 2.2"/></svg></span><span class="pp-lab">拍摄</span></button><button class="pp-item" data-name="一起玩"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true"><rect x="4.6" y="6" width="15" height="15" rx="4.2" fill="var(--plus-ico)" stroke="none"/><circle cx="8.4" cy="9.8" r="1.55" fill="var(--panel-solid)" stroke="none"/><circle cx="15.9" cy="9.8" r="1.55" fill="var(--panel-solid)" stroke="none"/><circle cx="8.4" cy="17.3" r="1.55" fill="var(--panel-solid)" stroke="none"/><circle cx="15.9" cy="17.3" r="1.55" fill="var(--panel-solid)" stroke="none"/><circle cx="12.15" cy="13.55" r="1.55" fill="var(--panel-solid)" stroke="none"/><path d="M18.3 4.9l1.8-1.8M20.6 6.1l2.1-2.1" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="pp-lab">一起玩</span></button>
             <button class="pp-item" data-name="视频通话"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.6" y="6.4" width="13.2" height="11.2" rx="3.2"/><path d="M15.8 10.6l5.6-3v8.8l-5.6-3z" fill="var(--plus-ico)" stroke="var(--plus-ico)"/></svg></span><span class="pp-lab">视频通话</span></button>
             <button class="pp-item" data-name="位置"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21.2s-7-6.3-7-11.2a7 7 0 1 1 14 0c0 4.9-7 11.2-7 11.2z" fill="var(--plus-ico)" stroke="none"/><circle cx="12" cy="9.8" r="2.5" fill="var(--plus-tile)" stroke="none"/></svg></span><span class="pp-lab">位置</span></button>
             <button class="pp-item" data-name="红包"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.6" y="3.2" width="14.8" height="17.6" rx="3" fill="var(--plus-ico)" stroke="none"/><path d="M5.4 8.2c4 3.4 9.2 3.4 13.2 0" stroke="var(--plus-tile)"/><circle cx="12" cy="13.6" r="1.9" fill="var(--plus-tile)" stroke="none"/></svg></span><span class="pp-lab">红包</span></button>
-            <button class="pp-item" data-name="礼物"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.4" y="11" width="15.2" height="9.4" rx="2" fill="var(--plus-ico)" stroke="none"/><rect x="3.2" y="7.8" width="17.6" height="2.9" rx="1.2" fill="var(--plus-ico)" stroke="none"/><path d="M12 7.6C10.2 3.6 5.4 4.6 7.6 7.3M12 7.6c1.8-4 6.6-3 4.4-.3" stroke="var(--plus-ico)"/></svg></span><span class="pp-lab">礼物</span></button>
+            
             <button class="pp-item" data-name="转账"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.2 9.3h12.6l-3-3M19.8 14.7H7.2l3 3" stroke-width="2"/></svg></span><span class="pp-lab">转账</span></button>
-            <button class="pp-item" data-name="语音输入"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9.3" y="3.2" width="5.4" height="10.2" rx="2.7" fill="var(--plus-ico)" stroke="none"/><path d="M6.2 11.6a5.8 5.8 0 0 0 11.6 0M12 17.4v3M9.2 20.4h5.6"/></svg></span><span class="pp-lab">语音输入</span></button>
+            <button class="pp-item" data-name="语音通话"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" fill="var(--plus-ico)" stroke="none"/></svg></span><span class="pp-lab">语音通话</span></button>
           </div>
           <div class="pp-page">
-            <button class="pp-item" data-name="收藏"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M12 12.1l7.8-4.6M12 12.1L4.2 7.5M12 12.1V21"/></svg></span><span class="pp-lab">收藏</span></button>
+            <button class="pp-item" data-name="礼物"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.4" y="11" width="15.2" height="9.4" rx="2" fill="var(--plus-ico)" stroke="none"/><rect x="3.2" y="7.8" width="17.6" height="2.9" rx="1.2" fill="var(--plus-ico)" stroke="none"/><path d="M12 7.6C10.2 3.6 5.4 4.6 7.6 7.3M12 7.6c1.8-4 6.6-3 4.4-.3" stroke="var(--plus-ico)"/></svg></span><span class="pp-lab">礼物</span></button><button class="pp-item" data-name="收藏"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M12 12.1l7.8-4.6M12 12.1L4.2 7.5M12 12.1V21"/></svg></span><span class="pp-lab">收藏</span></button>
             <button class="pp-item" data-name="个人名片"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.8" r="3.5" fill="var(--plus-ico)" stroke="none"/><path d="M5.2 19.4a6.9 6.9 0 0 1 13.6 0z" fill="var(--plus-ico)" stroke="none"/></svg></span><span class="pp-lab">个人名片</span></button>
             <button class="pp-item" data-name="文件"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4.1l2 2.3H19a2 2 0 0 1 2 2v8.2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="var(--plus-ico)" stroke="none"/></svg></span><span class="pp-lab">文件</span></button>
             <button class="pp-item" data-name="音乐"><span class="pp-tile"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--plus-ico)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.4 18V6.4L19 4.6v11.4"/><circle cx="7" cy="18.1" r="2.4" fill="var(--plus-ico)" stroke="none"/><circle cx="16.6" cy="16.1" r="2.4" fill="var(--plus-ico)" stroke="none"/></svg></span><span class="pp-lab">音乐</span></button>
@@ -852,6 +889,20 @@ body.has-wall .stars{opacity:.75}
   <div id="modelList"></div>
 </div>
 
+<!-- v38.9 一起玩：游戏列表 -->
+<div class="sheet" id="gameSheet">
+  <div class="grip"></div>
+  <h3>一起玩</h3>
+  <div class="gs-list">
+    <button class="gs-item" data-game="monopoly" type="button">
+      <span class="gs-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6352" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.35" fill="#6f6352" stroke="none"/><circle cx="15.4" cy="8.6" r="1.35" fill="#6f6352" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="#6f6352" stroke="none"/><circle cx="8.6" cy="15.4" r="1.35" fill="#6f6352" stroke="none"/><circle cx="15.4" cy="15.4" r="1.35" fill="#6f6352" stroke="none"/></svg></span>
+      <span><span class="gs-name">大富翁</span><div class="gs-desc">双人桌 · 成人版，输的人等着受罚</div></span>
+      <span class="gs-arrow">›</span>
+    </button>
+    <div class="gs-more">更多玩法即将登场</div>
+  </div>
+</div>
+
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="fs-head">
@@ -859,7 +910,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v36.77</span>
+    <span class="fs-ver">v39.3</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -996,7 +1047,8 @@ body.has-wall .stars{opacity:.75}
   <div class="set-block">
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
-      ChatNest · 星夜小筑 v35<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
+      ChatNest · 星夜小筑 v37.82<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -1186,10 +1238,6 @@ async function boot(){
       await openConv(state.convId, {silent:true});
     }else{
       newConv();
-    }
-    /* v38.3 从大富翁退出回跳：URL 带 view=explore 时启动后直接落探索页 */
-    if(new URLSearchParams(location.search).get('view')==='explore'){
-      syncDock('explore'); showHome(false); showExplore(true); setDock(true); setDockFlat(true);
     }
   }catch(e){
     toast(e.message||'启动失败');
@@ -1534,6 +1582,13 @@ function bubbleEl(m){
   /* v36.68 时间：优先后端字段（多名字兼容），后端没存就用本地发送时刻缓存，都没有才不显示 */
   const mt = fmtTimeSmart(m.created_at||m.time||m.timestamp||'') || lookupMsgTime(m);
   if(isUser){
+    /* v38.9 邀请卡片历史渲染：标记消息还原成卡片 */
+    const imv=(m.text||'').match(INVITE_RE);
+    if(imv){
+      const el=inviteCardNode(imv[1], imv[2], mt, m.id||'');
+      el.dataset.raw=(m.text||'');
+      return el;
+    }
     const el=document.createElement('div');
     el.className='msg user';
     el.dataset.mid=m.id||'';
@@ -1752,6 +1807,15 @@ $('btnSend').addEventListener('click', ()=>{
 async function send(){
   const text = $('input').value.trim();
   if(!text) return;
+  /* v38.9 邀请卡片标记兜底：只入列渲染卡片，不触发 AI 请求 */
+  const imv = text.match(INVITE_RE);
+  if(imv){
+    $('splash').classList.add('hidden');
+    $('input').value=''; autoGrow();
+    $('streamInner').appendChild(inviteCardNode(imv[1], imv[2], fmtClock()));
+    scrollToBottom(true);
+    return;
+  }
   const sendAt = Date.now();   /* v36.68 记录发送时刻，历史时间缓存用 */
   $('splash').classList.add('hidden');
   const inner = $('streamInner');
@@ -1944,6 +2008,7 @@ function openSheet(id){ $(id).classList.add('on'); $('scrim').classList.add('on'
 function closeSheets(){
   $('modelSheet').classList.remove('on'); $('settingsSheet').classList.remove('on'); $('ctxSheet').classList.remove('on');
   $('mcpSheet').classList.remove('on'); $('mcpEditSheet').classList.remove('on');
+  $('gameSheet').classList.remove('on');   /* v38.9 一起玩列表也归口统一关闭 */
   $('scrim').classList.remove('on');
 }
 
@@ -2043,22 +2108,86 @@ function setPlus(open){
     plusPanel.style.maxHeight=Math.max(320,Math.round(window.innerHeight-top))+'px';
     plusPanel.classList.add('open');
     if(bar)bar.classList.add('flush');
+    void plusPanel.offsetHeight;   /* v37.79 强制同步重排重绘，防磨砂层停旧帧 */
+    /* v37.80 自愈：220ms 后复查，若面板高度仍塌陷（<100px）抖一帧可见性强制重绘并重设高度 */
+    setTimeout(function(){
+      if(plusPanel.classList.contains('open') && plusPanel.offsetHeight<100){
+        plusPanel.style.visibility='hidden';
+        void plusPanel.offsetHeight;
+        plusPanel.style.visibility='';
+        const top2=plusPanel.getBoundingClientRect().top;
+        plusPanel.style.maxHeight=Math.max(320,Math.round(window.innerHeight-top2))+'px';
+        void plusPanel.offsetHeight;
+      }
+    },220);
   }else{
-    plusPanel.style.maxHeight='0px';
     plusPanel.classList.remove('open');
+    plusPanel.style.maxHeight='';
     if(bar)bar.classList.remove('flush');
-    setTimeout(()=>{ if(!plusPanel.classList.contains('open')) plusPanel.style.maxHeight=''; },320);
   }
 }
-$('btnPlus').addEventListener('click', (e)=>{ e.stopPropagation(); setPlus(!plusPanel.classList.contains('open')); });
+/* v37.80 防手机 Edge 偶发同点双 click：250ms 内只认一次，防"开了又立刻被关" */
+let plusLock=0;
+$('btnPlus').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const now=Date.now();
+  if(now-plusLock<250) return;
+  plusLock=now;
+  setPlus(!plusPanel.classList.contains('open'));
+});
 plusPanel.addEventListener('click', (e)=>{
   const b=e.target.closest('button');
   if(!b) return;
-  setPlus(false);
   const n=b.dataset.name;
+  /* v38.9 一起玩：打开游戏列表弹层（不再 toast 占位） */
+  if(n==='一起玩'){ setPlus(false); setTimeout(()=>openSheet('gameSheet'),60); return; }
+  setPlus(false);
   const hint=(n==='语音通话'||n==='视频通话') ? '「'+n+'」等小Y把通话页做好就有啦'
             : '「'+n+'」还没修好，哥哥后面再来';
   toast(hint, 2000);
+});
+/* ═══ v38.9 一起玩：选游戏 → 生成房码 → 聊天流发邀请卡片 ═══
+   卡片消息标记 [[invite:游戏:房码]]（本地入列；接口接上后换 POST type=game_invite 落库） */
+const INVITE_RE=/^\[\[invite:(\w+):([A-Z0-9]{4})\]\]$/;
+const INVITE_META={
+  monopoly:{ name:'大富翁', sub:'SPICY MONOPOLY',
+    dice:'<svg viewBox="0 0 24 24" fill="none" stroke="#6f6352" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.35" fill="#6f6352" stroke="none"/><circle cx="15.4" cy="8.6" r="1.35" fill="#6f6352" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="#6f6352" stroke="none"/><circle cx="8.6" cy="15.4" r="1.35" fill="#6f6352" stroke="none"/><circle cx="15.4" cy="15.4" r="1.35" fill="#6f6352" stroke="none"/></svg>' }
+};
+function inviteCode(){
+  const pool='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s='';
+  for(let i=0;i<4;i++) s+=pool[Math.floor(Math.random()*pool.length)];
+  return s;
+}
+function inviteCardNode(game, code, mtime, mid){
+  const meta=INVITE_META[game]||INVITE_META.monopoly;
+  const el=document.createElement('div');
+  el.className='msg user';
+  el.dataset.raw='[[invite:'+game+':'+code+']]';
+  if(mid) el.dataset.mid=mid;
+  const avMeOk = state.avatars && state.avatars.me && state.avatars.me.url;
+  el.innerHTML = '<div class="avatar'+(avMeOk?'':' me-def')+'">'+avatarSvg('me')+'</div><div class="col">'
+    +'<div class="inv-card"><div class="inv-head"><span class="inv-ico">'+meta.dice+'</span>'
+    +'<span><div class="inv-game">'+meta.name+'</div><div class="inv-sub">'+meta.sub+'</div></span></div>'
+    +'<div class="inv-codes">'+code.split('').map(c=>'<span>'+esc(c)+'</span>').join('')+'</div>'
+    +'<div class="inv-st">等待 TA 入座…</div></div>'
+    +(mtime?'<div class="mtime">'+mtime+'</div>':'')+'</div>';
+  return el;
+}
+function sendInviteCard(game, code){
+  const sp=$('splash'); if(sp) sp.classList.add('hidden');
+  $('streamInner').appendChild(inviteCardNode(game, code, fmtClock()));
+  try{ stashLastMsg(state.convId||'', 'user', '[[invite:'+game+':'+code+']]'); }catch(err){}
+  try{ localStorage.setItem('lastRoomCode', code); }catch(err){}
+  /* 已接：POST /api/invite 邀请即建房，荷官侧经 /api/invites 感知入桌 */
+  try{
+    fetch('https://game.eira0716.dpdns.org/api/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:game,code:code,from:'宝宝'})}).catch(()=>{});
+  }catch(err){}
+  scrollToBottom(true);
+}
+$('gameSheet').addEventListener('click',(e)=>{
+  const it=e.target.closest('.gs-item'); if(!it) return;
+  closeSheets();
+  sendInviteCard(it.dataset.game, inviteCode());
 });
 /* v36.77 宫格翻页圆点 */
 const ppTrack=$('ppTrack'), ppDots=$('ppDots');
@@ -2775,9 +2904,10 @@ function renderHomeCards(){
 }
 window.renderHomeCards=renderHomeCards;
 window.renderHome=renderHome;
-/* ── v38.1 视图同步（治主页分裂）：旧实现 homeShown/exploreShown 守卫短路，
-   标志位与 DOM 一旦脱同步，再点主页/探索就什么都不做 → 聊天流与主页同屏（上半聊天下半主页）、
-   布局塌陷露壁纸。改为每次调用无条件全量同步 DOM（toggle + 考虑另一视图状态），幂等自愈。 ── */
+/* ── v38.1 视图同步（治主页分裂）：旧实现 homeShown/exploreShown 守卫短路，标志位与 DOM
+   一旦脱同步，再点主页/探索就什么都不做 → 聊天流与主页同屏（上半聊天下半主页）、布局塌陷露壁纸。
+   改为每次调用无条件全量同步 DOM（toggle + 考虑另一视图状态），幂等自愈；
+   v37.82 加号面板 hidden 摘挂行为保持：flat 视图时藏，回聊天时摘。 ── */
 let homeShown=false;
 function showHome(on){
   const sec=document.getElementById('viewHome');
@@ -2792,26 +2922,26 @@ function showHome(on){
   sec.classList.toggle('hidden',!on);
   if(stream)stream.classList.toggle('hidden',!!(on||exploreShown));
   if(crow)crow.classList.toggle('hidden',!!(on||exploreShown));
-  if(on){
-    if(pp&&!pp.classList.contains('hidden'))pp.classList.add('hidden');
-    if(splash&&!splash.classList.contains('hidden'))splash.classList.add('hidden');
-  }
+  if(pp)pp.classList.toggle('hidden',!!on);
+  if(on&&splash&&!splash.classList.contains('hidden'))splash.classList.add('hidden');
 }
-/* ── v38 探索页（游戏房列表）：与主页同层 flat 视图，毛玻璃卡露背景 ── */
+/* ── v38 探索页（游戏房列表）：与主页同层 flat 视图，横条毛玻璃卡露背景 ── */
 let exploreShown=false;
 function showExplore(on){
   const sec=document.getElementById('viewExplore');
   if(!sec)return;
   const vh=document.getElementById('viewHome');
+  if(vh&&vh.classList.contains('hm-light'))sec.classList.add('hm-light');else sec.classList.remove('hm-light');
   const stream=document.getElementById('stream');
   const comp=document.querySelector('.composer');
   const crow=comp?comp.querySelector('.composer-row'):null;
   const splash=document.getElementById('splash');
-  if(vh&&vh.classList.contains('hm-light'))sec.classList.add('hm-light');else sec.classList.remove('hm-light');
+  const pp=document.getElementById('plusPanel');
   exploreShown=!!on;
   sec.classList.toggle('hidden',!on);
   if(stream)stream.classList.toggle('hidden',!!(on||homeShown));
   if(crow)crow.classList.toggle('hidden',!!(on||homeShown));
+  if(pp)pp.classList.toggle('hidden',!!on);
   if(on&&splash&&!splash.classList.contains('hidden'))splash.classList.add('hidden');
 }
 window.showExplore=showExplore;
@@ -2822,6 +2952,38 @@ function syncDock(v){
 }
 /* v34 newConv / openConv 会调用：把界面切回聊天并同步 Dock 高亮（切回聊天必须脱离 flat，否则输入框被摘出渲染层） */
 window.syncChatView=function(){ setDockFlat(false); syncDock('chat'); showHome(false); showExplore(false); };   /* v38.1 补 showExplore(false)：newConv/openConv 可在探索页开着时触发，漏藏会分裂 */
+/* v38.2 大富翁=探索页子页：点击在探索页上盖全屏游戏层（iframe），退出掀掉即"返回大页"，URL 不变无跳转 */
+const gameFrame=document.createElement('div');
+gameFrame.id='gameFrame'; gameFrame.className='hidden';
+gameFrame.innerHTML='<iframe id="gameFrameInner" title="大富翁" src="about:blank"></iframe>';
+document.body.appendChild(gameFrame);
+const gameFrameInner=gameFrame.querySelector('#gameFrameInner');
+function openGameFrame(){ try{ gameFrameInner.src='spicy-monopoly-shell.html?v=14&code='+encodeURIComponent((function(){try{return localStorage.getItem('lastRoomCode')||''}catch(e){return ''}})()); }catch(e){} gameFrame.classList.remove('hidden'); }
+function closeGameFrame(){ gameFrame.classList.add('hidden'); setTimeout(()=>{ try{ gameFrameInner.src='about:blank'; }catch(e){} },400); }
+/* v39.3 组队层：探索页点大富翁先进组队页，开桌后拉起游戏层 */
+const teamFrame=document.createElement('div');
+teamFrame.id='teamFrame'; teamFrame.className='hidden';
+teamFrame.innerHTML='<iframe id="teamFrameInner" title="组队开桌" src="about:blank"></iframe>';
+document.body.appendChild(teamFrame);
+const teamFrameInner=teamFrame.querySelector('#teamFrameInner');
+function openTeamFrame(){ try{ teamFrameInner.src='monopoly-team.html?v=7'; }catch(e){} teamFrame.classList.remove('hidden'); }
+function closeTeamFrame(){ teamFrame.classList.add('hidden'); setTimeout(()=>{ try{ teamFrameInner.src='about:blank'; }catch(e){} },400); }
+(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',openTeamFrame); })();
+window.addEventListener('message',e=>{
+  const d=e&&e.data; if(!d||!d.type)return;
+  if(d.type==='smExit')closeGameFrame();
+  /* v39.3 组队页 → 星夜小筑 消息桥 */
+  else if(d.type==='cn_team_back')closeTeamFrame();
+  else if(d.type==='cn_team_chat_invite'){
+    closeTeamFrame(); syncChatView();
+    try{ if(d.code) localStorage.setItem('lastRoomCode', String(d.code).toUpperCase()); }catch(err){}
+    setTimeout(()=>sendInviteCard('monopoly', String(d.code||'').toUpperCase()||inviteCode()), 200);
+  }
+  else if(d.type==='cn_team_start'){
+    try{ if(d.code) localStorage.setItem('lastRoomCode', String(d.code).toUpperCase()); }catch(err){}
+    closeTeamFrame(); openGameFrame();
+  }
+});
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
 /* ── v36.46 展开=纯垂直沉落：任何 rotateY 在下方灭点的透视里右缘都会从深处向上浮出（上升感根源），
@@ -2877,8 +3039,6 @@ if(dock){
     else{ syncDock(v); toast('「'+(names[v]||v)+'」还在装修，先占个位',2200); setDock(true); setDockFlat(true); }
   }));
 }
-/* v38 探索卡：大富翁 → 游戏壳 */
-(()=>{ const ec=document.getElementById('exCardMonopoly'); if(ec)ec.addEventListener('click',()=>{ location.href='spicy-monopoly-shell.html?v=3'; }); })();
 /* ───────── v36 水珠悬浮球：iOS18 液态玻璃 Dock ───────── */
 if(dock){
   const ball=document.getElementById('dockBall');
