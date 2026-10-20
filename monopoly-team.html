@@ -227,15 +227,52 @@ body{
       <button class="btn ghost" id="roomExit">退房</button>
       <button class="btn" id="readyBtn" disabled>准备</button>
     </div>
-    <div class="sys-line" id="sysLine">— 演示模式 · 入座/准备未接接口 —</div>
+    <div class="sys-line" id="sysLine">— 接口已接 · 等待开局 —</div>
   </div>
 </div>
 
 <script>
-/* ═══ 对接点（等接口约定后替换）═══
-   API.createRoom()  → 返回房间码
-   API.joinRoom(code)→ 入座
-   API.ready() / API.onStart —— 轮询或推送对端状态   */
+/* ═══ 对接层 v8：spicy-dealer 游戏房后端（已接）═══
+   建房=POST /api/invite · 入座=POST .../join · 房态=GET 轮询 · 开桌=cn_team_start */
+const DEALER='https://game.eira0716.dpdns.org';
+let myRoom=null, pollTimer=null, lastChatId=0;
+async function dFetch(path,opt){
+  const r=await fetch(DEALER+path,opt);
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(j.message||('http_'+r.status)),{code:j.error});
+  return j;
+}
+function stopPoll(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+function startPoll(code){
+  stopPoll();
+  const tick=async()=>{
+    try{ const room=await dFetch('/api/game/room/'+encodeURIComponent(code)+'?after_chat_id='+lastChatId); renderRoom(room); }
+    catch(e){ $('sysLine').textContent='信号有点抖，重试中…'; }
+  };
+  tick(); pollTimer=setInterval(tick,2000);
+}
+function renderRoom(room){
+  const names=(room.members||[]).map(m=>m.name);
+  const meName=names.includes('宝宝')?'宝宝':(names[0]||'宝宝');
+  const taName=names.filter(n=>n!==meName)[0];
+  if(taName){
+    $('seatTa').classList.remove('empty');
+    $('seatTa').querySelector('.pawn').style.background='var(--p1)';
+    $('seatTa').querySelector('.pawn').style.borderStyle='solid';
+    $('seatTa').querySelector('.name').textContent=taName;
+    $('seatTa').querySelector('.st').textContent='已入座';
+    $('waitHint').style.display='none';
+  }
+  if(room.status==='playing'){ $('sysLine').textContent='对局已开始'; teamPost({type:'cn_team_start',code:room.room_id}); stopPoll(); return; }
+  if(room.status==='ready'&&names.length>=2){
+    $('readyBtn').disabled=false; $('readyBtn').textContent='开 桌';
+    $('sysLine').textContent='双方就绪 · 点开桌进入对局';
+  }else{
+    $('readyBtn').disabled=true; $('readyBtn').textContent='准备';
+    $('sysLine').textContent=taName?'等荷官确认开局…':'等待 TA 入座…';
+  }
+  (room.chat||[]).forEach(c=>{ lastChatId=Math.max(lastChatId,c.id); if(c.type==='game_event') $('sysLine').textContent=c.text; });
+}
 const $=id=>document.getElementById(id);
 
 /* ═══ 主题（同 shell · 偏好存本地）═══ */
@@ -272,8 +309,8 @@ function teamPost(msg){
   try{ if(window.parent!==window) parent.postMessage(msg,'*'); }catch(e){}
 }
 
-/* ═══ 创建房间（演示：本地生成码）═══ */
-let myRole='host';                     /* host=房主(蓝) guest=受邀(粉) */
+/* ═══ 创建房间（真接口：邀请即建房）═══ */
+let myRole='host';
 function makeCode(){
   const pool='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s='';
   for(let i=0;i<4;i++) s+=pool[Math.floor(Math.random()*pool.length)];
@@ -282,11 +319,18 @@ function makeCode(){
 function renderCode(code){
   $('codeRow').innerHTML = code.split('').map(c=>`<div class="code-chip">${c}</div>`).join('');
 }
-function createRoom(){
-  myRole='host';
-  renderCode(makeCode());
-  resetSeats();
-  show('room');
+async function createRoom(tries){
+  tries=tries||0;
+  const code=makeCode();
+  try{
+    await dFetch('/api/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'monopoly',code,from:'宝宝'})});
+  }catch(e){
+    if(e.code==='code_taken'&&tries<3) return createRoom(tries+1);
+    $('sysLine').textContent='接口打盹了，再点一次试试';
+    return;
+  }
+  myRole='host'; myRoom=code;
+  renderCode(code); resetSeats(); show('room'); startPoll(code);
 }
 function resetSeats(){
   $('seatTa').classList.add('empty');
@@ -304,46 +348,12 @@ function resetSeats(){
   $('readyBtn').textContent='准备';
   taReady=false; meReady=false;
 }
-/* ═══ TA 入座 / 准备（演示流：点空位触发，对接后由推送驱动）═══ */
-let taReady=false, meReady=false;
-$('seatTa').addEventListener('click',()=>{
-  if(!$('seatTa').classList.contains('empty'))return;
-  $('seatTa').classList.remove('empty');
-  $('seatTa').querySelector('.pawn').style.background='var(--p1)';
-  $('seatTa').querySelector('.pawn').style.borderStyle='solid';
-  $('seatTa').querySelector('.name').textContent='TA';
-  $('seatTa').querySelector('.name').style.color='';
-  $('seatTa').querySelector('.st').textContent='已入座';
-  $('seatTa').querySelector('.rk').textContent='未准备'; $('seatTa').querySelector('.rk').className='rk rk-wait';
-  $('waitHint').style.display='none';
-  $('readyBtn').disabled=false;
-  /* 演示：1.2s 后 TA 自动准备 */
-  setTimeout(()=>{
-    taReady=true;
-    $('seatTa').classList.add('ready');
-    $('seatTa').querySelector('.rk').textContent='已准备'; $('seatTa').querySelector('.rk').className='rk rk-ok';
-    $('seatTa').querySelector('.st').textContent='已准备';
-    checkStart();
-  },1200);
-});
+/* ═══ TA 入座：由轮询驱动（renderRoom），不再点空位演示 ═══ */
 $('readyBtn').addEventListener('click',()=>{
   if($('readyBtn').disabled)return;
-  /* 双方就绪后再点 = 开桌：通知父页拉起游戏层 */
-  if(meReady&&taReady&&$('readyBtn').textContent.indexOf('开')>-1){ teamPost({type:'cn_team_start'}); return; }
-  meReady=true;
-  $('seatMe').classList.add('ready');
-  $('seatMe').querySelector('.st').textContent = myRole==='host' ? '房主 · 已准备' : '受邀 · 已准备';
-  $('seatMe').querySelector('.rk').textContent='已准备'; $('seatMe').querySelector('.rk').className='rk rk-ok';
-  $('readyBtn').disabled=true;
-  checkStart();
+  /* 双方就绪后点 = 开桌：通知父页拉起游戏层（真实开局由荷官侧完成） */
+  if($('readyBtn').textContent.indexOf('开')>-1){ teamPost({type:'cn_team_start',code:myRoom}); return; }
 });
-function checkStart(){
-  if(meReady&&taReady){
-    $('readyBtn').disabled=false;
-    $('readyBtn').textContent='开 桌';
-    $('sysLine').textContent='双方就绪 · 开桌后由接口拉起对局（演示）';
-  }
-}
 /* ═══ 聊天邀请：请父页在聊天流里发邀请卡片（用组队页同一个房码）═══ */
 $('chatInviteBtn').addEventListener('click',()=>{
   const code=[...$('codeRow').children].map(x=>x.textContent).join('');
@@ -352,6 +362,7 @@ $('chatInviteBtn').addEventListener('click',()=>{
   setTimeout(()=>$('chatInviteBtn').textContent='聊天邀请',1400);
 });
 function resetRoom(){
+  stopPoll(); myRoom=null; lastChatId=0;
   $('codeRow').innerHTML='';
   cinputs.forEach(x=>x.value='');
   $('joinGo').disabled=true;
@@ -367,23 +378,20 @@ cinputs.forEach((inp,i)=>{
   });
   inp.addEventListener('keydown',e=>{ if(e.key==='Backspace'&&!inp.value&&i>0)cinputs[i-1].focus(); });
 });
-$('joinGo').addEventListener('click',()=>{
-  myRole='guest';
-  renderCode(cinputs.map(x=>x.value).join(''));
-  resetSeats();
-  /* 演示：房主已在座且马上准备 */
-  setTimeout(()=>{
-    taReady=true;
-    $('seatTa').classList.remove('empty');
-    $('seatTa').querySelector('.pawn').style.background='var(--p2)';
-    $('seatTa').querySelector('.pawn').style.borderStyle='solid';
-    $('seatTa').querySelector('.name').textContent='TA';
-    $('seatTa').querySelector('.st').textContent='已准备';
-    $('seatTa').querySelector('.rk').textContent='已准备'; $('seatTa').querySelector('.rk').className='rk rk-ok';
-    $('seatTa').classList.add('ready');
-    $('waitHint').style.display='none';
-  },700);
-  show('room');
+$('joinGo').addEventListener('click',async()=>{
+  const code=cinputs.map(x=>x.value).join('');
+  if(!/^[A-Z0-9]{4}$/.test(code)) return;
+  try{
+    await dFetch('/api/game/room/'+encodeURIComponent(code));
+    await dFetch('/api/game/room/'+encodeURIComponent(code)+'/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'宝宝'})});
+  }catch(e){
+    const old=$('joinGo').textContent;
+    $('joinGo').textContent = e.code==='room_not_found' ? '房码无效' : '入座失败';
+    setTimeout(()=>$('joinGo').textContent=old,1500);
+    return;
+  }
+  myRole='guest'; myRoom=code;
+  renderCode(code); resetSeats(); show('room'); startPoll(code);
 });
 
 /* ═══ 复制房码 ═══ */
