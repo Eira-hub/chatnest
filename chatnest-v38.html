@@ -528,6 +528,11 @@ body.has-wall .stars{opacity:.75}
 #viewExplore .ex-title{font-size:26px;font-weight:800;letter-spacing:.5px;color:#16161c;text-shadow:none}
 #viewExplore .ex-sub{margin-top:4px;font-size:12.5px;color:#2a2a32;opacity:.8}
 #viewExplore .ex-list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+/* ═══ v38.8 大富翁子页：全屏游戏层（iframe 盖在探索页上，退出即掀掉露出大页）═══ */
+#gameFrame{position:fixed;inset:0;z-index:80;background:var(--bg0);animation:gfin .3s var(--ease)}
+#gameFrame.hidden{display:none}
+#gameFrame iframe{width:100%;height:100%;border:none;display:block}
+@keyframes gfin{from{opacity:0}to{opacity:1}}
 #viewExplore .ex-row{display:flex;align-items:stretch;overflow:hidden;text-align:left;padding:0;border-radius:var(--r-panel);border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.66);box-shadow:0 6px 22px rgba(0,0,0,.14);cursor:pointer;color:inherit;font:inherit;transition:transform .18s ease,box-shadow .18s ease}
 #viewExplore.hm-light .ex-row{background:rgba(255,255,255,.72);border-color:rgba(0,0,0,.08);box-shadow:0 6px 22px rgba(40,60,120,.12)}
 #viewExplore .ex-row:active{transform:scale(.985)}
@@ -863,7 +868,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v38.7</span>
+    <span class="fs-ver">v38.8</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -2844,26 +2849,16 @@ function syncDock(v){
 }
 /* v34 newConv / openConv 会调用：把界面切回聊天并同步 Dock 高亮（切回聊天必须脱离 flat，否则输入框被摘出渲染层） */
 window.syncChatView=function(){ setDockFlat(false); syncDock('chat'); showHome(false); showExplore(false); };   /* v38.1 补 showExplore(false)：newConv/openConv 可在探索页开着时触发，漏藏会分裂 */
-/* v38.2 探索卡 → 大富翁游戏页：直接跳转，不弹装修中提示（样式零改动，只接跳转） */
-(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',()=>{ location.href='spicy-monopoly-shell.html?v=4'; }); })();
-/* v38.7 从大富翁退出回跳（一次性）：view=explore + 时间戳门闩；判定瞬间即抹 URL 参数，刷新/重开恢复默认聊天页首页 */
-(function(){
-  const q=new URLSearchParams(location.search);
-  if(q.get('view')!=='explore')return;
-  const hopT=q.get('t')||'';
-  const wipe=()=>{ try{ const u=new URL(location.href); u.searchParams.delete('view'); u.searchParams.delete('t'); history.replaceState(null,'',u.pathname+u.search); }catch(e){} };
-  let armed=true; const _scv=window.syncChatView;   /* 吞掉启动流程第一次「回聊天」，防 boot 把探索页踢掉 */
-  window.syncChatView=function(){ if(armed){ armed=false; return; } if(_scv)_scv(); };
-  if(hopT && sessionStorage.getItem('exploreHopT')===hopT){ wipe(); return; }   /* 同一跳的刷新：不再回跳 */
-  try{ sessionStorage.setItem('exploreHopT',hopT); }catch(e){}
-  wipe();
-  const go=()=>{ try{ syncDock('explore'); showHome(false); showExplore(true); setDock(true); setDockFlat(true); }catch(e){} };
-  const t=setInterval(()=>{
-    const g=document.getElementById('gate');
-    if(g&&g.classList.contains('hidden')){ clearInterval(t); go(); }
-  },250);
-  setTimeout(()=>clearInterval(t),30000);
-})();
+/* v38.2 大富翁=探索页子页：点击在探索页上盖全屏游戏层（iframe），退出掀掉即"返回大页"，URL 不变无跳转 */
+const gameFrame=document.createElement('div');
+gameFrame.id='gameFrame'; gameFrame.className='hidden';
+gameFrame.innerHTML='<iframe id="gameFrameInner" title="大富翁" src="about:blank"></iframe>';
+document.body.appendChild(gameFrame);
+const gameFrameInner=gameFrame.querySelector('#gameFrameInner');
+function openGameFrame(){ try{ gameFrameInner.src='spicy-monopoly-shell.html?v=5'; }catch(e){} gameFrame.classList.remove('hidden'); }
+function closeGameFrame(){ gameFrame.classList.add('hidden'); setTimeout(()=>{ try{ gameFrameInner.src='about:blank'; }catch(e){} },400); }
+(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',openGameFrame); })();
+window.addEventListener('message',e=>{ if(e&&e.data&&e.data.type==='smExit')closeGameFrame(); });
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
 /* ── v36.46 展开=纯垂直沉落：任何 rotateY 在下方灭点的透视里右缘都会从深处向上浮出（上升感根源），

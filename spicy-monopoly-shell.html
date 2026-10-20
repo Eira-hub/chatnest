@@ -687,7 +687,11 @@ addMsg('me','（玩家消息占位）',state.players[0].name);
   document.getElementById('exitBtn').addEventListener('click',()=>{ mask.classList.add('show'); });
   mask.addEventListener('click',e=>{ if(e.target===mask) mask.classList.remove('show'); });
   document.getElementById('exitNo').addEventListener('click',()=>{ mask.classList.remove('show'); });
-  document.getElementById('exitYes').addEventListener('click',()=>{ location.href='chatnest-v38.html?view=explore&t='+Date.now(); });
+  /* v38.8 在星夜小筑 iframe 内时：通知父页掀掉游戏层（返回大页）；独立打开时兜底跳回 */
+  document.getElementById('exitYes').addEventListener('click',()=>{
+    try{ if(window.parent&&window.parent!==window){ window.parent.postMessage({type:'smExit'},'*'); return; } }catch(e){}
+    location.href='chatnest-v38.html';
+  });
 })();
 </script>
 </body>
