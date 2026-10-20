@@ -353,6 +353,35 @@ svg{display:block}
 .sheet.on{transform:none}
 .sheet .grip{width:38px;height:4px;border-radius:4px;background:rgba(255,255,255,.16);margin:4px auto 14px}
 .sheet h3{font-family:var(--serif);font-size:15px;font-weight:500;letter-spacing:.1em;color:var(--text2);margin-bottom:12px;text-align:center}
+/* ═══ v38.9 一起玩：游戏列表弹层 + 房间邀请卡片（长方形 · 大圆角）═══ */
+.gs-list{display:flex;flex-direction:column;gap:10px}
+.gs-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  border:1px solid var(--line);background:var(--panel2);border-radius:18px;padding:12px 14px;
+  cursor:pointer;font:inherit;color:inherit;transition:transform .15s var(--ease)}
+.gs-item:active{transform:scale(.98)}
+.gs-ico{width:42px;height:42px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#faf6ea,#efe8d6)}
+.gs-ico svg{width:22px;height:22px}
+.gs-name{font-size:14.5px;font-weight:700;color:var(--text);display:block}
+.gs-desc{font-size:11.5px;color:var(--text3);margin-top:2px}
+.gs-arrow{margin-left:auto;font-size:20px;color:var(--text3);opacity:.5}
+.gs-more{border:1px dashed var(--line);border-radius:18px;padding:14px;text-align:center;
+  font-size:12px;color:var(--text3);letter-spacing:.14em}
+.inv-card{width:min(280px,70vw);border-radius:24px;overflow:hidden;
+  background:var(--panel-solid);border:1px solid var(--line);box-shadow:var(--shadow)}
+.inv-head{display:flex;align-items:center;gap:11px;padding:13px 15px 10px}
+.inv-ico{width:38px;height:38px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#faf6ea,#efe8d6)}
+.inv-ico svg{width:20px;height:20px}
+.inv-game{font-size:15px;font-weight:800;color:var(--text)}
+.inv-sub{font-size:9.5px;letter-spacing:.22em;color:var(--text3);margin-top:1px}
+.inv-codes{display:flex;gap:7px;justify-content:center;padding:4px 15px 12px}
+.inv-codes span{width:38px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  font-size:21px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--moon);
+  background:var(--panel2);border:1px solid var(--line)}
+.inv-st{border-top:1px solid var(--line);padding:9px 15px 11px;text-align:center;
+  font-size:11.5px;color:var(--text3);animation:invPulse 1.6s infinite}
+@keyframes invPulse{0%,100%{opacity:.4}50%{opacity:1}}
 /* ═══ v36.55 设置页=全屏独立页面：点开即整页设置，无过渡动画（v36.51 悬浮面板方案废弃）═══ */
 #settingsSheet{top:0;bottom:0;left:0;right:0;width:auto;height:auto;max-height:none;
   border-radius:0;border:none;box-shadow:none;
@@ -828,7 +857,6 @@ body.has-wall .stars{opacity:.75}
           </div>
         </div>
         <div class="pp-dots" id="ppDots"><span class="on"></span><span></span></div>
-        <div class="pp-ver">ChatNest v37.82</div><!-- 版本戳：发布时同步改这里和设置页"关于"，用于肉眼验证线上版本 -->
       </div>
   </div><!-- /composer -->
 
@@ -861,6 +889,20 @@ body.has-wall .stars{opacity:.75}
   <div id="modelList"></div>
 </div>
 
+<!-- v38.9 一起玩：游戏列表 -->
+<div class="sheet" id="gameSheet">
+  <div class="grip"></div>
+  <h3>一起玩</h3>
+  <div class="gs-list">
+    <button class="gs-item" data-game="monopoly" type="button">
+      <span class="gs-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#6f6352" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.35" fill="#6f6352" stroke="none"/><circle cx="15.4" cy="8.6" r="1.35" fill="#6f6352" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="#6f6352" stroke="none"/><circle cx="8.6" cy="15.4" r="1.35" fill="#6f6352" stroke="none"/><circle cx="15.4" cy="15.4" r="1.35" fill="#6f6352" stroke="none"/></svg></span>
+      <span><span class="gs-name">大富翁</span><div class="gs-desc">双人桌 · 成人版，输的人等着受罚</div></span>
+      <span class="gs-arrow">›</span>
+    </button>
+    <div class="gs-more">更多玩法即将登场</div>
+  </div>
+</div>
+
 <!-- 设置 -->
 <div class="sheet" id="settingsSheet">
   <div class="fs-head">
@@ -868,7 +910,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v38.8</span>
+    <span class="fs-ver">v38.9</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1540,6 +1582,13 @@ function bubbleEl(m){
   /* v36.68 时间：优先后端字段（多名字兼容），后端没存就用本地发送时刻缓存，都没有才不显示 */
   const mt = fmtTimeSmart(m.created_at||m.time||m.timestamp||'') || lookupMsgTime(m);
   if(isUser){
+    /* v38.9 邀请卡片历史渲染：标记消息还原成卡片 */
+    const imv=(m.text||'').match(INVITE_RE);
+    if(imv){
+      const el=inviteCardNode(imv[1], imv[2], mt, m.id||'');
+      el.dataset.raw=(m.text||'');
+      return el;
+    }
     const el=document.createElement('div');
     el.className='msg user';
     el.dataset.mid=m.id||'';
@@ -1758,6 +1807,15 @@ $('btnSend').addEventListener('click', ()=>{
 async function send(){
   const text = $('input').value.trim();
   if(!text) return;
+  /* v38.9 邀请卡片标记兜底：只入列渲染卡片，不触发 AI 请求 */
+  const imv = text.match(INVITE_RE);
+  if(imv){
+    $('splash').classList.add('hidden');
+    $('input').value=''; autoGrow();
+    $('streamInner').appendChild(inviteCardNode(imv[1], imv[2], fmtClock()));
+    scrollToBottom(true);
+    return;
+  }
   const sendAt = Date.now();   /* v36.68 记录发送时刻，历史时间缓存用 */
   $('splash').classList.add('hidden');
   const inner = $('streamInner');
@@ -1950,6 +2008,7 @@ function openSheet(id){ $(id).classList.add('on'); $('scrim').classList.add('on'
 function closeSheets(){
   $('modelSheet').classList.remove('on'); $('settingsSheet').classList.remove('on'); $('ctxSheet').classList.remove('on');
   $('mcpSheet').classList.remove('on'); $('mcpEditSheet').classList.remove('on');
+  $('gameSheet').classList.remove('on');   /* v38.9 一起玩列表也归口统一关闭 */
   $('scrim').classList.remove('on');
 }
 
@@ -2079,12 +2138,50 @@ $('btnPlus').addEventListener('click', (e)=>{
 plusPanel.addEventListener('click', (e)=>{
   const b=e.target.closest('button');
   if(!b) return;
-  setPlus(false);
   const n=b.dataset.name;
-  const hint=(n==='一起玩') ? '游戏房装修中，等接口接上就能开桌啦' /* v38b */
-            : (n==='语音通话'||n==='视频通话') ? '「'+n+'」等小Y把通话页做好就有啦'
+  /* v38.9 一起玩：打开游戏列表弹层（不再 toast 占位） */
+  if(n==='一起玩'){ setPlus(false); setTimeout(()=>openSheet('gameSheet'),60); return; }
+  setPlus(false);
+  const hint=(n==='语音通话'||n==='视频通话') ? '「'+n+'」等小Y把通话页做好就有啦'
             : '「'+n+'」还没修好，哥哥后面再来';
   toast(hint, 2000);
+});
+/* ═══ v38.9 一起玩：选游戏 → 生成房码 → 聊天流发邀请卡片 ═══
+   卡片消息标记 [[invite:游戏:房码]]（本地入列；接口接上后换 POST type=game_invite 落库） */
+const INVITE_RE=/^\[\[invite:(\w+):([A-Z0-9]{4})\]\]$/;
+const INVITE_META={
+  monopoly:{ name:'大富翁', sub:'SPICY MONOPOLY',
+    dice:'<svg viewBox="0 0 24 24" fill="none" stroke="#6f6352" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.6" cy="8.6" r="1.35" fill="#6f6352" stroke="none"/><circle cx="15.4" cy="8.6" r="1.35" fill="#6f6352" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="#6f6352" stroke="none"/><circle cx="8.6" cy="15.4" r="1.35" fill="#6f6352" stroke="none"/><circle cx="15.4" cy="15.4" r="1.35" fill="#6f6352" stroke="none"/></svg>' }
+};
+function inviteCode(){
+  const pool='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s='';
+  for(let i=0;i<4;i++) s+=pool[Math.floor(Math.random()*pool.length)];
+  return s;
+}
+function inviteCardNode(game, code, mtime, mid){
+  const meta=INVITE_META[game]||INVITE_META.monopoly;
+  const el=document.createElement('div');
+  el.className='msg user';
+  el.dataset.raw='[[invite:'+game+':'+code+']]';
+  if(mid) el.dataset.mid=mid;
+  const avMeOk = state.avatars && state.avatars.me && state.avatars.me.url;
+  el.innerHTML = '<div class="avatar'+(avMeOk?'':' me-def')+'">'+avatarSvg('me')+'</div><div class="col">'
+    +'<div class="inv-card"><div class="inv-head"><span class="inv-ico">'+meta.dice+'</span>'
+    +'<span><div class="inv-game">'+meta.name+'</div><div class="inv-sub">'+meta.sub+'</div></span></div>'
+    +'<div class="inv-codes">'+code.split('').map(c=>'<span>'+esc(c)+'</span>').join('')+'</div>'
+    +'<div class="inv-st">等待 TA 入座…</div></div>'
+    +(mtime?'<div class="mtime">'+mtime+'</div>':'')+'</div>';
+  return el;
+}
+$('gameSheet').addEventListener('click',(e)=>{
+  const it=e.target.closest('.gs-item'); if(!it) return;
+  closeSheets();
+  const game=it.dataset.game, code=inviteCode();
+  const sp=$('splash'); if(sp) sp.classList.add('hidden');
+  $('streamInner').appendChild(inviteCardNode(game, code, fmtClock()));
+  try{ stashLastMsg(state.convId||'', 'user', '[[invite:'+game+':'+code+']]'); }catch(err){}
+  scrollToBottom(true);
+  /* 对接点：接口接上后改为 POST /chat {type:'game_invite'} 落库，TA 侧收到同样卡片 */
 });
 /* v36.77 宫格翻页圆点 */
 const ppTrack=$('ppTrack'), ppDots=$('ppDots');

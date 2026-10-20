@@ -209,7 +209,7 @@ body{
 
     <div class="seats">
       <div class="seat" id="seatMe">
-        <span class="pawn" style="background:var(--p1)"></span>
+        <span class="pawn" style="background:var(--p2)"></span>
         <span class="who"><span class="name">我</span><div class="st" id="seatMeSt">房主 · 未准备</div></span>
         <span class="rk rk-wait" id="seatMeRk">未准备</span>
       </div>
@@ -300,7 +300,7 @@ let taReady=false, meReady=false;
 $('seatTa').addEventListener('click',()=>{
   if(!$('seatTa').classList.contains('empty'))return;
   $('seatTa').classList.remove('empty');
-  $('seatTa').querySelector('.pawn').style.background='var(--p2)';
+  $('seatTa').querySelector('.pawn').style.background='var(--p1)';
   $('seatTa').querySelector('.pawn').style.borderStyle='solid';
   $('seatTa').querySelector('.name').textContent='TA';
   $('seatTa').querySelector('.name').style.color='';
@@ -357,7 +357,7 @@ $('joinGo').addEventListener('click',()=>{
   setTimeout(()=>{
     taReady=true;
     $('seatTa').classList.remove('empty');
-    $('seatTa').querySelector('.pawn').style.background='var(--p1)';
+    $('seatTa').querySelector('.pawn').style.background='var(--p2)';
     $('seatTa').querySelector('.pawn').style.borderStyle='solid';
     $('seatTa').querySelector('.name').textContent='TA';
     $('seatTa').querySelector('.st').textContent='已准备';
