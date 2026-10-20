@@ -863,7 +863,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v38.6</span>
+    <span class="fs-ver">v38.7</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -2845,26 +2845,25 @@ function syncDock(v){
 /* v34 newConv / openConv 会调用：把界面切回聊天并同步 Dock 高亮（切回聊天必须脱离 flat，否则输入框被摘出渲染层） */
 window.syncChatView=function(){ setDockFlat(false); syncDock('chat'); showHome(false); showExplore(false); };   /* v38.1 补 showExplore(false)：newConv/openConv 可在探索页开着时触发，漏藏会分裂 */
 /* v38.2 探索卡 → 大富翁游戏页：直接跳转，不弹装修中提示（样式零改动，只接跳转） */
-(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',()=>{ location.href='spicy-monopoly-shell.html?v=3'; }); })();
-/* v38.5 从大富翁退出回跳：URL 带 view=explore 时，门禁一过关立刻切探索页（独立于 boot 启动流程，接口失败也生效） */
-if(new URLSearchParams(location.search).get('view')==='explore'){
-  (function(){
-    /* 吞掉启动流程的第一次「回聊天」调用，防 boot 的 newConv/openConv 把探索页踢掉 */
-    let armed=true; const _scv=window.syncChatView;
-    window.syncChatView=function(){ if(armed){ armed=false; return; } if(_scv)_scv(); };
-    const go=()=>{ try{
-      syncDock('explore'); showHome(false); showExplore(true); setDock(true); setDockFlat(true);
-      /* 一次性回跳：落定后立刻抹掉 view 参数，刷新/重开恢复默认聊天页首页 */
-      const u=new URL(location.href); u.searchParams.delete('view');
-      try{ history.replaceState(null,'',u.pathname+u.search); }catch(e){}
-    }catch(e){} };
-    const t=setInterval(()=>{
-      const g=document.getElementById('gate');
-      if(g&&g.classList.contains('hidden')){ clearInterval(t); go(); }
-    },250);
-    setTimeout(()=>clearInterval(t),30000);
-  })();
-}
+(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',()=>{ location.href='spicy-monopoly-shell.html?v=4'; }); })();
+/* v38.7 从大富翁退出回跳（一次性）：view=explore + 时间戳门闩；判定瞬间即抹 URL 参数，刷新/重开恢复默认聊天页首页 */
+(function(){
+  const q=new URLSearchParams(location.search);
+  if(q.get('view')!=='explore')return;
+  const hopT=q.get('t')||'';
+  const wipe=()=>{ try{ const u=new URL(location.href); u.searchParams.delete('view'); u.searchParams.delete('t'); history.replaceState(null,'',u.pathname+u.search); }catch(e){} };
+  let armed=true; const _scv=window.syncChatView;   /* 吞掉启动流程第一次「回聊天」，防 boot 把探索页踢掉 */
+  window.syncChatView=function(){ if(armed){ armed=false; return; } if(_scv)_scv(); };
+  if(hopT && sessionStorage.getItem('exploreHopT')===hopT){ wipe(); return; }   /* 同一跳的刷新：不再回跳 */
+  try{ sessionStorage.setItem('exploreHopT',hopT); }catch(e){}
+  wipe();
+  const go=()=>{ try{ syncDock('explore'); showHome(false); showExplore(true); setDock(true); setDockFlat(true); }catch(e){} };
+  const t=setInterval(()=>{
+    const g=document.getElementById('gate');
+    if(g&&g.classList.contains('hidden')){ clearInterval(t); go(); }
+  },250);
+  setTimeout(()=>clearInterval(t),30000);
+})();
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
 /* ── v36.46 展开=纯垂直沉落：任何 rotateY 在下方灭点的透视里右缘都会从深处向上浮出（上升感根源），
