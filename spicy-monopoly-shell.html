@@ -248,6 +248,29 @@ body{
 }
 .drama-next{font-size:12px;color:var(--text3);letter-spacing:2px;animation:pulse 1.4s infinite}
 @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+/* ── 退出确认：点返回键弹出，确认才回星夜小筑 ── */
+.exit-mask{
+  position:fixed;inset:0;z-index:50;display:none;
+  align-items:center;justify-content:center;
+  background:rgba(12,16,34,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+.exit-mask.show{display:flex;animation:dramaIn .25s var(--ease)}
+.exit-card{
+  width:min(78vw,300px);border-radius:20px;
+  background:var(--panel-solid);border:1px solid var(--line);
+  box-shadow:var(--shadow);padding:22px 20px 16px;text-align:center;
+}
+.exit-title{font-size:15px;font-weight:700;color:var(--text)}
+.exit-sub{margin-top:6px;font-size:12px;color:var(--text3)}
+.exit-btns{margin-top:16px;display:flex;gap:10px}
+.exit-btns button{
+  flex:1;border:none;cursor:pointer;border-radius:99px;
+  padding:10px 0;font-size:13.5px;font-weight:700;
+  transition:transform .15s var(--ease);
+}
+.exit-btns button:active{transform:scale(.95)}
+.exit-no{background:var(--panel3);color:var(--text2);border:1px solid var(--line)}
+.exit-yes{background:linear-gradient(135deg,var(--danger),#a53f3f);color:#fff}
 /* 窄屏：棋盘缩放 + 顶栏紧凑化（防横向溢出） */
 @media (max-width:860px){
   .board{--sz:min(12vw,56px);gap:4px;padding:8px}
@@ -273,6 +296,7 @@ body{
 <div class="stars"></div>
 
 <header class="topbar">
+  <button class="theme-btn" id="exitBtn" title="返回">‹</button>
   <div class="brand"><b>SPICY</b> MONOPOLY</div>
   <div class="round-pill" id="roundPill">— / —</div>
   <button class="theme-btn" id="themeBtn" title="主题">☾</button>
@@ -297,6 +321,18 @@ body{
       <form class="say" id="dramaSayForm"><input id="dramaInput" placeholder="…" autocomplete="off"></form>
     </div>
     <button id="dramaEnd">✕</button>
+  </div>
+</div>
+
+<!-- 退出确认：第一次及每次点返回键都会先问 -->
+<div class="exit-mask" id="exitMask">
+  <div class="exit-card">
+    <div class="exit-title">是否要退出房间？</div>
+    <div class="exit-sub">退出后回到星夜小筑</div>
+    <div class="exit-btns">
+      <button class="exit-no" id="exitNo">留下</button>
+      <button class="exit-yes" id="exitYes">退出</button>
+    </div>
   </div>
 </div>
 
@@ -644,6 +680,15 @@ document.getElementById('typeForm').addEventListener('submit',e=>{ e.preventDefa
 addMsg('sys','— 演示模式 · 消息流未接入接口 —');
 addMsg('host','（荷官消息占位 · 接口下发后渲染）',state.players[1].name);
 addMsg('me','（玩家消息占位）',state.players[0].name);
+
+/* ═══ 返回键：先弹确认，确认后才回星夜小筑 ═══ */
+(function(){
+  const mask=document.getElementById('exitMask');
+  document.getElementById('exitBtn').addEventListener('click',()=>{ mask.classList.add('show'); });
+  mask.addEventListener('click',e=>{ if(e.target===mask) mask.classList.remove('show'); });
+  document.getElementById('exitNo').addEventListener('click',()=>{ mask.classList.remove('show'); });
+  document.getElementById('exitYes').addEventListener('click',()=>{ location.href='chatnest-v38.html'; });
+})();
 </script>
 </body>
 </html>

@@ -2845,7 +2845,7 @@ function syncDock(v){
 /* v34 newConv / openConv 会调用：把界面切回聊天并同步 Dock 高亮（切回聊天必须脱离 flat，否则输入框被摘出渲染层） */
 window.syncChatView=function(){ setDockFlat(false); syncDock('chat'); showHome(false); showExplore(false); };   /* v38.1 补 showExplore(false)：newConv/openConv 可在探索页开着时触发，漏藏会分裂 */
 /* v38.2 探索卡 → 大富翁游戏页：直接跳转，不弹装修中提示（样式零改动，只接跳转） */
-(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',()=>{ location.href='spicy-monopoly-shell.html'; }); })();
+(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',()=>{ location.href='spicy-monopoly-shell.html?v=2'; }); })();
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
 /* ── v36.46 展开=纯垂直沉落：任何 rotateY 在下方灭点的透视里右缘都会从深处向上浮出（上升感根源），
