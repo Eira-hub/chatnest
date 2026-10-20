@@ -2177,8 +2177,12 @@ function sendInviteCard(game, code){
   const sp=$('splash'); if(sp) sp.classList.add('hidden');
   $('streamInner').appendChild(inviteCardNode(game, code, fmtClock()));
   try{ stashLastMsg(state.convId||'', 'user', '[[invite:'+game+':'+code+']]'); }catch(err){}
+  try{ localStorage.setItem('lastRoomCode', code); }catch(err){}
+  /* 已接：POST /api/invite 邀请即建房，荷官侧经 /api/invites 感知入桌 */
+  try{
+    fetch('https://game.eira0716.dpdns.org/api/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:game,code:code,from:'宝宝'})}).catch(()=>{});
+  }catch(err){}
   scrollToBottom(true);
-  /* 对接点：接口接上后改为 POST /chat {type:'game_invite'} 落库，TA 侧收到同样卡片 */
 }
 $('gameSheet').addEventListener('click',(e)=>{
   const it=e.target.closest('.gs-item'); if(!it) return;
@@ -2954,7 +2958,7 @@ gameFrame.id='gameFrame'; gameFrame.className='hidden';
 gameFrame.innerHTML='<iframe id="gameFrameInner" title="大富翁" src="about:blank"></iframe>';
 document.body.appendChild(gameFrame);
 const gameFrameInner=gameFrame.querySelector('#gameFrameInner');
-function openGameFrame(){ try{ gameFrameInner.src='spicy-monopoly-shell.html?v=5'; }catch(e){} gameFrame.classList.remove('hidden'); }
+function openGameFrame(){ try{ gameFrameInner.src='spicy-monopoly-shell.html?v=14&code='+encodeURIComponent((function(){try{return localStorage.getItem('lastRoomCode')||''}catch(e){return ''}})()); }catch(e){} gameFrame.classList.remove('hidden'); }
 function closeGameFrame(){ gameFrame.classList.add('hidden'); setTimeout(()=>{ try{ gameFrameInner.src='about:blank'; }catch(e){} },400); }
 /* v39.3 组队层：探索页点大富翁先进组队页，开桌后拉起游戏层 */
 const teamFrame=document.createElement('div');
@@ -2972,9 +2976,13 @@ window.addEventListener('message',e=>{
   else if(d.type==='cn_team_back')closeTeamFrame();
   else if(d.type==='cn_team_chat_invite'){
     closeTeamFrame(); syncChatView();
+    try{ if(d.code) localStorage.setItem('lastRoomCode', String(d.code).toUpperCase()); }catch(err){}
     setTimeout(()=>sendInviteCard('monopoly', String(d.code||'').toUpperCase()||inviteCode()), 200);
   }
-  else if(d.type==='cn_team_start'){ closeTeamFrame(); openGameFrame(); }
+  else if(d.type==='cn_team_start'){
+    try{ if(d.code) localStorage.setItem('lastRoomCode', String(d.code).toUpperCase()); }catch(err){}
+    closeTeamFrame(); openGameFrame();
+  }
 });
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
