@@ -203,7 +203,10 @@ body{
     <div class="room-card">
       <div class="room-label">房间码</div>
       <div class="code-row" id="codeRow"></div>
-      <button class="copy-btn" id="copyBtn">复制给 TA</button>
+      <div style="display:flex;gap:9px">
+        <button class="copy-btn" id="chatInviteBtn">聊天邀请</button>
+        <button class="copy-btn" id="copyBtn">复制给 TA</button>
+      </div>
       <div class="wait-hint" id="waitHint">等待 TA 入座…</div>
     </div>
 
@@ -260,8 +263,14 @@ $('joinBack').addEventListener('click',()=>show('pick'));
 $('roomExit').addEventListener('click',()=>{ resetRoom(); show('pick'); });
 $('backBtn').addEventListener('click',()=>{
   if($('roomView').classList.contains('on')||$('joinView').classList.contains('on')) show('pick');
+  /* 嵌入星夜小筑时：通知父页收起组队层回探索页 */
+  else if(window.parent!==window) parent.postMessage({type:'cn_team_back'},'*');
   else if(history.length>1) history.back();
 });
+/* ═══ 嵌入态：向父页（星夜小筑）发消息 ═══ */
+function teamPost(msg){
+  try{ if(window.parent!==window) parent.postMessage(msg,'*'); }catch(e){}
+}
 
 /* ═══ 创建房间（演示：本地生成码）═══ */
 let myRole='host';                     /* host=房主(蓝) guest=受邀(粉) */
@@ -319,6 +328,8 @@ $('seatTa').addEventListener('click',()=>{
 });
 $('readyBtn').addEventListener('click',()=>{
   if($('readyBtn').disabled)return;
+  /* 双方就绪后再点 = 开桌：通知父页拉起游戏层 */
+  if(meReady&&taReady&&$('readyBtn').textContent.indexOf('开')>-1){ teamPost({type:'cn_team_start'}); return; }
   meReady=true;
   $('seatMe').classList.add('ready');
   $('seatMe').querySelector('.st').textContent = myRole==='host' ? '房主 · 已准备' : '受邀 · 已准备';
@@ -333,6 +344,13 @@ function checkStart(){
     $('sysLine').textContent='双方就绪 · 开桌后由接口拉起对局（演示）';
   }
 }
+/* ═══ 聊天邀请：请父页在聊天流里发邀请卡片（用组队页同一个房码）═══ */
+$('chatInviteBtn').addEventListener('click',()=>{
+  const code=[...$('codeRow').children].map(x=>x.textContent).join('');
+  teamPost({type:'cn_team_chat_invite', code});
+  $('chatInviteBtn').textContent='已发到聊天 ✓';
+  setTimeout(()=>$('chatInviteBtn').textContent='聊天邀请',1400);
+});
 function resetRoom(){
   $('codeRow').innerHTML='';
   cinputs.forEach(x=>x.value='');

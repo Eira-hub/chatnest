@@ -558,9 +558,9 @@ body.has-wall .stars{opacity:.75}
 #viewExplore .ex-sub{margin-top:4px;font-size:12.5px;color:#2a2a32;opacity:.8}
 #viewExplore .ex-list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
 /* ═══ v38.8 大富翁子页：全屏游戏层（iframe 盖在探索页上，退出即掀掉露出大页）═══ */
-#gameFrame{position:fixed;inset:0;z-index:80;background:var(--bg0);animation:gfin .3s var(--ease)}
-#gameFrame.hidden{display:none}
-#gameFrame iframe{width:100%;height:100%;border:none;display:block}
+#gameFrame,#teamFrame{position:fixed;inset:0;z-index:80;background:var(--bg0);animation:gfin .3s var(--ease)}
+#gameFrame.hidden,#teamFrame.hidden{display:none}
+#gameFrame iframe,#teamFrame iframe{width:100%;height:100%;border:none;display:block}
 @keyframes gfin{from{opacity:0}to{opacity:1}}
 #viewExplore .ex-row{display:flex;align-items:stretch;overflow:hidden;text-align:left;padding:0;border-radius:var(--r-panel);border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.66);box-shadow:0 6px 22px rgba(0,0,0,.14);cursor:pointer;color:inherit;font:inherit;transition:transform .18s ease,box-shadow .18s ease}
 #viewExplore.hm-light .ex-row{background:rgba(255,255,255,.72);border-color:rgba(0,0,0,.08);box-shadow:0 6px 22px rgba(40,60,120,.12)}
@@ -910,7 +910,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v39.2</span>
+    <span class="fs-ver">v39.3</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -2173,15 +2173,17 @@ function inviteCardNode(game, code, mtime, mid){
     +(mtime?'<div class="mtime">'+mtime+'</div>':'')+'</div>';
   return el;
 }
-$('gameSheet').addEventListener('click',(e)=>{
-  const it=e.target.closest('.gs-item'); if(!it) return;
-  closeSheets();
-  const game=it.dataset.game, code=inviteCode();
+function sendInviteCard(game, code){
   const sp=$('splash'); if(sp) sp.classList.add('hidden');
   $('streamInner').appendChild(inviteCardNode(game, code, fmtClock()));
   try{ stashLastMsg(state.convId||'', 'user', '[[invite:'+game+':'+code+']]'); }catch(err){}
   scrollToBottom(true);
   /* 对接点：接口接上后改为 POST /chat {type:'game_invite'} 落库，TA 侧收到同样卡片 */
+}
+$('gameSheet').addEventListener('click',(e)=>{
+  const it=e.target.closest('.gs-item'); if(!it) return;
+  closeSheets();
+  sendInviteCard(it.dataset.game, inviteCode());
 });
 /* v36.77 宫格翻页圆点 */
 const ppTrack=$('ppTrack'), ppDots=$('ppDots');
@@ -2954,8 +2956,26 @@ document.body.appendChild(gameFrame);
 const gameFrameInner=gameFrame.querySelector('#gameFrameInner');
 function openGameFrame(){ try{ gameFrameInner.src='spicy-monopoly-shell.html?v=5'; }catch(e){} gameFrame.classList.remove('hidden'); }
 function closeGameFrame(){ gameFrame.classList.add('hidden'); setTimeout(()=>{ try{ gameFrameInner.src='about:blank'; }catch(e){} },400); }
-(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',openGameFrame); })();
-window.addEventListener('message',e=>{ if(e&&e.data&&e.data.type==='smExit')closeGameFrame(); });
+/* v39.3 组队层：探索页点大富翁先进组队页，开桌后拉起游戏层 */
+const teamFrame=document.createElement('div');
+teamFrame.id='teamFrame'; teamFrame.className='hidden';
+teamFrame.innerHTML='<iframe id="teamFrameInner" title="组队开桌" src="about:blank"></iframe>';
+document.body.appendChild(teamFrame);
+const teamFrameInner=teamFrame.querySelector('#teamFrameInner');
+function openTeamFrame(){ try{ teamFrameInner.src='monopoly-team.html?v=7'; }catch(e){} teamFrame.classList.remove('hidden'); }
+function closeTeamFrame(){ teamFrame.classList.add('hidden'); setTimeout(()=>{ try{ teamFrameInner.src='about:blank'; }catch(e){} },400); }
+(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',openTeamFrame); })();
+window.addEventListener('message',e=>{
+  const d=e&&e.data; if(!d||!d.type)return;
+  if(d.type==='smExit')closeGameFrame();
+  /* v39.3 组队页 → 星夜小筑 消息桥 */
+  else if(d.type==='cn_team_back')closeTeamFrame();
+  else if(d.type==='cn_team_chat_invite'){
+    closeTeamFrame(); syncChatView();
+    setTimeout(()=>sendInviteCard('monopoly', String(d.code||'').toUpperCase()||inviteCode()), 200);
+  }
+  else if(d.type==='cn_team_start'){ closeTeamFrame(); openGameFrame(); }
+});
 /* ── v36.19 底部平移翻折状态机：收起=聊天框+输入框，展开=水珠 Dock ── */
 const dockbar=document.getElementById('dockbar');
 /* ── v36.46 展开=纯垂直沉落：任何 rotateY 在下方灭点的透视里右缘都会从深处向上浮出（上升感根源），
