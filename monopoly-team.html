@@ -297,7 +297,7 @@ function show(view){
 $('pickCreate').addEventListener('click',()=>{ createRoom(); });
 $('pickJoin').addEventListener('click',()=>{ show('join'); setTimeout(()=>$('codeInputs').querySelector('input').focus(),80); });
 $('joinBack').addEventListener('click',()=>show('pick'));
-$('roomExit').addEventListener('click',()=>{ resetRoom(); show('pick'); });
+$('roomExit').addEventListener('click',()=>{ try{ localStorage.removeItem('lastRoomCode'); }catch(e){} resetRoom(); show('pick'); });
 $('backBtn').addEventListener('click',()=>{
   if($('roomView').classList.contains('on')||$('joinView').classList.contains('on')) show('pick');
   /* 嵌入星夜小筑时：通知父页收起组队层回探索页 */
@@ -330,6 +330,7 @@ async function createRoom(tries){
     return;
   }
   myRole='host'; myRoom=code;
+  try{ localStorage.setItem('lastRoomCode',code); }catch(e){}
   renderCode(code); resetSeats(); show('room'); startPoll(code);
 }
 function resetSeats(){
@@ -391,6 +392,7 @@ $('joinGo').addEventListener('click',async()=>{
     return;
   }
   myRole='guest'; myRoom=code;
+  try{ localStorage.setItem('lastRoomCode',code); }catch(e){}
   renderCode(code); resetSeats(); show('room'); startPoll(code);
 });
 
@@ -401,6 +403,7 @@ $('joinGo').addEventListener('click',async()=>{
   try{
     const room=await dFetch('/api/game/room/'+encodeURIComponent(urlCode));
     myRole='host'; myRoom=urlCode;
+    try{ localStorage.setItem('lastRoomCode',urlCode); }catch(e){}
     renderCode(urlCode); resetSeats();
     try{ renderRoom(room); }catch(e){}
     show('room'); startPoll(urlCode);
