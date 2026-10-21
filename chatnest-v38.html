@@ -914,7 +914,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v39.4</span>
+    <span class="fs-ver">v39.6</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1052,7 +1052,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v37.82<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v39.6<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -1261,7 +1261,8 @@ function newConv(){
   localStorage.removeItem(LS.conv);
   $('streamInner').innerHTML = '';
   const sp = $('splash');
-  sp.classList.remove('hidden');
+  if(mirrorLoad().length){ sp.classList.add('hidden'); renderMirrorCards(); }   /* v39.6 新会话也补镜像卡（后端挂掉时刷新落在这里） */
+  else sp.classList.remove('hidden');
   $('splashLine').textContent = state.splash || '今晚月色不错';
 }
 async function openConv(id, opt){
@@ -1282,6 +1283,7 @@ async function openConv(id, opt){
       inner.appendChild(btn);
     }
     for(const m of msgs) inner.appendChild(bubbleEl(m));
+    renderMirrorCards();   /* v39.6 镜像兜底：历史里没有的卡片补回来（按房码去重） */
     const lm=msgs[msgs.length-1];
     if(lm) stashLastMsg(id, lm.role, lm.text);   /* v36.48 主页速览预览缓存 */
     scrollToBottom(true);
@@ -1808,21 +1810,27 @@ $('btnSend').addEventListener('click', ()=>{
   send();
 });
 
-async function send(){
+async function send(silentUser){
   const text = $('input').value.trim();
   if(!text) return;
-  /* v38.9 邀请卡片标记兜底：只入列渲染卡片，不触发 AI 请求 */
-  const imv = text.match(INVITE_RE);
+  /* v38.9 邀请卡片标记兜底（仅用户手输）：只入列渲染卡片，不触发 AI 请求。
+     v39.5 内部调用（sendInviteCard）走 silentUser 跳过兜底——卡片消息要落库且让 TA 感知 */
+  const imv = (!silentUser) && text.match(INVITE_RE);
   if(imv){
     $('splash').classList.add('hidden');
     $('input').value=''; autoGrow();
     $('streamInner').appendChild(inviteCardNode(imv[1], imv[2], fmtClock()));
+    saveMirrorCard(imv[1], imv[2]);   /* v39.6 手输标记也进镜像 */
     scrollToBottom(true);
     return;
   }
   const sendAt = Date.now();   /* v36.68 记录发送时刻，历史时间缓存用 */
   $('splash').classList.add('hidden');
   const inner = $('streamInner');
+  if(silentUser){
+    /* v39.5 静默用户侧：卡片已由 sendInviteCard 渲染，这里只清输入不重复出气泡 */
+    $('input').value=''; autoGrow(); scrollToBottom(true);
+  }else{
   const um = document.createElement('div');
   um.className = 'msg user';
   um.dataset.raw = text;   /* v34 长按复制/重新编辑 */
@@ -1830,6 +1838,7 @@ async function send(){
   um.innerHTML = '<div class="avatar'+(avMeOk?'':' me-def')+'">'+avatarSvg('me')+'</div><div class="col"><div class="bubble"><div class="body">'+md(text)+'</div></div><div class="mtime">'+fmtClock()+'</div></div>';
   inner.appendChild(um);
   $('input').value=''; autoGrow(); scrollToBottom(true);
+  }
 
   const ab = document.createElement('div');
   ab.className = 'msg ai';
@@ -2162,6 +2171,38 @@ function inviteCode(){
   for(let i=0;i<4;i++) s+=pool[Math.floor(Math.random()*pool.length)];
   return s;
 }
+/* ═══ v39.6 卡片本地镜像：/api/chat 挂掉时 convId 拿不到、历史拉不回，刷新后卡片不能跟着丢 ═══
+   发卡即存 localStorage（按房码去重，留最近12张）；开屏/开会话时，历史里没有的卡从镜像补渲染；
+   房间 404 过期时从镜像清除，避免下次刷新弹死房 */
+const LS_INV_MIRROR='cn_invite_cards';
+function mirrorLoad(){ try{ return JSON.parse(localStorage.getItem(LS_INV_MIRROR)||'[]')||[]; }catch(e){ return []; } }
+function mirrorSave(list){ try{ localStorage.setItem(LS_INV_MIRROR, JSON.stringify(list.slice(0,12))); }catch(e){} }
+function saveMirrorCard(game, code){
+  if(!code) return;
+  const list=mirrorLoad().filter(x=>x.code!==String(code).toUpperCase());
+  list.unshift({game:String(game||'monopoly'), code:String(code).toUpperCase(), ts:Date.now()});
+  mirrorSave(list);
+}
+function removeMirrorCard(code){
+  try{ mirrorSave(mirrorLoad().filter(x=>x.code!==String(code).toUpperCase())); }catch(e){}
+}
+function renderMirrorCards(){
+  try{
+    const inner=$('streamInner'); if(!inner) return;
+    const have=new Set();
+    inner.querySelectorAll('.msg[data-raw]').forEach(el=>{
+      const m=String(el.dataset.raw||'').match(INVITE_RE); if(m) have.add(m[2]);
+    });
+    const list=mirrorLoad();
+    for(let i=list.length-1;i>=0;i--){
+      const it=list[i];
+      if(have.has(it.code)) continue;   /* 历史回拉已有这张卡，不重复补 */
+      have.add(it.code);
+      inner.appendChild(inviteCardNode(it.game, it.code, fmtTimeSmart(it.ts)||''));
+    }
+    if(list.length) scrollToBottom(true);
+  }catch(e){}
+}
 /* ═══ v39.4 邀请卡是活的：3s 轮询房态，状态行实时更新（等待→已入座→对局中）═══ */
 let invPollTimer=null,invPollCode='',invPollCard=null;
 const INV_ST_WAIT='等待 TA 入座…',INV_ST_READY='TA 已入座 · 点卡开桌',
@@ -2182,7 +2223,9 @@ async function invTick(){
   const st=invPollCard.querySelector('.inv-st'); if(!st) return;
   try{
     const r=await fetch('https://game.eira0716.dpdns.org/api/game/room/'+encodeURIComponent(invPollCode));
-    if(!r.ok){ st.textContent=INV_ST_GONE; st.style.animation='none'; stopInvPoll(); return; }
+    /* v39.5 只有 404 才判过期：429/5xx 等抖动直接跳过本轮，别把活房定格成"已过期" */
+    if(r.status===404){ st.textContent=INV_ST_GONE; st.style.animation='none'; stopInvPoll(); removeMirrorCard(invPollCode); return; }
+    if(!r.ok) return;
     const room=await r.json();
     const nm=(room.members&&room.members.length)||0;
     const sts=String(room.status||'');
@@ -2212,13 +2255,16 @@ function inviteCardNode(game, code, mtime, mid){
 function sendInviteCard(game, code){
   const sp=$('splash'); if(sp) sp.classList.add('hidden');
   $('streamInner').appendChild(inviteCardNode(game, code, fmtClock()));
-  try{ stashLastMsg(state.convId||'', 'user', '[[invite:'+game+':'+code+']]'); }catch(err){}
+  scrollToBottom(true);
   try{ localStorage.setItem('lastRoomCode', code); }catch(err){}
+  saveMirrorCard(game, code);   /* v39.6 镜像：刷新后卡片必在 */
+  /* v39.5 卡片消息落库：走 /api/chat（silentUser 不重复渲染气泡），历史刷新可回拉重建卡片；
+     TA（Orion）侧经 [[invite:游戏:房码]] 标记感知邀请，可入座（join 是引擎侧职责） */
+  try{ send('[[invite:'+game+':'+code+']]', true); }catch(err){}
   /* 已接：POST /api/invite 邀请即建房，荷官侧经 /api/invites 感知入桌 */
   try{
     fetch('https://game.eira0716.dpdns.org/api/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:game,code:code,from:'宝宝'})}).catch(()=>{});
   }catch(err){}
-  scrollToBottom(true);
 }
 $('gameSheet').addEventListener('click',(e)=>{
   const it=e.target.closest('.gs-item'); if(!it) return;
@@ -3004,7 +3050,8 @@ document.body.appendChild(teamFrame);
 const teamFrameInner=teamFrame.querySelector('#teamFrameInner');
 function openTeamFrame(code){
   try{
-    /* v39.4 带码回房：点邀请卡重进组队页，房码走 URL 参数恢复 */
+    /* v39.4 带码回房；v39.5 无码时读 lastRoomCode 自动回上次房间（房间保留） */
+    if(!code){ try{ code=localStorage.getItem('lastRoomCode')||''; }catch(e){} }
     const c=code?('&code='+encodeURIComponent(String(code).toUpperCase())):'';
     teamFrameInner.src='monopoly-team.html?v=8'+c;
   }catch(e){}
