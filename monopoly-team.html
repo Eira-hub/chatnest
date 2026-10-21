@@ -394,6 +394,21 @@ $('joinGo').addEventListener('click',async()=>{
   renderCode(code); resetSeats(); show('room'); startPoll(code);
 });
 
+/* ═══ v39.4 ?code= 恢复房间：点聊天邀请卡带码回房，不重建不换码 ═══ */
+(async()=>{
+  const urlCode=(new URLSearchParams(location.search).get('code')||'').toUpperCase();
+  if(!/^[A-Z0-9]{4}$/.test(urlCode)) return;
+  try{
+    const room=await dFetch('/api/game/room/'+encodeURIComponent(urlCode));
+    myRole='host'; myRoom=urlCode;
+    renderCode(urlCode); resetSeats();
+    try{ renderRoom(room); }catch(e){}
+    show('room'); startPoll(urlCode);
+  }catch(e){
+    $('sysLine').textContent = e.code==='room_not_found' ? '房间不存在或已过期' : '恢复房间失败，可重新建房';
+  }
+})();
+
 /* ═══ 复制房码 ═══ */
 $('copyBtn').addEventListener('click',()=>{
   const code=[...$('codeRow').children].map(x=>x.textContent).join('');

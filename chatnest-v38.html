@@ -382,6 +382,10 @@ svg{display:block}
 .inv-st{border-top:1px solid var(--line);padding:5px 14px 7px;text-align:center;
   font-size:11px;color:var(--text3);animation:invPulse 1.6s infinite}
 @keyframes invPulse{0%,100%{opacity:.4}50%{opacity:1}}
+/* ═══ v39.4 卡片交互：整卡可点回房；TA 入座/对局中亮金边提示 ═══ */
+.inv-card{cursor:pointer}
+.inv-card.inv-live{border-color:rgba(212,175,55,.5);box-shadow:0 8px 30px rgba(212,175,55,.14)}
+.inv-card.inv-live .inv-st{color:var(--moon);animation:invPulse 1.6s infinite}
 /* ═══ v36.55 设置页=全屏独立页面：点开即整页设置，无过渡动画（v36.51 悬浮面板方案废弃）═══ */
 #settingsSheet{top:0;bottom:0;left:0;right:0;width:auto;height:auto;max-height:none;
   border-radius:0;border:none;box-shadow:none;
@@ -910,7 +914,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v39.3</span>
+    <span class="fs-ver">v39.4</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -2158,6 +2162,36 @@ function inviteCode(){
   for(let i=0;i<4;i++) s+=pool[Math.floor(Math.random()*pool.length)];
   return s;
 }
+/* ═══ v39.4 邀请卡是活的：3s 轮询房态，状态行实时更新（等待→已入座→对局中）═══ */
+let invPollTimer=null,invPollCode='',invPollCard=null;
+const INV_ST_WAIT='等待 TA 入座…',INV_ST_READY='TA 已入座 · 点卡开桌',
+      INV_ST_PLAY='对局进行中 · 点卡回牌桌',INV_ST_GONE='房间已过期';
+function markActiveInvite(code,card){
+  invPollCode=String(code||'').toUpperCase(); invPollCard=card||null;
+  if(invPollTimer){ clearInterval(invPollTimer); invPollTimer=null; }
+  if(!invPollCard) return;
+  invPollTimer=setInterval(invTick,3000);
+  /* v39.4 首跑延迟一拍：发卡路径先建节点后 appendChild，立即跑会因 document.contains=false 把定时器自杀 */
+  setTimeout(invTick,800);
+}
+async function invTick(){
+  if(!invPollCard||!document.contains(invPollCard)){
+    if(invPollTimer){ clearInterval(invPollTimer); invPollTimer=null; }
+    return;
+  }
+  const st=invPollCard.querySelector('.inv-st'); if(!st) return;
+  try{
+    const r=await fetch('https://game.eira0716.dpdns.org/api/game/room/'+encodeURIComponent(invPollCode));
+    if(!r.ok){ st.textContent=INV_ST_GONE; st.style.animation='none'; stopInvPoll(); return; }
+    const room=await r.json();
+    const nm=(room.members&&room.members.length)||0;
+    const sts=String(room.status||'');
+    if(sts==='playing'){ st.textContent=INV_ST_PLAY; invPollCard.classList.add('inv-live'); }
+    else if(nm>=2||sts==='ready'){ st.textContent=INV_ST_READY; invPollCard.classList.add('inv-live'); }
+    else { st.textContent=INV_ST_WAIT; invPollCard.classList.remove('inv-live'); }
+  }catch(e){ /* 网络抖动忽略，下轮再试 */ }
+}
+function stopInvPoll(){ if(invPollTimer){ clearInterval(invPollTimer); invPollTimer=null; } }
 function inviteCardNode(game, code, mtime, mid){
   const meta=INVITE_META[game]||INVITE_META.monopoly;
   const el=document.createElement('div');
@@ -2171,6 +2205,8 @@ function inviteCardNode(game, code, mtime, mid){
     +'<div class="inv-codes">'+code.split('').map(c=>'<span>'+esc(c)+'</span>').join('')+'</div>'
     +'<div class="inv-st">等待 TA 入座…</div></div>'
     +(mtime?'<div class="mtime">'+mtime+'</div>':'')+'</div>';
+  /* v39.4 卡片渲染（新发或历史重建）都把活跃轮询指向最新一张；点击走 script2 的 document 委托（openTeamFrame 同块） */
+  markActiveInvite(code, el.querySelector('.inv-card'));
   return el;
 }
 function sendInviteCard(game, code){
@@ -2966,9 +3002,27 @@ teamFrame.id='teamFrame'; teamFrame.className='hidden';
 teamFrame.innerHTML='<iframe id="teamFrameInner" title="组队开桌" src="about:blank"></iframe>';
 document.body.appendChild(teamFrame);
 const teamFrameInner=teamFrame.querySelector('#teamFrameInner');
-function openTeamFrame(){ try{ teamFrameInner.src='monopoly-team.html?v=7'; }catch(e){} teamFrame.classList.remove('hidden'); }
+function openTeamFrame(code){
+  try{
+    /* v39.4 带码回房：点邀请卡重进组队页，房码走 URL 参数恢复 */
+    const c=code?('&code='+encodeURIComponent(String(code).toUpperCase())):'';
+    teamFrameInner.src='monopoly-team.html?v=8'+c;
+  }catch(e){}
+  teamFrame.classList.remove('hidden');
+}
 function closeTeamFrame(){ teamFrame.classList.add('hidden'); setTimeout(()=>{ try{ teamFrameInner.src='about:blank'; }catch(e){} },400); }
-(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',openTeamFrame); })();
+(()=>{ const ec=document.querySelector('.ex-row[data-game="monopoly"]'); if(ec)ec.addEventListener('click',()=>openTeamFrame()); })();
+/* ═══ v39.4 邀请卡点击委托：document 级监听，从 raw 解析房码后同块调 openTeamFrame ═══
+   （v39.4 初版把点击绑在 script1 的卡片闭包里，实测跨块全局解析失效 → 委托到本块，openTeamFrame 同作用域必可达） */
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const card=t&&t.closest?t.closest('.inv-card'):null;
+  if(!card) return;
+  const msg=card.closest('.msg');
+  const raw=(msg&&msg.dataset)?(msg.dataset.raw||''):'';
+  const m=raw.match(/\[\[invite:[a-z_]+:([A-Za-z0-9]{4})\]\]/);
+  if(m){ try{ openTeamFrame(m[1]); }catch(err){} }
+},false);
 window.addEventListener('message',e=>{
   const d=e&&e.data; if(!d||!d.type)return;
   if(d.type==='smExit')closeGameFrame();
