@@ -23,7 +23,29 @@
   <p>内容：打补丁后的 app.py + 原封 requirements.txt / start.sh</p>
   <p>校验 md5：<code>528e2803d72d82b324972606b845659e</code></p>
   <p>上传 FC 后访问 <code>/</code>，返回 build 字段一致即部署成功。</p>
-  <a class="btn" href="chatnest-fc-20261022-r2-mcp.zip" download>⬇ 下载 chatnest-fc-20261022-r2-mcp.zip</a>
+  <a class="btn" href="chatnest-fc-20261022-r2-mcp.zip" download id="dl">⬇ 下载 chatnest-fc-20261022-r2-mcp.zip</a>
+  <p id="msg" style="margin-top:14px;display:none;color:#8fd694">已触发保存，请在浏览器下载列表里确认 zip 本体（不要选“解压/预览”）。</p>
 </div>
+<script>
+document.getElementById('dl').addEventListener('click', function(e){
+  e.preventDefault();
+  var btn = this;
+  fetch(btn.getAttribute('href')).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.blob();
+  }).then(function(b){
+    var u = URL.createObjectURL(b);
+    var a = document.createElement('a');
+    a.href = u; a.download = 'chatnest-fc-20261022-r2-mcp.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(u); }, 8000);
+    document.getElementById('msg').style.display = 'block';
+  }).catch(function(err){
+    document.getElementById('msg').style.display = 'block';
+    document.getElementById('msg').textContent = '直接下载失败('+err.message+')，请改用方案B：FC 控制台在线 IDE 逐个粘贴三个文件。';
+    location.href = btn.getAttribute('href');
+  });
+});
+</script>
 </body>
 </html>
