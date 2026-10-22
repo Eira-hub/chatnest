@@ -914,7 +914,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v39.6</span>
+    <span class="fs-ver">v39.7</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1052,7 +1052,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v39.6<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v39.7<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -2986,6 +2986,11 @@ function renderHomeCards(){
 }
 window.renderHomeCards=renderHomeCards;
 window.renderHome=renderHome;
+/* v39.7 补暴露：块1 跨块引用但这三个被 IIFE 困住，发消息 stashLastMsg 报 Unhandled rejection、
+   applyHomeGrad 引用 HOME_DEF 是潜伏雷（renderHome/renderHomeCards 此前已显式暴露，照抄同款做法） */
+window.stashLastMsg=stashLastMsg;
+window.readLastMsg=readLastMsg;
+window.HOME_DEF=HOME_DEF;
 /* ── v38.1 视图同步（治主页分裂）：旧实现 homeShown/exploreShown 守卫短路，标志位与 DOM
    一旦脱同步，再点主页/探索就什么都不做 → 聊天流与主页同屏（上半聊天下半主页）、布局塌陷露壁纸。
    改为每次调用无条件全量同步 DOM（toggle + 考虑另一视图状态），幂等自愈；
