@@ -1,0 +1,580 @@
+--- app.py.orig	2026-10-22 18:41:43.044097942 +0800
++++ app.py	2026-10-22 18:49:46.550428815 +0800
+@@ -1,8 +1,11 @@
+ # -*- coding: utf-8 -*-
+ """chatnest 自用后端 —— FastAPI + Cloudflare KV + OpenAI 兼容 upstream。
+ 
+-给 chatnest-ui（仿微信聊天前端）配的一个人自用后端。纯聊天场景，
+-不实现 agent 工具循环，消息的 traces 字段一律空数组。
++给 chatnest-ui（仿微信聊天前端）配的一个人自用后端。
++消息的 traces 字段一律空数组；工具/MCP 动作通过 SSE 的 tool 事件实时推送
++（{name, ok, ms}），不落库，刷新后胶囊消失——前端契约如此。
++v41 起带 MCP 工具循环：/api/mcp/* 管理服务器，聊天时注入 tools 定义，
++模型发起 tool_calls 就执行 MCP tools/call，结果回灌再续流。
+ 
+ 上游（OpenAI 兼容 /chat/completions，key 全部走环境变量）：
+     aliyun   https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions   ALIYUN_API_KEY
+@@ -30,6 +33,9 @@
+   idx:uploads:{conv_id}     [附件meta] 同消息对象里的 attachments 元素
+   att:{conv_id}:{filename}  附件内容，base64 文本（原始 bytes → base64 → KV）
+   idx:persona               可选 {system_prompt} 覆盖系统提示（优先级高于环境变量）
++  idx:mcp                   MCP 服务器列表 [{id,name,url,type,bearer,headers,enabled,
++                            connected,checkedAt,error,tools:[{name,description,inputSchema,enabled}]}]
++                            bearer/headers 属敏感信息，接口回包一律剥掉
+ 
+ token 无状态：{过期毫秒}.{HMAC-SHA256(密钥=APP_PASSWORD, 过期毫秒) 前 32 位}，不占 KV。
+ 
+@@ -53,7 +59,7 @@
+ from datetime import datetime, timezone
+ from difflib import SequenceMatcher
+ from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
+-from urllib.parse import quote
++from urllib.parse import quote, urljoin
+ from zoneinfo import ZoneInfo
+ 
+ import httpx
+@@ -70,6 +76,7 @@
+ # ────────────────────────────── 配置（全部环境变量，代码里不硬编码任何 key） ──────────────────────────────
+ 
+ APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
++CODE_BUILD = "2026-10-22-r2-mcp"   # v41：MCP 服务器管理 + 聊天工具循环
+ 
+ def env_float(name: str, default: float) -> float:
+     try:
+@@ -674,8 +681,11 @@
+     pass
+ 
+ def build_chat_payload(model_cfg: Dict[str, Any], messages: List[Dict[str, str]], stream: bool,
+-                       extended: bool = True) -> Dict[str, Any]:
++                       extended: bool = True, tools: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+     payload: Dict[str, Any] = {"model": model_cfg["model"], "messages": messages, "stream": stream}
++    if tools:
++        payload["tools"] = tools
++        payload["tool_choice"] = "auto"
+     up = model_cfg["upstream"]
+     if up == "aliyun":
+         # 百炼兼容模式：enable_thinking 控制 GLM 思考开关（玖时关不掉、DeepSeek 不用传）
+@@ -683,16 +693,19 @@
+     return payload
+ 
+ async def stream_chat(model_cfg: Dict[str, Any], messages: List[Dict[str, str]],
+-                      extended: bool = True) -> AsyncIterator[Tuple[str, str]]:
+-    """stream 调 upstream，yield ("thinking"|"delta", chunk)。reasoning_content → thinking 事件。"""
++                      extended: bool = True,
++                      tools: Optional[List[Dict[str, Any]]] = None) -> AsyncIterator[Tuple[str, Any]]:
++    """stream 调 upstream，yield ("thinking"|"delta", chunk)。
++    带 tools 时若模型发起工具调用，末尾 yield ("tool_calls", [{id,name,arguments}])（arguments 为原始 JSON 串）。"""
+     up = model_cfg["upstream"]
+     key = upstream_key(up)
+     if not key:
+         raise UpstreamError(f"模型 {model_cfg['id']} 需要的 API key 未配置（环境变量 {UPSTREAM_KEY_ENV[up]}）")
+-    payload = build_chat_payload(model_cfg, messages, stream=True, extended=extended)
++    payload = build_chat_payload(model_cfg, messages, stream=True, extended=extended, tools=tools)
+     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                "Accept": "text/event-stream"}
+     timeout = httpx.Timeout(connect=15, read=env_int("UPSTREAM_READ_TIMEOUT", 300), write=30, pool=15)
++    pending: Dict[int, Dict[str, str]] = {}   # index → 累积中的 tool_call 片段
+     async with httpx.AsyncClient(timeout=timeout) as client:
+         async with client.stream("POST", upstream_base(up), json=payload, headers=headers) as r:
+             if r.status_code != 200:
+@@ -703,7 +716,7 @@
+                     continue
+                 data = line[5:].strip()
+                 if data == "[DONE]":
+-                    return
++                    break
+                 try:
+                     obj = json.loads(data)
+                 except ValueError:
+@@ -716,6 +729,21 @@
+                 content = delta.get("content")
+                 if content:
+                     yield "delta", str(content)
++                for frag in delta.get("tool_calls") or []:
++                    i = int(frag.get("index") or 0)
++                    slot = pending.setdefault(i, {"id": "", "name": "", "args": ""})
++                    if frag.get("id"):
++                        slot["id"] = str(frag["id"])
++                    fn = frag.get("function") or {}
++                    if fn.get("name"):
++                        slot["name"] += str(fn["name"])
++                    if fn.get("arguments"):
++                        slot["args"] += str(fn["arguments"])
++    if pending:
++        calls = [{"id": v["id"] or f"call_{k}", "name": v["name"], "arguments": v["args"]}
++                 for k, v in sorted(pending.items()) if v["name"]]
++        if calls:
++            yield "tool_calls", calls
+ 
+ async def cheap_complete(system: str, user: str) -> str:
+     """摘要类非流式调用（便宜模型，enable_thinking=False），返回纯文本，失败抛异常。"""
+@@ -746,6 +774,306 @@
+     first = re.split(r"(?<=[。！？.!?])", s)[0].strip() or s
+     return first[:30] + ("…" if len(first) > 30 else "")
+ 
++# ────────────────────────────── MCP（服务器管理 + 工具调用） ──────────────────────────────
++
++MCP_KEY = "idx:mcp"
++MCP_PROTOCOL_VERSION = "2025-03-26"
++MCP_CONNECT_TIMEOUT = env_int("MCP_CONNECT_TIMEOUT", 15)
++MCP_CALL_TIMEOUT = env_int("MCP_CALL_TIMEOUT", 120)
++MCP_MAX_ROUNDS = env_int("MCP_MAX_ROUNDS", 8)          # 单条消息最多几轮工具调用
++MCP_RESULT_MAX_CHARS = env_int("MCP_RESULT_MAX_CHARS", 8000)
++
++class McpError(RuntimeError):
++    pass
++
++async def mcp_load_servers() -> List[Dict[str, Any]]:
++    return await kv_get_json(MCP_KEY, [])
++
++async def mcp_save_servers(items: List[Dict[str, Any]]) -> None:
++    await kv_put_json(MCP_KEY, items)
++
++def mcp_public(s: Dict[str, Any]) -> Dict[str, Any]:
++    """前端可见字段；bearer/headers 属敏感信息不回传（前端「留空 = 不修改」契约）。"""
++    tools = s.get("tools") or []
++    return {"id": s.get("id"), "name": s.get("name"), "url": s.get("url"),
++            "type": s.get("type") or "http", "enabled": s.get("enabled", True),
++            "connected": s.get("connected", False), "checkedAt": s.get("checkedAt"),
++            "error": s.get("error") or "",
++            "tools": [{"name": t.get("name"), "description": t.get("description") or "",
++                       "enabled": t.get("enabled", True)} for t in tools],
++            "toolCount": sum(1 for t in tools if t.get("enabled", True)),
++            "totalTools": len(tools)}
++
++def mcp_sanitize_name(s: str, fallback: str = "") -> str:
++    """工具名要过 upstream 的 ^[A-Za-z0-9_-]+$ 校验；中文名会被替换成下划线，
++    一个 ASCII 字符都不剩时回退 srv_<id前缀>，保证全名跨请求稳定。"""
++    out = re.sub(r"[^0-9A-Za-z_-]", "_", str(s or ""))
++    out = re.sub(r"_+", "_", out).strip("_")[:48]
++    if not out:
++        out = "srv_" + re.sub(r"[^0-9a-z]", "", str(fallback or "").lower())[:6]
++    return out or "srv"
++
++async def mcp_openai_tools() -> Tuple[List[Dict[str, Any]], Dict[str, Tuple[Dict[str, Any], str]]]:
++    """所有已启用服务器的已启用工具 → OpenAI tools 定义 + 全名→(服务器, 原始工具名) 映射。"""
++    tools: List[Dict[str, Any]] = []
++    index: Dict[str, Tuple[Dict[str, Any], str]] = {}
++    for s in await mcp_load_servers():
++        if not s.get("enabled", True):
++            continue
++        sn = mcp_sanitize_name(s.get("name"), s.get("id", ""))
++        for t in s.get("tools") or []:
++            if not t.get("enabled", True) or not t.get("name"):
++                continue
++            full = f"mcp__{sn}__{mcp_sanitize_name(t['name'])}"
++            if full in index:
++                continue
++            index[full] = (s, str(t["name"]))
++            tools.append({"type": "function", "function": {
++                "name": full, "description": t.get("description") or "",
++                "parameters": t.get("inputSchema") or {"type": "object", "properties": {}}}})
++    return tools, index
++
++def mcp_base_headers(srv: Dict[str, Any]) -> Dict[str, str]:
++    h = {"Accept": "application/json, text/event-stream"}
++    if srv.get("bearer"):
++        h["Authorization"] = "Bearer " + str(srv["bearer"])
++    for k, v in (srv.get("headers") or {}).items():
++        if str(k).lower() in {"content-length", "host", "authorization"}:
++            continue
++        h[str(k)] = str(v)
++    return h
++
++def mcp_parse_sse_objects(text: str) -> List[Dict[str, Any]]:
++    """SSE body 里的 data: 行逐条解析成 JSON-RPC 对象。"""
++    out: List[Dict[str, Any]] = []
++    for line in str(text or "").splitlines():
++        line = line.strip()
++        if line.startswith("data:"):
++            d = line[5:].strip()
++            if d and d != "[DONE]":
++                try:
++                    o = json.loads(d)
++                except ValueError:
++                    continue
++                if isinstance(o, dict):
++                    out.append(o)
++    return out
++
++def mcp_check_rpc(obj: Dict[str, Any]) -> Any:
++    if obj.get("error"):
++        err = obj["error"]
++        msg = err.get("message") if isinstance(err, dict) else str(err)
++        raise McpError(str(msg or "MCP 调用失败"))
++    return obj.get("result")
++
++def mcp_content_text(res: Dict[str, Any]) -> str:
++    parts: List[str] = []
++    for c in res.get("content") or []:
++        if not isinstance(c, dict):
++            continue
++        if c.get("type") == "text" and c.get("text"):
++            parts.append(str(c["text"]))
++        elif c.get("uri") or (c.get("type") == "resource" and c.get("text")):
++            parts.append(str(c.get("text") or c.get("uri")))
++    if not parts and res.get("structuredContent") is not None:
++        try:
++            parts.append(json.dumps(res["structuredContent"], ensure_ascii=False))
++        except (TypeError, ValueError):
++            pass
++    text = "\n".join(parts).strip()
++    if len(text) > MCP_RESULT_MAX_CHARS:
++        text = text[:MCP_RESULT_MAX_CHARS] + "…（已截断）"
++    return text
++
++class McpClient:
++    """最小 MCP 客户端：streamable HTTP（type=http）与 HTTP+SSE（type=sse）两种传输，
++    只实现 initialize / tools/list / tools/call，够管理页和工具循环用。"""
++
++    def __init__(self, srv: Dict[str, Any]):
++        self.srv = srv
++        self.ttype = "sse" if srv.get("type") == "sse" else "http"
++        self.session_id: Optional[str] = None
++        self._client: Optional[httpx.AsyncClient] = None
++        self._resp: Optional[httpx.Response] = None    # sse 传输的常驻 GET 流
++        self._lines: Optional[AsyncIterator[str]] = None
++        self.endpoint: Optional[str] = None
++        self._nid = 0
++
++    async def __aenter__(self) -> "McpClient":
++        self._client = httpx.AsyncClient(timeout=httpx.Timeout(
++            connect=MCP_CONNECT_TIMEOUT, read=MCP_CALL_TIMEOUT, write=30, pool=MCP_CONNECT_TIMEOUT))
++        try:
++            await self._connect()
++        except BaseException:
++            await self._client.aclose()
++            raise
++        return self
++
++    async def __aexit__(self, *exc) -> None:
++        try:
++            if self._resp is not None:
++                await self._resp.aclose()
++        finally:
++            await self._client.aclose()
++
++    async def _connect(self) -> None:
++        if self.ttype == "sse":
++            await self._sse_open_stream()
++        await self._rpc("initialize", {"protocolVersion": MCP_PROTOCOL_VERSION, "capabilities": {},
++                                       "clientInfo": {"name": "chatnest", "version": "1.0.0"}})
++        await self._rpc("notifications/initialized", notify=True)
++
++    def _next_id(self) -> int:
++        self._nid += 1
++        return self._nid
++
++    async def _rpc(self, method: str, params: Optional[Dict[str, Any]] = None,
++                   notify: bool = False) -> Any:
++        payload: Dict[str, Any] = {"jsonrpc": "2.0", "method": method}
++        if params is not None:
++            payload["params"] = params
++        rid = None
++        if not notify:
++            rid = self._next_id()
++            payload["id"] = rid
++        if self.ttype == "http":
++            return await self._http_rpc(payload, rid)
++        return await self._sse_rpc(payload, rid)
++
++    async def _http_rpc(self, payload: Dict[str, Any], rid: Optional[int]) -> Any:
++        """streamable HTTP：POST 一次拿一个响应（application/json 或 sse 包裹）。"""
++        headers = mcp_base_headers(self.srv)
++        if self.session_id:
++            headers["Mcp-Session-Id"] = self.session_id
++        r = await self._client.post(self.srv["url"], json=payload, headers=headers)
++        sid = r.headers.get("mcp-session-id")
++        if sid:
++            self.session_id = sid
++        if r.status_code in (202, 204):
++            return None
++        if r.status_code != 200:
++            raise McpError(f"HTTP {r.status_code}：{r.text[:200]}")
++        if "text/event-stream" in r.headers.get("content-type", ""):
++            objs = mcp_parse_sse_objects(r.text)
++        else:
++            try:
++                objs = [r.json()]
++            except ValueError:
++                raise McpError(f"响应不是 JSON：{r.text[:200]}")
++        for o in objs:
++            if rid is None or o.get("id") == rid:
++                return mcp_check_rpc(o)
++        return None
++
++    async def _sse_open_stream(self) -> None:
++        """旧式 HTTP+SSE：先 GET 常驻事件流，等 endpoint 事件拿 POST 地址。"""
++        headers = mcp_base_headers(self.srv)
++        headers["Accept"] = "text/event-stream"
++        req = self._client.build_request("GET", self.srv["url"], headers=headers)
++        self._resp = await self._client.send(req, stream=True)
++        if self._resp.status_code != 200:
++            status = self._resp.status_code
++            body = (await self._resp.aread())[:300].decode("utf-8", errors="replace")
++            await self._resp.aclose()
++            self._resp = None
++            raise McpError(f"SSE {status}：{body}")
++        self._lines = self._resp.aiter_lines()
++        ev = None
++        async for line in self._lines:
++            line = line.strip()
++            if line.startswith("event:"):
++                ev = line[6:].strip()
++            elif line.startswith("data:") and (ev == "endpoint" or ev is None):
++                d = line[5:].strip()
++                if d:
++                    self.endpoint = urljoin(self.srv["url"], d)
++                    return
++                ev = None
++        raise McpError("SSE 流里没等到 endpoint 事件")
++
++    async def _sse_rpc(self, payload: Dict[str, Any], rid: Optional[int]) -> Any:
++        headers = mcp_base_headers(self.srv)
++        headers["Content-Type"] = "application/json"
++        r = await self._client.post(self.endpoint, json=payload, headers=headers)
++        if r.status_code not in (200, 202, 204):
++            raise McpError(f"POST {r.status_code}：{r.text[:200]}")
++        if rid is None:
++            return None
++        # 少数服务器直接把 JSON-RPC 响应放在 POST 回包里
++        if r.status_code == 200 and r.text.strip():
++            try:
++                o = r.json()
++            except ValueError:
++                o = None
++            if isinstance(o, dict) and (o.get("id") == rid or o.get("result") is not None or o.get("error")):
++                return mcp_check_rpc(o)
++        async for line in self._lines:
++            line = line.strip()
++            if not line.startswith("data:"):
++                continue
++            d = line[5:].strip()
++            if not d or d == "[DONE]":
++                continue
++            try:
++                o = json.loads(d)
++            except ValueError:
++                continue
++            if isinstance(o, dict) and o.get("id") == rid:
++                return mcp_check_rpc(o)
++        raise McpError("SSE 流在收到响应前结束")
++
++    async def list_tools(self) -> List[Dict[str, Any]]:
++        res = await self._rpc("tools/list", {})
++        return (res or {}).get("tools") or []
++
++    async def call_tool(self, name: str, arguments: Dict[str, Any]) -> Tuple[bool, str]:
++        res = await self._rpc("tools/call", {"name": name, "arguments": arguments or {}})
++        if not isinstance(res, dict):
++            return True, ""
++        text = mcp_content_text(res)
++        if res.get("isError"):
++            return False, text or "工具返回错误"
++        return True, text
++
++async def mcp_check_server(s: Dict[str, Any]) -> Dict[str, Any]:
++    """连接服务器拉工具清单，更新 connected/tools（保留每个工具的启停配置）。"""
++    old = {t.get("name"): t.get("enabled", True) for t in s.get("tools") or []}
++    try:
++        async with McpClient(s) as cli:
++            tools = await cli.list_tools()
++        s["tools"] = [{"name": str(t.get("name") or ""),
++                       "description": str(t.get("description") or ""),
++                       "inputSchema": t.get("inputSchema") or {"type": "object", "properties": {}},
++                       "enabled": old.get(str(t.get("name") or ""), True)}
++                      for t in tools if t.get("name")]
++        s["connected"] = True
++        s["error"] = ""
++    except Exception as e:
++        s["connected"] = False
++        s["error"] = str(e)[:300]
++    s["checkedAt"] = iso_now()
++    return s
++
++async def mcp_execute(full_name: str, raw_args: str,
++                      index: Dict[str, Tuple[Dict[str, Any], str]]) -> Tuple[bool, str]:
++    """按 mcp__srv__tool 全名找到服务器，连上执行一次 tools/call。"""
++    entry = index.get(full_name)
++    if entry is None:
++        return False, f"未找到工具：{full_name}"
++    srv, raw_name = entry
++    try:
++        args = json.loads(raw_args) if (raw_args or "").strip() else {}
++    except ValueError:
++        return False, "工具参数不是合法 JSON"
++    if not isinstance(args, dict):
++        return False, "工具参数必须是 JSON 对象"
++    try:
++        async with McpClient(srv) as cli:
++            return await cli.call_tool(raw_name, args)
++    except Exception as e:
++        return False, f"工具调用失败：{e}"
++
++
+ # ────────────────────────────── FastAPI 应用 ──────────────────────────────
+ 
+ @asynccontextmanager
+@@ -1400,6 +1728,96 @@
+     await kv_put_json(_cal_key(y), {"days": days})
+     return {"day": days.get(date, {})}
+ 
++# ── MCP 服务器管理（v41，前端 MCP 管理页契约）──
++
++class McpUpsertBody(BaseModel):
++    id: Optional[str] = None            # 有 id = 编辑更新，没有 = 新建
++    name: str
++    url: str
++    type: str = "http"                  # http = streamable HTTP，sse = 旧式 HTTP+SSE
++    enabled: bool = True
++    bearer: Optional[str] = None        # None = 不修改；字符串 = 覆盖
++    headers: Optional[Dict[str, str]] = None
++
++class McpToggleBody(BaseModel):
++    name: str
++    enabled: bool
++
++@app.get("/api/mcp/servers")
++async def mcp_servers_get(_auth: None = Depends(require_auth)):
++    return {"servers": [mcp_public(s) for s in await mcp_load_servers()]}
++
++@app.post("/api/mcp/servers")
++async def mcp_servers_post(body: McpUpsertBody, _auth: None = Depends(require_auth)):
++    if body.type not in ("http", "sse"):
++        raise HTTPException(status_code=400, detail="type 只能是 http 或 sse")
++    if not str(body.url).startswith(("http://", "https://")):
++        raise HTTPException(status_code=400, detail="URL 要以 http(s):// 开头")
++    if not body.name.strip():
++        raise HTTPException(status_code=400, detail="名称不能为空")
++    servers = await mcp_load_servers()
++    if body.id:
++        s = next((x for x in servers if x.get("id") == body.id), None)
++        if s is None:
++            raise HTTPException(status_code=404, detail="服务器不存在")
++    else:
++        s = {"id": uuid.uuid4().hex, "connected": False, "error": "", "checkedAt": None, "tools": []}
++        servers.append(s)
++    s["name"] = body.name.strip()
++    s["url"] = body.url.strip()
++    s["type"] = body.type
++    s["enabled"] = bool(body.enabled)
++    if body.bearer is not None:
++        s["bearer"] = body.bearer
++        s.pop("connected", None)        # 鉴权变了，旧状态不可信
++    if body.headers is not None:
++        s["headers"] = body.headers
++        s.pop("connected", None)
++    s["connected"] = False
++    s["error"] = ""
++    await mcp_save_servers(servers)
++    return {"server": mcp_public(s)}
++
++@app.delete("/api/mcp/servers/{sid}")
++async def mcp_servers_delete(sid: str, _auth: None = Depends(require_auth)):
++    servers = await mcp_load_servers()
++    rest = [x for x in servers if x.get("id") != sid]
++    if len(rest) == len(servers):
++        raise HTTPException(status_code=404, detail="服务器不存在")
++    await mcp_save_servers(rest)
++    return {"ok": True}
++
++@app.post("/api/mcp/servers/checkall")
++async def mcp_checkall(_auth: None = Depends(require_auth)):
++    servers = await mcp_load_servers()
++    for s in servers:
++        await mcp_check_server(s)
++    await mcp_save_servers(servers)
++    return {"servers": [mcp_public(s) for s in servers]}
++
++@app.post("/api/mcp/servers/{sid}/check")
++async def mcp_check_one(sid: str, _auth: None = Depends(require_auth)):
++    servers = await mcp_load_servers()
++    s = next((x for x in servers if x.get("id") == sid), None)
++    if s is None:
++        raise HTTPException(status_code=404, detail="服务器不存在")
++    await mcp_check_server(s)
++    await mcp_save_servers(servers)
++    return {"server": mcp_public(s)}
++
++@app.post("/api/mcp/servers/{sid}/tools/toggle")
++async def mcp_tool_toggle(sid: str, body: McpToggleBody, _auth: None = Depends(require_auth)):
++    servers = await mcp_load_servers()
++    s = next((x for x in servers if x.get("id") == sid), None)
++    if s is None:
++        raise HTTPException(status_code=404, detail="服务器不存在")
++    t = next((x for x in s.get("tools") or [] if x.get("name") == body.name), None)
++    if t is None:
++        raise HTTPException(status_code=404, detail=f"工具不存在：{body.name}")
++    t["enabled"] = bool(body.enabled)
++    await mcp_save_servers(servers)
++    return {"server": mcp_public(s)}
++
+ # ── 核心聊天（SSE） ──
+ 
+ class ChatBody(BaseModel):
+@@ -1497,15 +1915,52 @@
+         # 防御：三种流正常都会留至少一条用户消息，这里兜底
+         up_msgs.append({"role": "user", "content": (message or "（继续）") + prompt_note(prev_ts)})
+ 
++    ext = body.extended is not False
++    tools, tool_index = await mcp_openai_tools()
++
+     async def gen() -> AsyncIterator[str]:
+         yield sse_event("conversation", {"conversation_id": conv_id, "user_message_id": user_msg_id})
+         text_parts: List[str] = []
+         thinking_parts: List[str] = []
+         finished = False
++        allow_tools = bool(tools)
+         try:
+-            async for kind, chunk in stream_chat(model_cfg, up_msgs, extended=body.extended is not False):
+-                (thinking_parts if kind == "thinking" else text_parts).append(chunk)
+-                yield sse_event(kind, {"text": chunk})
++            rnd = 0
++            while True:
++                rnd += 1
++                tc_list: List[Dict[str, str]] = []
++                round_start = len(text_parts)
++                try:
++                    async for kind, chunk in stream_chat(model_cfg, up_msgs, extended=ext,
++                                                         tools=tools if allow_tools else None):
++                        if kind == "tool_calls":
++                            tc_list = chunk
++                            continue
++                        (thinking_parts if kind == "thinking" else text_parts).append(chunk)
++                        yield sse_event(kind, {"text": chunk})
++                except UpstreamError as e:
++                    # 个别 upstream 不认 tools：首轮且啥都没吐出来时，去掉工具重试一次
++                    if allow_tools and rnd == 1 and not text_parts and not thinking_parts:
++                        log.warning("upstream rejected tools, retry without: %s", e)
++                        allow_tools = False
++                        continue
++                    raise
++                if not tc_list or rnd >= MCP_MAX_ROUNDS:
++                    break
++                # 本轮正文挂到 tool_calls 消息上，工具结果回灌后继续下一轮
++                up_msgs.append({"role": "assistant", "content": "".join(text_parts[round_start:]),
++                                "tool_calls": [{"id": tc["id"], "type": "function",
++                                                "function": {"name": tc["name"],
++                                                             "arguments": tc["arguments"] or "{}"}}
++                                               for tc in tc_list]})
++                for tc in tc_list:
++                    t0 = time.monotonic()
++                    ok, out = await mcp_execute(tc["name"], tc["arguments"], tool_index)
++                    ms = int((time.monotonic() - t0) * 1000)
++                    log.info("mcp tool %s ok=%s %sms", tc["name"], ok, ms)
++                    yield sse_event("tool", {"name": tc["name"], "ok": ok, "ms": ms})
++                    up_msgs.append({"role": "tool", "tool_call_id": tc["id"],
++                                    "content": (("[error] " if not ok else "") + out).strip() or "（无输出）"})
+             finished = True
+         except UpstreamError as e:
+             log.warning("chat upstream error: %s", e)
+@@ -1541,7 +1996,8 @@
+ else:
+     @app.get("/")
+     async def root():
+-        return {"ok": True, "service": "chatnest-backend", "hint": "把前端仓库拷进 static/ 可同域托管"}
++        return {"ok": True, "service": "chatnest-backend", "build": CODE_BUILD,
++                "hint": "把前端仓库拷进 static/ 可同域托管"}
+ 
+ if __name__ == "__main__":
+     import uvicorn

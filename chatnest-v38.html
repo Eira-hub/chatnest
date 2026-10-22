@@ -914,7 +914,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v40.2</span>
+    <span class="fs-ver">v40.3</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1052,7 +1052,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v40.2<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v40.3<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -2735,6 +2735,7 @@ function mcpCollectForm(){
   const name=$('mcpFName').value.trim(), url=$('mcpFUrl').value.trim();
   if(!name || !url){ toast('名称和地址都要填',2000); return null; }
   const body={ name, url, type:mcpEditType, enabled:!!mcpEditEnabled };
+  if(mcpEditId) body.id=mcpEditId;          /* v40.3 编辑时带上 id，否则保存会变成新建重复项 */
   const b=$('mcpFBearer').value;
   if(b) body.bearer=b;                       // 有值=设置；无值=后端不动
   const h=$('mcpFHeaders').value.trim();
