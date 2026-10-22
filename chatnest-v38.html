@@ -167,7 +167,6 @@ svg{display:block}
 .think[open] summary .tp-arrow{transform:rotate(90deg)}
 .think .tk-body{font-size:12.5px;color:var(--text3);margin-top:5px;white-space:pre-wrap;max-height:180px;overflow-y:auto;line-height:1.6;padding-left:18px}
 .typing{display:inline-flex;gap:4px;align-items:center;height:20px}
-.typing .t-st{margin-left:6px;font-size:11.5px;color:var(--text3);letter-spacing:.04em;white-space:nowrap}
 /* v36.75 工具循环胶囊：AI 用工具时的小卡片 */
 .toolchip{display:flex;align-items:center;gap:8px;margin:6px 0 2px;padding:6px 12px;border-radius:14px;
   background:rgba(120,144,255,.10);border:1px solid rgba(120,144,255,.22);max-width:86%;width:fit-content;
@@ -915,7 +914,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v40.0</span>
+    <span class="fs-ver">v40.1</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1053,7 +1052,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v40.0<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v40.1<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -1843,9 +1842,8 @@ async function send(silentUser){
 
   const ab = document.createElement('div');
   ab.className = 'msg ai';
-  ab.innerHTML = '<div class="avatar">'+avatarSvg()+'</div><div class="col"><div class="bubble"><div class="typing"><i></i><i></i><i></i><span class="t-st">正在想…</span></div><div class="body" style="display:none"></div></div></div>';
-  /* v40.0 预留气泡常显：请求一发出就见三点动画+状态行（正在想→正在思考→调用工具→画图），
-     不再空白等待；首段弹出/出图/出错时照旧被替换或收起 */
+  ab.innerHTML = '<div class="avatar">'+avatarSvg()+'</div><div class="col"><div class="bubble"><div class="typing"><i></i><i></i><i></i></div><div class="body" style="display:none"></div></div></div>';
+  /* v40.1 预留气泡常显且只显示三个点动画（画图时也是三个点），不带文字；首段弹出/出图/出错时照旧被替换或收起 */
   ab.style.display = '';
   inner.appendChild(ab);
 
@@ -1855,8 +1853,6 @@ async function send(silentUser){
   let finished = false;           /* v36.71 流是否已结束（定时器弹段用） */
   const myLive = [];              /* v36.71 本条流已弹出的节点，结束时移除后统一重渲染，防消息发两遍 */
   const bodyEl = ab.querySelector('.body');
-  const abSt = ab.querySelector('.t-st');
-  function setAbState(t){ if(abSt) abSt.textContent = t; }   /* v40.0 预留气泡状态行 */
   let toolNodes = [];   /* v36.75 本轮流式期间的工具胶囊 */
   try{
     /* v36.65 语音提示与生图提示按需叠加（都以[[sys:...]]结尾，显示时会被剥掉） */
@@ -1890,7 +1886,6 @@ async function send(silentUser){
           state.convId = obj.conversation_id; localStorage.setItem(LS.conv, state.convId);
         }else if(ev==='thinking'){
           tBuf += obj.text||'';   /* v36.69 思考中不显示任何东西，思考内容在回复弹出时收进折叠条 */
-          setAbState('正在思考…');   /* v40.0 */
         }else if(ev==='delta'){
           xBuf += obj.text||'';
           had = true;
@@ -1930,7 +1925,6 @@ async function send(silentUser){
           chip.innerHTML='<span class="tc-ico">🔧</span><span class="tc-name">'+esc(pn)+'</span><span class="tc-st">'+(ok?('完成 · '+(ms/1000).toFixed(1)+'s'):'失败了')+'</span>';
           ab.parentNode && ab.parentNode.insertBefore(chip, ab);
           toolNodes.push(chip);
-          setAbState(ok?('刚调用了 '+pn+' · 接着想…'):(pn+' 失败了 · 换个思路想…'));
           scrollToBottom();
         }else if(ev==='error'){
           err = obj.message||'出错了';
@@ -1970,7 +1964,6 @@ async function send(silentUser){
           if(chunks.length) first=false;
         }else{
           first=false;
-          setAbState('正在画图…');   /* v40.0 */
           genImage(s.prompt).then(url=>{
             const node=imgDoneNode(url);
             /* v36.67 纯图回复：打字动画气泡保留到出图，图片直接替换它（不闪空） */
