@@ -914,7 +914,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v39.7</span>
+    <span class="fs-ver">v39.8</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1052,7 +1052,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v39.7<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v39.8<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -2259,8 +2259,10 @@ function sendInviteCard(game, code){
   try{ localStorage.setItem('lastRoomCode', code); }catch(err){}
   saveMirrorCard(game, code);   /* v39.6 镜像：刷新后卡片必在 */
   /* v39.5 卡片消息落库：走 /api/chat（silentUser 不重复渲染气泡），历史刷新可回拉重建卡片；
-     TA（Orion）侧经 [[invite:游戏:房码]] 标记感知邀请，可入座（join 是引擎侧职责） */
-  try{ send('[[invite:'+game+':'+code+']]', true); }catch(err){}
+     TA（Orion）侧经 [[invite:游戏:房码]] 标记感知邀请，可入座（join 是引擎侧职责）
+     v39.8 修复：send(silentUser) 的文本取自输入框，此前把标记文本传成了 silentUser 形参——
+     标记从未进输入框，send 里 if(!text) return 直接吞掉，卡片消息从未落库 */
+  try{ $('input').value='[[invite:'+game+':'+code+']]'; send(true); }catch(err){}
   /* 已接：POST /api/invite 邀请即建房，荷官侧经 /api/invites 感知入桌 */
   try{
     fetch('https://game.eira0716.dpdns.org/api/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:game,code:code,from:'宝宝'})}).catch(()=>{});
