@@ -914,7 +914,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v39.8</span>
+    <span class="fs-ver">v39.9</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1052,7 +1052,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v39.8<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v39.9<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -2204,11 +2204,11 @@ function renderMirrorCards(){
   }catch(e){}
 }
 /* ═══ v39.4 邀请卡是活的：3s 轮询房态，状态行实时更新（等待→已入座→对局中）═══ */
-let invPollTimer=null,invPollCode='',invPollCard=null;
+let invPollTimer=null,invPollCode='',invPollCard=null,invMiss=0;
 const INV_ST_WAIT='等待 TA 入座…',INV_ST_READY='TA 已入座 · 点卡开桌',
       INV_ST_PLAY='对局进行中 · 点卡回牌桌',INV_ST_GONE='房间已过期';
 function markActiveInvite(code,card){
-  invPollCode=String(code||'').toUpperCase(); invPollCard=card||null;
+  invPollCode=String(code||'').toUpperCase(); invPollCard=card||null; invMiss=0;
   if(invPollTimer){ clearInterval(invPollTimer); invPollTimer=null; }
   if(!invPollCard) return;
   invPollTimer=setInterval(invTick,3000);
@@ -2223,9 +2223,17 @@ async function invTick(){
   const st=invPollCard.querySelector('.inv-st'); if(!st) return;
   try{
     const r=await fetch('https://game.eira0716.dpdns.org/api/game/room/'+encodeURIComponent(invPollCode));
-    /* v39.5 只有 404 才判过期：429/5xx 等抖动直接跳过本轮，别把活房定格成"已过期" */
-    if(r.status===404){ st.textContent=INV_ST_GONE; st.style.animation='none'; stopInvPoll(); removeMirrorCard(invPollCode); return; }
+    /* v39.5 只有 404 才判过期：429/5xx 等抖动直接跳过本轮，别把活房定格成"已过期"
+       v39.9 防建房竞态：发卡同一时刻才发 /api/invite 建房（CF 冷启动可 >800ms），
+       首轮 404 是假信号——M47Q 实测中招：房其实建好了，卡却被定格"已过期"且镜像被清。
+       改为连续 2 次 404（间隔 3s，足够建房落地）才判过期 */
+    if(r.status===404){
+      invMiss++;
+      if(invMiss>=2){ st.textContent=INV_ST_GONE; st.style.animation='none'; stopInvPoll(); removeMirrorCard(invPollCode); }
+      return;
+    }
     if(!r.ok) return;
+    invMiss=0;
     const room=await r.json();
     const nm=(room.members&&room.members.length)||0;
     const sts=String(room.status||'');
