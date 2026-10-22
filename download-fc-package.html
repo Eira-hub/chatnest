@@ -18,12 +18,12 @@
 </head>
 <body>
 <div class="card">
-  <h1>📦 ChatNest FC 最终包</h1>
+  <h1>📦 ChatNest FC 完整包（含 pylibs）</h1>
   <p>build：<code>2026-10-22-r2-mcp</code>（MCP 服务器管理 + 聊天工具循环）</p>
-  <p>内容：打补丁后的 app.py + 原封 requirements.txt / start.sh</p>
-  <p>校验 md5：<code>528e2803d72d82b324972606b845659e</code></p>
+  <p>内容：app.py（已打补丁）+ requirements.txt + start.sh + <b>pylibs/ 依赖目录</b>（此前缺它导致启动失败）</p>
+  <p>校验 md5：<code>67c1c37728ab06f4b2e68bfce455998a</code>（6.6MB）</p>
   <p>上传 FC 后访问 <code>/</code>，返回 build 字段一致即部署成功。</p>
-  <a class="btn" href="chatnest-fc-20261022-r2-mcp.zip" download id="dl">⬇ 下载 chatnest-fc-20261022-r2-mcp.zip</a>
+  <a class="btn" href="chatnest-fc-20261022-r2-mcp-full.zip" download id="dl">⬇ 下载 chatnest-fc-20261022-r2-mcp-full.zip</a>
   <p id="msg" style="margin-top:14px;display:none;color:#8fd694">已触发保存，请在浏览器下载列表里确认 zip 本体（不要选“解压/预览”）。</p>
 </div>
 <script>
@@ -36,7 +36,7 @@ document.getElementById('dl').addEventListener('click', function(e){
   }).then(function(b){
     var u = URL.createObjectURL(b);
     var a = document.createElement('a');
-    a.href = u; a.download = 'chatnest-fc-20261022-r2-mcp.zip';
+    a.href = u; a.download = 'chatnest-fc-20261022-r2-mcp-full.zip';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){ URL.revokeObjectURL(u); }, 8000);
     document.getElementById('msg').style.display = 'block';
