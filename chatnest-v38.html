@@ -139,7 +139,7 @@ svg{display:block}
 .bubble{max-width:100%;padding:7px 12px;border-radius:var(--r-bubble);font-size:var(--fs);word-break:break-word;overflow-wrap:anywhere}
 .msg.user{margin-left:auto}
 .msg.user .bubble{background:linear-gradient(135deg,var(--user-b1),var(--user-b2));color:var(--user-fg);border:1px solid var(--user-line);border-top-right-radius:var(--r-bubble);box-shadow:0 2px 10px rgba(0,0,0,.22)}
-.msg.ai .bubble{background:var(--ai-b);border:1px solid var(--ai-line);border-top-left-radius:var(--r-bubble);color:var(--ai-fg,var(--text))}
+.msg.ai .bubble{background:linear-gradient(135deg,var(--ai-b1,var(--ai-b)),var(--ai-b2,rgba(12,13,18,.30)));border:1px solid var(--user-line);border-top-left-radius:var(--r-bubble);color:var(--ai-fg,var(--text));box-shadow:0 2px 10px rgba(0,0,0,.22)}   /* v40.7 对方气泡与我的同质感：暖渐变+同边框+阴影 */
 .bubble .body a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .bubble .body h1,.bubble .body h2,.bubble .body h3{font-family:var(--serif);font-weight:500;margin:10px 0 4px;font-size:16.5px}
 .bubble .body p{margin:0}
@@ -179,7 +179,7 @@ svg{display:block}
 .hex-in{width:88px;flex:none;padding:4px 8px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);
   color:var(--text);font:12px ui-monospace,monospace;outline:none}
 .hex-in:focus{border-color:var(--accent)}
-.typing i{width:5px;height:5px;border-radius:50%;background:var(--text);animation:blink 1.2s infinite}   /* v40.2 三点颜色与气泡字体一致 */
+.typing i{width:5px;height:5px;border-radius:50%;background:var(--ai-fg,var(--text));animation:blink 1.2s infinite}   /* v40.7 三点跟随气泡文字色（浅底上也能看见） */
 .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
 .msg-err{margin-top:6px;font-size:13px;color:var(--danger)}
@@ -917,7 +917,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v40.6</span>
+    <span class="fs-ver">v40.7</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1055,7 +1055,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v40.6<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v40.7<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -2604,8 +2604,11 @@ function tintApply(){
   r.setProperty('--user-b1', t.ub1||d.ub1); r.setProperty('--user-b2', t.ub2||d.ub2);
   r.setProperty('--user-fg', lum(t.ub1||d.ub1)>0.62?'#1B1C22':'#E9EBF4');
   r.setProperty('--ai-b', t.aib||d.aib); r.setProperty('--ai-line', t.line||d.line);
-  /* v40.6 对方气泡换了浅色时，气泡文字自动切深色，保证看得清 */
-  const ab6=(typeof t.aib==='string'&&t.aib[0]==='#')?t.aib.slice(0,7):(typeof d.aib==='string'&&d.aib[0]==='#'?d.aib.slice(0,7):null);
+  /* v40.7 对方气泡与我的气泡同质感：渐变两端 + 浅底深字对比度 */
+  const abBase=t.aib||d.aib;
+  const ab6=(typeof abBase==='string'&&abBase[0]==='#')?abBase.slice(0,7):null;
+  r.setProperty('--ai-b1', abBase);
+  r.setProperty('--ai-b2', ab6?shade(ab6,.72):'rgba(12,13,18,.30)');
   if(ab6) r.setProperty('--ai-fg', lum(ab6)>0.62?'#1B1C22':'#E9EBF4'); else r.removeProperty('--ai-fg');
   const pc=(typeof t.panel==='string'&&t.panel[0]==='#')?t.panel:d.panel;
   r.setProperty('--panel-solid', pc);
