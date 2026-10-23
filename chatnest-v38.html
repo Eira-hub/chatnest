@@ -139,7 +139,7 @@ svg{display:block}
 .bubble{max-width:100%;padding:7px 12px;border-radius:var(--r-bubble);font-size:var(--fs);word-break:break-word;overflow-wrap:anywhere}
 .msg.user{margin-left:auto}
 .msg.user .bubble{background:linear-gradient(135deg,var(--user-b1),var(--user-b2));color:var(--user-fg);border:1px solid var(--user-line);border-top-right-radius:var(--r-bubble);box-shadow:0 2px 10px rgba(0,0,0,.22)}
-.msg.ai .bubble{background:var(--ai-b);border:1px solid var(--ai-line);border-top-left-radius:var(--r-bubble)}
+.msg.ai .bubble{background:var(--ai-b);border:1px solid var(--ai-line);border-top-left-radius:var(--r-bubble);color:var(--ai-fg,var(--text))}
 .bubble .body a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .bubble .body h1,.bubble .body h2,.bubble .body h3{font-family:var(--serif);font-weight:500;margin:10px 0 4px;font-size:16.5px}
 .bubble .body p{margin:0}
@@ -176,7 +176,7 @@ svg{display:block}
 .toolchip.tc-fail{color:var(--danger)}
 @keyframes tcIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 /* v40.4 色号输入：所有颜色选择器旁可直接敲 #RRGGBB */
-.hex-in{width:88px;padding:4px 8px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);
+.hex-in{width:88px;flex:none;padding:4px 8px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);
   color:var(--text);font:12px ui-monospace,monospace;outline:none}
 .hex-in:focus{border-color:var(--accent)}
 .typing i{width:5px;height:5px;border-radius:50%;background:var(--text);animation:blink 1.2s infinite}   /* v40.2 三点颜色与气泡字体一致 */
@@ -519,7 +519,7 @@ body.has-wall .stars{opacity:.75}
 .wall-grid .sw.on{border-color:var(--accent);background:var(--panel3)}
 .wall-grid .sw i{width:100%;aspect-ratio:1;border-radius:9px;background-size:cover;background-position:center;border:1px solid var(--line2);display:block}
 .wall-grid .sw b{font-size:10.5px;font-weight:400;color:var(--text2);white-space:nowrap;overflow:hidden;max-width:100%}
-.wall-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.wall-row{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
 .wall-row .wl-lab{font-size:12px;color:var(--text3);flex-shrink:0;letter-spacing:.1em}
 .wall-row input[type=range]{flex:1;accent-color:#A5B9DC;height:22px}
 .palette{display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin-top:10px}
@@ -917,7 +917,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v40.5</span>
+    <span class="fs-ver">v40.6</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -983,7 +983,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">主页渐变与背景</div>
     <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">渐变色跟背景图都在这，点一下就换。</div>
     <div id="hmGradRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
-          <div class="wall-row" style="margin-top:12px"><span class="wl-lab">文字颜色</span><input type="color" id="hmFgPick" value="#FFFFFF"><input type="text" class="hex-in" id="hmFgPickHex" maxlength="7" placeholder="#FFFFFF" autocomplete="off" spellcheck="false"><button class="set-btn" id="btnHmFgReset" style="padding:5px 12px;font-size:12px">跟随渐变</button></div>
+          <div class="wall-row" style="margin-top:12px"><span class="wl-lab">文字颜色</span><input type="color" id="hmFgPick" value="#FFFFFF"><input type="text" class="hex-in" id="hmFgPickHex" maxlength="7" placeholder="#FFFFFF" autocomplete="off" spellcheck="false" autocapitalize="off"><button class="set-btn" id="btnHmFgReset" style="width:auto;height:30px;padding:5px 12px;font-size:12px;flex:none">跟随渐变</button></div>
     <div style="display:flex;gap:10px;margin-top:10px">
       <button class="set-btn" id="btnHomeBg" style="flex:1">换背景图</button>
       <button class="set-btn" id="btnHomeBgClear" style="flex:1">清除背景</button>
@@ -1055,7 +1055,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v40.5<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v40.6<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -2593,7 +2593,7 @@ $('btnWallReset').addEventListener('click', ()=>{ const c=wallConf(); c.mode='de
 
 /* ───────── 调色盘 v15 ───────── */
 LS.theme='cn_theme';
-const TINT_DEF={ub1:'#F2EDE7',ub2:'#E7E0D8',aib:'rgba(12,13,18,.42)',line:'rgba(255,255,255,.22)',panel:'#111731'};
+const TINT_DEF={ub1:'#F2EDE7',ub2:'#E7E0D8',aib:'#F5F0E0',line:'rgba(255,255,255,.22)',panel:'#111731'};   /* v40.6 对方气泡默认奶油色 F5F0E0 */
 function lum(hex){ try{ const n=parseInt(hex.slice(1),16); return (0.299*((n>>16)&255)+0.587*((n>>8)&255)+0.114*(n&255))/255; }catch(e){ return 0; } }
 const PALETTE=['#A5B9DC','#D98A9E','#E8A2B8','#8E7CC3','#5E8D9E','#7FBFA8','#D9A066','#C9A86A','#A0525F','#3D4E7A','#4A6E5D','#16161C'];
 function shade(hex,f){ try{ const n=parseInt(hex.slice(1),16); const r=Math.round(((n>>16)&255)*f),g=Math.round(((n>>8)&255)*f),b=Math.round((n&255)*f); return '#'+[r,g,b].map(x=>Math.min(255,x).toString(16).padStart(2,'0')).join(''); }catch(e){ return hex; } }
@@ -2604,12 +2604,15 @@ function tintApply(){
   r.setProperty('--user-b1', t.ub1||d.ub1); r.setProperty('--user-b2', t.ub2||d.ub2);
   r.setProperty('--user-fg', lum(t.ub1||d.ub1)>0.62?'#1B1C22':'#E9EBF4');
   r.setProperty('--ai-b', t.aib||d.aib); r.setProperty('--ai-line', t.line||d.line);
+  /* v40.6 对方气泡换了浅色时，气泡文字自动切深色，保证看得清 */
+  const ab6=(typeof t.aib==='string'&&t.aib[0]==='#')?t.aib.slice(0,7):(typeof d.aib==='string'&&d.aib[0]==='#'?d.aib.slice(0,7):null);
+  if(ab6) r.setProperty('--ai-fg', lum(ab6)>0.62?'#1B1C22':'#E9EBF4'); else r.removeProperty('--ai-fg');
   const pc=(typeof t.panel==='string'&&t.panel[0]==='#')?t.panel:d.panel;
   r.setProperty('--panel-solid', pc);
   r.setProperty('--panel-top', pc+'99');
   r.setProperty('--panel', pc+'C7');
   if($('bubSelf')) $('bubSelf').value=(typeof t.ub1==='string'&&t.ub1[0]==='#')?t.ub1:d.ub1;
-  if($('bubPeer')) $('bubPeer').value=(typeof t.aib==='string'&&t.aib[0]==='#')?t.aib.slice(0,7):'#0C0D12';
+  if($('bubPeer')){ const abv=(t.aib!==undefined?t.aib:d.aib); $('bubPeer').value=(typeof abv==='string'&&abv[0]==='#')?abv.slice(0,7):'#0C0D12'; }
   if($('bubPanel')) $('bubPanel').value=pc;
   window.hexSync&&hexSync('bubSelf');window.hexSync&&hexSync('bubPeer');window.hexSync&&hexSync('bubPanel');   /* v40.4 色号框跟随 */
 }
@@ -2650,7 +2653,7 @@ function hexBind(id){
     h.addEventListener('change',()=>{ const v=norm(h.value); if(v)apply(); else h.value=c.value; });
     const ok=document.createElement('button');
     ok.type='button'; ok.className='set-btn'; ok.textContent='确定';
-    ok.style.cssText='padding:4px 12px;font-size:12px;flex:none';
+    ok.style.cssText='padding:4px 12px;font-size:12px;width:auto;height:30px;flex:none';   /* v40.6 覆盖 .set-btn 的 width:100%，否则挤爆整行 */
     ok.addEventListener('click',()=>{ apply(); h.blur(); });
     h.after(ok);
   }
