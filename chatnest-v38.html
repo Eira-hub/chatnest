@@ -917,7 +917,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v40.4</span>
+    <span class="fs-ver">v40.5</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1055,7 +1055,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v40.4<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v40.5<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -2629,7 +2629,7 @@ $('bubSelf').addEventListener('input', ()=>{ const t=tint(); t.ub1=$('bubSelf').
 $('bubPeer').addEventListener('input', ()=>{ const t=tint(); t.aib=$('bubPeer').value+'D9'; tintSave(t); tintApply(); });
 $('bubPanel').addEventListener('input', ()=>{ const t=tint(); t.panel=$('bubPanel').value; tintSave(t); tintApply(); });
 $('btnTintReset').addEventListener('click', ()=>{ localStorage.removeItem(LS.theme); tintApply(); toast('回到原色了'); });
-/* v40.4 色号输入：颜色选择器旁的 #RRGGBB 双向绑定（输入合法色号即生效，非法失焦还原） */
+/* v40.5 色号输入：加「确定」键生效（回车等同确定），不再边输边套；非法色号提示并还原 */
 function hexSync(id){ const c=document.getElementById(id),h=document.getElementById(id+'Hex'); if(c&&h)h.value=c.value; }
 function hexBind(id){
   const c=document.getElementById(id),h=document.getElementById(id+'Hex'); if(!c||!h)return;
@@ -2637,8 +2637,22 @@ function hexBind(id){
   if(!c.dataset.hexBound){
     c.dataset.hexBound='1';
     c.addEventListener('input',()=>{ h.value=c.value; });
-    h.addEventListener('input',()=>{ const v=norm(h.value); if(v&&v.toLowerCase()!==c.value.toLowerCase()){ c.value=v; c.dispatchEvent(new Event('input')); } });
-    h.addEventListener('change',()=>{ const v=norm(h.value); h.value=v||c.value; });
+    const apply=()=>{
+      const v=norm(h.value);
+      if(v){
+        h.value=v;
+        if(v.toLowerCase()!==c.value.toLowerCase()){ c.value=v; c.dispatchEvent(new Event('input')); toast('颜色换好了'); }
+      }else{
+        toast('色号要 #RRGGBB 六位十六进制',2000); h.value=c.value;
+      }
+    };
+    h.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); apply(); h.blur(); } });
+    h.addEventListener('change',()=>{ const v=norm(h.value); if(v)apply(); else h.value=c.value; });
+    const ok=document.createElement('button');
+    ok.type='button'; ok.className='set-btn'; ok.textContent='确定';
+    ok.style.cssText='padding:4px 12px;font-size:12px;flex:none';
+    ok.addEventListener('click',()=>{ apply(); h.blur(); });
+    h.after(ok);
   }
   h.value=c.value;
 }
