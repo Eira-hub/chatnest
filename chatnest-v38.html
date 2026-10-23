@@ -167,15 +167,18 @@ svg{display:block}
 .think[open] summary .tp-arrow{transform:rotate(90deg)}
 .think .tk-body{font-size:12.5px;color:var(--text3);margin-top:5px;white-space:pre-wrap;max-height:180px;overflow-y:auto;line-height:1.6;padding-left:18px}
 .typing{display:inline-flex;gap:4px;align-items:center;height:20px}
-/* v36.75 工具循环胶囊：AI 用工具时的小卡片 */
-.toolchip{display:flex;align-items:center;gap:8px;margin:6px 0 2px;padding:6px 12px;border-radius:14px;
-  background:rgba(120,144,255,.10);border:1px solid rgba(120,144,255,.22);max-width:86%;width:fit-content;
-  font-size:12px;color:#5b6bd6;animation:tcIn .25s ease}
-.toolchip .tc-ico{font-size:13px}
+/* v40.4 工具行动行：对话流中间的纯文字（无气泡无底色），TA 调用工具/MCP 的记录 */
+.toolchip{display:block;text-align:center;margin:6px 0 2px;padding:2px 12px;
+  font-size:11.5px;color:var(--text3);letter-spacing:.3px;animation:tcIn .25s ease}
+.toolchip .tc-ico{font-size:11.5px}
 .toolchip .tc-name{font-weight:600;font-family:ui-monospace,monospace;letter-spacing:.2px}
-.toolchip .tc-st{opacity:.75;font-size:11px}
-.toolchip.tc-fail{background:rgba(255,99,99,.08);border-color:rgba(255,99,99,.25);color:#c0564f}
+.toolchip .tc-st{opacity:.8;font-size:11px}
+.toolchip.tc-fail{color:var(--danger)}
 @keyframes tcIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* v40.4 色号输入：所有颜色选择器旁可直接敲 #RRGGBB */
+.hex-in{width:88px;padding:4px 8px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);
+  color:var(--text);font:12px ui-monospace,monospace;outline:none}
+.hex-in:focus{border-color:var(--accent)}
 .typing i{width:5px;height:5px;border-radius:50%;background:var(--text);animation:blink 1.2s infinite}   /* v40.2 三点颜色与气泡字体一致 */
 .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
@@ -914,7 +917,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v40.2</span>
+    <span class="fs-ver">v40.4</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -980,7 +983,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">主页渐变与背景</div>
     <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">渐变色跟背景图都在这，点一下就换。</div>
     <div id="hmGradRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
-          <div class="wall-row" style="margin-top:12px"><span class="wl-lab">文字颜色</span><input type="color" id="hmFgPick" value="#FFFFFF"><button class="set-btn" id="btnHmFgReset" style="padding:5px 12px;font-size:12px">跟随渐变</button></div>
+          <div class="wall-row" style="margin-top:12px"><span class="wl-lab">文字颜色</span><input type="color" id="hmFgPick" value="#FFFFFF"><input type="text" class="hex-in" id="hmFgPickHex" maxlength="7" placeholder="#FFFFFF" autocomplete="off" spellcheck="false"><button class="set-btn" id="btnHmFgReset" style="padding:5px 12px;font-size:12px">跟随渐变</button></div>
     <div style="display:flex;gap:10px;margin-top:10px">
       <button class="set-btn" id="btnHomeBg" style="flex:1">换背景图</button>
       <button class="set-btn" id="btnHomeBgClear" style="flex:1">清除背景</button>
@@ -989,14 +992,14 @@ body.has-wall .stars{opacity:.75}
   <div class="set-block">
     <div class="set-label">主题颜色</div>
     <div style="font-size:11px;color:var(--text3);margin:-2px 0 8px;line-height:1.5">顶栏、对话列表、设置页就是这里的颜色。</div>
-    <div class="wall-row"><span class="wl-lab">面板</span><input type="color" id="bubPanel" value="#111731"></div>
+    <div class="wall-row"><span class="wl-lab">面板</span><input type="color" id="bubPanel" value="#111731"><input type="text" class="hex-in" id="bubPanelHex" maxlength="7" placeholder="#111731" autocomplete="off" spellcheck="false"></div>
     <div class="sub-lab">气泡</div>
-    <div class="wall-row"><span class="wl-lab">我的气泡</span><input type="color" id="bubSelf" value="#F2EDE7"></div>
-    <div class="wall-row"><span class="wl-lab">对方气泡</span><input type="color" id="bubPeer" value="#0C0D12"></div>
+    <div class="wall-row"><span class="wl-lab">我的气泡</span><input type="color" id="bubSelf" value="#F2EDE7"><input type="text" class="hex-in" id="bubSelfHex" maxlength="7" placeholder="#F2EDE7" autocomplete="off" spellcheck="false"></div>
+    <div class="wall-row"><span class="wl-lab">对方气泡</span><input type="color" id="bubPeer" value="#0C0D12"><input type="text" class="hex-in" id="bubPeerHex" maxlength="7" placeholder="#0C0D12" autocomplete="off" spellcheck="false"></div>
     <div class="sub-lab">聊天壁纸颜色</div>
     <div class="palette" id="wallPalette"></div>
-    <div class="wall-row"><span class="wl-lab">上色</span><input type="color" id="wallC1" value="#A5B9DC"></div>
-    <div class="wall-row"><span class="wl-lab">下色</span><input type="color" id="wallC2" value="#0A0F22"></div>
+    <div class="wall-row"><span class="wl-lab">上色</span><input type="color" id="wallC1" value="#A5B9DC"><input type="text" class="hex-in" id="wallC1Hex" maxlength="7" placeholder="#A5B9DC" autocomplete="off" spellcheck="false"></div>
+    <div class="wall-row"><span class="wl-lab">下色</span><input type="color" id="wallC2" value="#0A0F22"><input type="text" class="hex-in" id="wallC2Hex" maxlength="7" placeholder="#0A0F22" autocomplete="off" spellcheck="false"></div>
     <button class="set-btn" id="btnTintReset" style="margin-top:12px">颜色恢复默认</button>
     <div class="sub-lab">水珠选中色</div>
     <div class="palette" id="ballPalette"></div>
@@ -1052,7 +1055,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v40.2<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v40.4<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -2451,6 +2454,7 @@ function applyHomeFg(){
   const ok=v&&/^#[0-9a-fA-F]{6}$/.test(v);
   if(ok)sec.style.setProperty('--hm-fg',v);else sec.style.removeProperty('--hm-fg');
   if(fp)fp.value=ok?v:'#FFFFFF';
+  window.hexSync&&hexSync('hmFgPick');   /* v40.4 色号框跟随 */
 }
 (function(){
   const fp=document.getElementById('hmFgPick'),fr=document.getElementById('btnHmFgReset');
@@ -2607,16 +2611,17 @@ function tintApply(){
   if($('bubSelf')) $('bubSelf').value=(typeof t.ub1==='string'&&t.ub1[0]==='#')?t.ub1:d.ub1;
   if($('bubPeer')) $('bubPeer').value=(typeof t.aib==='string'&&t.aib[0]==='#')?t.aib.slice(0,7):'#0C0D12';
   if($('bubPanel')) $('bubPanel').value=pc;
+  window.hexSync&&hexSync('bubSelf');window.hexSync&&hexSync('bubPeer');window.hexSync&&hexSync('bubPanel');   /* v40.4 色号框跟随 */
 }
 function renderPalette(){
   const p=$('wallPalette'); if(!p) return;
   p.innerHTML=PALETTE.map(c=>'<i data-c="'+c+'" style="background:linear-gradient(180deg,'+c+','+shade(c,.42)+')"></i>').join('');
   p.querySelectorAll('i').forEach(el=>el.addEventListener('click',()=>{
     const c=el.dataset.c; const w=wallConf(); w.mode='custom'; w.c1=c; w.c2=shade(c,.42); wallSave(w); wallApply();
-    $('wallC1').value=c; $('wallC2').value=w.c2; toast('换好了');
+    $('wallC1').value=c; $('wallC2').value=w.c2; window.hexSync&&hexSync('wallC1');window.hexSync&&hexSync('wallC2'); toast('换好了');
   }));
   const cur=wallConf();
-  if(cur.mode==='custom'){ $('wallC1').value=cur.c1||'#A5B9DC'; $('wallC2').value=cur.c2||'#0A0F22'; }
+  if(cur.mode==='custom'){ $('wallC1').value=cur.c1||'#A5B9DC'; $('wallC2').value=cur.c2||'#0A0F22'; window.hexSync&&hexSync('wallC1');window.hexSync&&hexSync('wallC2'); }
 }
 $('wallC1').addEventListener('input', ()=>{ const w=wallConf(); w.mode='custom'; w.c1=$('wallC1').value; if(!w.c2) w.c2=shade(w.c1,.42); wallSave(w); wallApply(); });
 $('wallC2').addEventListener('input', ()=>{ const w=wallConf(); w.mode='custom'; w.c2=$('wallC2').value; if(!w.c1) w.c1='#A5B9DC'; wallSave(w); wallApply(); });
@@ -2624,6 +2629,20 @@ $('bubSelf').addEventListener('input', ()=>{ const t=tint(); t.ub1=$('bubSelf').
 $('bubPeer').addEventListener('input', ()=>{ const t=tint(); t.aib=$('bubPeer').value+'D9'; tintSave(t); tintApply(); });
 $('bubPanel').addEventListener('input', ()=>{ const t=tint(); t.panel=$('bubPanel').value; tintSave(t); tintApply(); });
 $('btnTintReset').addEventListener('click', ()=>{ localStorage.removeItem(LS.theme); tintApply(); toast('回到原色了'); });
+/* v40.4 色号输入：颜色选择器旁的 #RRGGBB 双向绑定（输入合法色号即生效，非法失焦还原） */
+function hexSync(id){ const c=document.getElementById(id),h=document.getElementById(id+'Hex'); if(c&&h)h.value=c.value; }
+function hexBind(id){
+  const c=document.getElementById(id),h=document.getElementById(id+'Hex'); if(!c||!h)return;
+  const norm=v=>{ v=(v||'').trim(); if(v&&v[0]!=='#')v='#'+v; return /^#[0-9a-fA-F]{6}$/.test(v)?v:null; };
+  if(!c.dataset.hexBound){
+    c.dataset.hexBound='1';
+    c.addEventListener('input',()=>{ h.value=c.value; });
+    h.addEventListener('input',()=>{ const v=norm(h.value); if(v&&v.toLowerCase()!==c.value.toLowerCase()){ c.value=v; c.dispatchEvent(new Event('input')); } });
+    h.addEventListener('change',()=>{ const v=norm(h.value); h.value=v||c.value; });
+  }
+  h.value=c.value;
+}
+['hmFgPick','bubPanel','bubSelf','bubPeer','wallC1','wallC2'].forEach(hexBind);
 LS.think='cn_think';
 $('btnThink').addEventListener('click', ()=>{ const on=thinkOn(); localStorage.setItem(LS.think, on?'0':'1'); $('btnThink').textContent=on?'已隐藏':'显示中'; toast(on?'藏起来了':'好，给你看'); });
 $('wallDim').addEventListener('input', ()=>{ const c=wallConf(); c.dim=+$('wallDim').value; wallSave(c); $('wallpaper').querySelector('.dim').style.opacity=c.dim/100; });
@@ -2735,6 +2754,7 @@ function mcpCollectForm(){
   const name=$('mcpFName').value.trim(), url=$('mcpFUrl').value.trim();
   if(!name || !url){ toast('名称和地址都要填',2000); return null; }
   const body={ name, url, type:mcpEditType, enabled:!!mcpEditEnabled };
+  if(mcpEditId) body.id=mcpEditId;          /* v40.3 编辑时带上 id，否则保存会变成新建重复项 */
   const b=$('mcpFBearer').value;
   if(b) body.bearer=b;                       // 有值=设置；无值=后端不动
   const h=$('mcpFHeaders').value.trim();
