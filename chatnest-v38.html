@@ -916,7 +916,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v40.13</span>
+    <span class="fs-ver">v40.14</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1054,7 +1054,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v40.13<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v40.14<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -1288,7 +1288,12 @@ async function openConv(id, opt){
       btn.addEventListener('click', ()=> loadEarlier(btn, id, r.next_before_id));
       inner.appendChild(btn);
     }
-    for(const m of msgs) inner.appendChild(bubbleEl(m));
+    for(const m of msgs){
+      inner.appendChild(bubbleEl(m));
+      if((m.role||'')==='user'){
+        for(const it of chipTakeFor(id, m.text||'')) inner.appendChild(toolChipNode(it.n, it.ok));   /* v40.14 行动行原位重建 */
+      }
+    }
     renderMirrorCards();   /* v39.6 镜像兜底：历史里没有的卡片补回来（按房码去重） */
     const lm=msgs[msgs.length-1];
     if(lm) stashLastMsg(id, lm.role, lm.text);   /* v36.48 主页速览预览缓存 */
@@ -1305,7 +1310,12 @@ async function loadEarlier(btn, id, before){
     const r = await api('/api/sessions/'+id+'/messages?limit=40&before_id='+before);
     const inner = $('streamInner');
     const frag = document.createDocumentFragment();
-    for(const m of (r.messages||[])) frag.appendChild(bubbleEl(m));
+    for(const m of (r.messages||[])){
+      frag.appendChild(bubbleEl(m));
+      if((m.role||'')==='user'){
+        for(const it of chipTakeFor(id, m.text||'')) frag.appendChild(toolChipNode(it.n, it.ok));   /* v40.14 */
+      }
+    }
     inner.insertBefore(frag, btn);
     st.scrollTop = t0 + (st.scrollHeight - h0);
     if(!r.has_more){ btn.remove(); } else { btn.textContent='查看更早'; btn.onclick=()=>loadEarlier(btn,id,r.next_before_id); }
@@ -1890,6 +1900,16 @@ async function send(silentUser){
         let obj; try{ obj = JSON.parse(data); }catch(e){ continue; }
         if(ev==='conversation' && obj.conversation_id){
           state.convId = obj.conversation_id; localStorage.setItem(LS.conv, state.convId);
+          /* v40.14 镜像卡补绑会话：发卡瞬间会话还不存在（conv 为空），现在把这张卡认领到本会话 */
+          try{
+            const mv=String(msgOut||'').match(INVITE_RE);
+            if(mv){
+              const list=mirrorLoad();
+              let dirty=false;
+              for(const it of list) if(it.code===String(mv[2]).toUpperCase() && !it.conv){ it.conv=String(obj.conversation_id); dirty=true; }
+              if(dirty) mirrorSave(list);
+            }
+          }catch(e){}
         }else if(ev==='thinking'){
           tBuf += obj.text||'';   /* v36.69 思考中不显示任何东西，思考内容在回复弹出时收进折叠条 */
         }else if(ev==='delta'){
@@ -1923,14 +1943,12 @@ async function send(silentUser){
         }else if(ev==='tool'){
           /* v36.75 工具循环：AI 真的在动手，弹个小胶囊
              v40.0 胶囊保留在对话流里作为 TA 的动作记录（MCP/工具调用了什么一目了然），
-             收尾不再移除；历史回拉不重建（服务端不存 tool 事件），刷新后消失 */
+             v40.14 同时落本地锚定（会话+触发消息哈希），刷新/历史回拉原位重建 */
           const nm=obj.name||'工具', ok=!!obj.ok;
-          const ph=toolPhrase(nm, ok);
-          const chip=document.createElement('div');
-          chip.className='toolchip'+(ok?'':' tc-fail');
-          chip.textContent=ph;
+          const chip=toolChipNode(nm, ok);
           ab.parentNode && ab.parentNode.insertBefore(chip, ab);
           toolNodes.push(chip);
+          chipRemember(state.convId, msgOut, nm, ok);   /* v40.14 锚定用 msgOut：历史落库的是它，回拉哈希才对得上 */
           scrollToBottom();
         }else if(ev==='error'){
           err = obj.message||'出错了';
@@ -2041,6 +2059,36 @@ function toolPhrase(nm, ok){
   else if(/^(download|upload|convert)/.test(t)) s='他在'+tgt+'传了文件';
   else s='他用'+tgt+'做了点事';
   return ok? s : (s+'，但没成功');
+}
+/* v40.14 工具行动行落本地：按「会话 + 触发它的用户消息文本哈希」锚定，
+   刷新/历史回拉后在原位补插（服务端不存 tool 事件，这是前端侧持久化） */
+const LS_TOOLCHIPS='cn_toolchips';
+function tcHash(s){ s=String(s||''); let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))>>>0; return h.toString(36); }
+function tcLoad(){ try{ return JSON.parse(localStorage.getItem(LS_TOOLCHIPS)||'{}')||{}; }catch(e){ return {}; } }
+function tcSave(o){ try{ localStorage.setItem(LS_TOOLCHIPS, JSON.stringify(o)); }catch(e){} }
+function chipRemember(cid, userText, name, ok){
+  try{
+    if(!cid) return;
+    const o=tcLoad(), k=String(cid);
+    (o[k]=o[k]||[]).push({u:tcHash(userText), n:String(name||''), ok:ok?1:0, t:Date.now()});
+    if(o[k].length>80) o[k]=o[k].slice(-80);
+    tcSave(o);
+  }catch(e){}
+}
+function chipTakeFor(cid, userText){
+  const out=[];
+  try{
+    const o=tcLoad(), k=String(cid), h=tcHash(userText);
+    /* v40.14 只读匹配不消费：刷新多少次都能重建；同文本多轮极端情况会重复显示，可接受 */
+    if(o[k]) for(const it of o[k]) if(it.u===h) out.push(it);
+  }catch(e){}
+  return out;
+}
+function toolChipNode(name, ok){
+  const chip=document.createElement('div');
+  chip.className='toolchip'+(ok?'':' tc-fail');
+  chip.textContent=toolPhrase(String(name||'工具'), !!ok);
+  return chip;
 }
 function renderModelLabel(){
   const m = state.models.find(x=>x.id===state.model);
@@ -2211,7 +2259,7 @@ function mirrorSave(list){ try{ localStorage.setItem(LS_INV_MIRROR, JSON.stringi
 function saveMirrorCard(game, code){
   if(!code) return;
   const list=mirrorLoad().filter(x=>x.code!==String(code).toUpperCase());
-  list.unshift({game:String(game||'monopoly'), code:String(code).toUpperCase(), ts:Date.now()});
+  list.unshift({game:String(game||'monopoly'), code:String(code).toUpperCase(), ts:Date.now(), conv:String(state.convId||'')});   /* v40.14 绑定发起会话 */
   mirrorSave(list);
 }
 function removeMirrorCard(code){
@@ -2224,7 +2272,12 @@ function renderMirrorCards(){
     inner.querySelectorAll('.msg[data-raw]').forEach(el=>{
       const m=String(el.dataset.raw||'').match(INVITE_RE); if(m) have.add(m[2]);
     });
-    const list=mirrorLoad();
+    /* v40.14 镜像按会话收紧：只补「发起它的那个会话」里历史缺失的卡；
+       旧数据没绑会话的一律不再补（这就是之前每次上线都冒卡片的根因）；
+       空会话（newConv）只补 1 小时内的新卡 */
+    const list=mirrorLoad()
+      .filter(it=>String(it.conv||'')===String(state.convId||''))
+      .filter(it=>state.convId || (Date.now()-(it.ts||0)<3600000));
     for(let i=list.length-1;i>=0;i--){
       const it=list[i];
       if(have.has(it.code)) continue;   /* 历史回拉已有这张卡，不重复补 */
