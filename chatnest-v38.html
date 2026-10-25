@@ -167,10 +167,10 @@ svg{display:block}
 .think[open] summary .tp-arrow{transform:rotate(90deg)}
 .think .tk-body{font-size:12.5px;color:var(--text3);margin-top:5px;white-space:pre-wrap;max-height:180px;overflow-y:auto;line-height:1.6;padding-left:18px}
 .typing{display:inline-flex;gap:4px;align-items:center;height:20px}
-/* v40.18 行动行：托影归零——纯描边+微透蓝底，无任何投影 */
-.toolchip{display:block;width:fit-content;max-width:78%;margin:6px auto 4px;padding:3px 12px;border:1px solid rgba(124,139,201,.32);border-radius:999px;background:rgba(124,139,201,.11);
+/* v40.19 行动行定稿：灰线+近无底冷灰（H 方案），深色主题等比映射 */
+.toolchip{display:block;width:fit-content;max-width:78%;margin:6px auto 4px;padding:3px 12px;border:1px solid rgba(30,40,80,.16);border-radius:999px;background:rgba(30,40,80,.035);
   text-align:center;font-size:11.5px;color:var(--text);line-height:1.5;letter-spacing:.2px;animation:tcIn .25s ease}
-[data-theme="dark"] .toolchip{background:rgba(165,185,220,.13);border-color:rgba(165,185,220,.30)}
+[data-theme="dark"] .toolchip{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.12)}
 .toolchip.tc-fail{color:var(--danger);border-color:rgba(217,122,122,.45)}
 @keyframes tcIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 /* v40.4 色号输入：所有颜色选择器旁可直接敲 #RRGGBB */
@@ -915,7 +915,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v40.18</span>
+    <span class="fs-ver">v40.19</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1053,7 +1053,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v40.18<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v40.19<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
