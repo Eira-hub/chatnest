@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>行动行边框候选</title>
+<title>行动行底色候选 · 第二轮</title>
 <style>
 :root{
   --bg0:#EEF1F7;--text:#16181D;
@@ -16,26 +16,24 @@ body{margin:0;min-height:100vh;background:
 h1{font-size:15px;font-weight:600;opacity:.8}
 .row{display:flex;flex-direction:column;gap:8px;align-items:center;width:100%}
 .tag{font-size:12px;opacity:.55;letter-spacing:.5px}
-.chip{display:block;width:fit-content;max-width:78%;padding:3px 12px;border-radius:999px;background:rgba(124,139,201,.11);
+.chip{display:block;width:fit-content;max-width:78%;padding:3px 12px;border:1px solid rgba(30,40,80,.16);border-radius:999px;
   text-align:center;font-size:11.5px;line-height:1.5;letter-spacing:.2px}
-/* A 现行：蓝描边 */
-.a .chip{border:1px solid rgba(124,139,201,.32)}
-/* B 中性灰线 */
-.b .chip{border:1px solid rgba(30,40,80,.16)}
-/* C 暖金细线 */
-.c .chip{border:1px solid rgba(156,123,70,.38)}
-/* D 深蓝描边 */
-.d .chip{border:1px solid rgba(74,87,165,.55)}
-/* E 无描边 */
-.e .chip{border:1px solid transparent;background:rgba(124,139,201,.16)}
+/* 全部配 B 中性灰线，只变底色 */
+.f .chip{background:rgba(124,139,201,.11)}   /* F 现行雾蓝 */
+.g .chip{background:rgba(124,139,201,.06)}   /* G 极淡蓝 */
+.h .chip{background:rgba(30,40,80,.035)}     /* H 近无底冷灰 */
+.i .chip{background:rgba(255,255,255,.55)}   /* I 月白 */
+.j .chip{background:rgba(242,237,231,.55)}   /* J 奶油微底 */
+.k .chip{background:rgba(110,150,175,.10)}   /* K 星青 */
 </style>
 </head>
 <body>
-<h1>行动行边框候选 · 回数字即可</h1>
-<div class="row a"><span class="tag">A · 现行（雾蓝）</span><span class="chip">他看了你的 github</span></div>
-<div class="row b"><span class="tag">B · 中性灰线</span><span class="chip">他看了你的 github</span></div>
-<div class="row c"><span class="tag">C · 暖金细线</span><span class="chip">他看了你的 github</span></div>
-<div class="row d"><span class="tag">D · 深蓝描边</span><span class="chip">他看了你的 github</span></div>
-<div class="row e"><span class="tag">E · 无描边（加深底）</span><span class="chip">他看了你的 github</span></div>
+<h1>行动行底色候选 · 灰线已定 · 回字母即可</h1>
+<div class="row f"><span class="tag">F · 现行雾蓝</span><span class="chip">他看了你的 github</span></div>
+<div class="row g"><span class="tag">G · 极淡蓝</span><span class="chip">他看了你的 github</span></div>
+<div class="row h"><span class="tag">H · 近无底冷灰</span><span class="chip">他看了你的 github</span></div>
+<div class="row i"><span class="tag">I · 月白</span><span class="chip">他看了你的 github</span></div>
+<div class="row j"><span class="tag">J · 奶油微底</span><span class="chip">他看了你的 github</span></div>
+<div class="row k"><span class="tag">K · 星青</span><span class="chip">他看了你的 github</span></div>
 </body>
 </html>
