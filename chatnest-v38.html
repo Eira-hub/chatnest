@@ -915,7 +915,7 @@ body.has-wall .stars{opacity:.75}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <span class="fs-title" id="fsTitle">设置</span>
-    <span class="fs-ver">v40.19</span>
+    <span class="fs-ver">v40.20</span>
   </div>
   <div class="set-group">
   <div class="set-sec">模型与服务</div>
@@ -1053,7 +1053,7 @@ body.has-wall .stars{opacity:.75}
     <div class="set-label">关于</div>
     <div style="font-size:12.5px;color:var(--text3);line-height:2">
       <!-- v37.81 版本号修复：这里从 v35 时代起就没同步过，用户一直以此判断新旧版；发布新版本时必须同步改这里和面板 pp-ver -->
-      ChatNest · 星夜小筑 v40.19<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
+      ChatNest · 星夜小筑 v40.20<br>前端 GitHub Pages 托管 · 后端阿里云函数计算<br>猎户座之下，只属于两个人的房间
     </div>
   </div>
   </div><!-- /组4 通用 -->
@@ -1864,9 +1864,11 @@ async function send(silentUser){
 
   const myCtl = new AbortController();   /* v36.70 每条消息独立请求，可并行发送 */
   let tBuf = '', xBuf = '', had = false, err = null;
-  let sDone = 0, tDone = false;   /* v36.68 即时拆条：已完结段落数 / 思考串是否已挂到第一段 */
+  let sDone = 0, tDone = false, sChars = 0;   /* v36.68 已完结段落数/思考已挂；v40.20 sChars=当前轮已弹字符数（行动前冲刷用） */
   let finished = false;           /* v36.71 流是否已结束（定时器弹段用） */
+  let fullText = '';              /* v40.20 全轮正文（含行动前后所有话）：落库缓存/长按复制/收尾用 */
   const myLive = [];              /* v36.71 本条流已弹出的节点，结束时移除后统一重渲染，防消息发两遍 */
+  const liveQ = [];               /* v40.20 待弹队列：分段气泡的定时器句柄，行动事件到达前强制清空，保证 说话→行动 顺序 */
   const bodyEl = ab.querySelector('.body');
   let toolNodes = [];   /* v36.75 本轮流式期间的工具胶囊 */
   try{
@@ -1913,6 +1915,7 @@ async function send(silentUser){
           tBuf += obj.text||'';   /* v36.69 思考中不显示任何东西，思考内容在回复弹出时收进折叠条 */
         }else if(ev==='delta'){
           xBuf += obj.text||'';
+          fullText += obj.text||'';   /* v40.20 全轮累计 */
           had = true;
           /* v36.69 不打字机：尾段只缓冲不显示；前面段落一写完，立刻整条弹出（头像+时间），像一条一条发消息 */
           const chunks = splitAiText(xBuf);
@@ -1924,22 +1927,36 @@ async function send(silentUser){
               const kText = segsK.filter(s=>s.type==='text').map(s=>s.text).join('\n').trim();
               if(kText){
                 (function(txt, first){
-                  setTimeout(function(){   /* v36.71 像真人发消息：一条一条蹦，条与条之间留点间隔 */
-                    if(finished) return;
+                  const fire = function(){
+                    const qi = liveQ.findIndex(q=>q.fn===fire); if(qi>=0) liveQ.splice(qi,1);
+                    if(finished && !toolNodes.length) return;   /* v40.20 无工具时收尾统一重渲染，定时器让位；有工具保留现场，定时器照常弹 */
                     const n = aiMsgNode(txt,{cont:false, thinking:(first? tBuf:''), mtime:fmtClock(), raw:xBuf});
                     n.setAttribute('data-live','1');
                     myLive.push(n);
                     if(ab.parentNode) ab.parentNode.insertBefore(n, ab);
                     scrollToBottom();
-                  }, delay);
+                  };
+                  const tid = setTimeout(fire, delay);
+                  liveQ.push({t:tid, fn:fire});
                   delay += 420;
                 })(kText, !tDone);
+                sChars += chunks[k].length;   /* v40.20 记账：入队即记（行动冲刷按队列清算，不会重复） */
                 tDone = true;
               }
             }
             sDone = fresh;
           }
         }else if(ev==='tool'){
+          /* v40.20 行动穿插：动手前把 TA 刚说的话立刻落成独立气泡（说话→行动→说话，说不说看模型自己） */
+          while(liveQ.length){ clearTimeout(liveQ[0].t); liveQ.shift().fn(); }   /* 待弹段先强制弹出，排在行动行前 */
+          const tailTxt = xBuf.slice(sChars).trim();
+          if(tailTxt){
+            const tn = aiMsgNode(tailTxt, {cont:false, thinking:(!tDone? tBuf:''), mtime:fmtClock(), raw:tailTxt});
+            tn.setAttribute('data-live','1'); myLive.push(tn);
+            ab.parentNode && ab.parentNode.insertBefore(tn, ab);
+            tDone = true; tBuf = '';
+          }
+          xBuf = ''; sDone = 0; sChars = 0;   /* v40.20 新一轮正文清零累计，收尾只渲染行动后的尾巴 */
           /* v36.75 工具循环：AI 真的在动手，弹个小胶囊
              v40.0 胶囊保留在对话流里作为 TA 的动作记录（MCP/工具调用了什么一目了然），
              v40.14 同时落本地锚定（会话+触发消息哈希），刷新/历史回拉原位重建 */
@@ -1963,7 +1980,34 @@ async function send(silentUser){
   /* v40.0 工具胶囊保留在对话流里（TA 的动作记录），收尾不再移除 */
   /* v36.67 渲染段包 try/finally：任何异常都不再卡住发送按钮（streaming 必复位） */
   try{
-  if(xBuf){
+  if(toolNodes.length){
+    /* v40.20 有行动行的回合：说话→行动穿插现场原位保留，只渲染行动后没弹完的尾巴；不再整段重渲染抹平顺序 */
+    ab.dataset.raw = fullText;
+    if(err){
+      const d = document.createElement('div'); d.className='msg-err'; d.textContent='⚠ '+err; ab.querySelector('.bubble').appendChild(d);
+    }else{
+      while(liveQ.length){ clearTimeout(liveQ[0].t); liveQ.shift().fn(); }   /* 收尾前把没到点的段先弹掉 */
+      const tailTxt = xBuf.trim();
+      if(tailTxt){
+        const vT = extractVoice(tailTxt);
+        const segsT = parseImgSegs(vT!==null ? vT : tailTxt);
+        const hasTextT = segsT.some(s=>s.type==='text' && s.text.trim()) || vT!==null;
+        const fragT = document.createDocumentFragment(); const clockT = fmtClock();
+        segsT.forEach(s=>{
+          if(s.type==='text'){
+            splitAiText(s.text).forEach(c=>{ if(c.trim()) fragT.appendChild(aiMsgNode(c,{cont:false,thinking:'',mtime:clockT,raw:tailTxt})); });
+          }else{
+            genImage(s.prompt).then(url=>{ const node=imgDoneNode(url);
+              if(!hasTextT && ab.isConnected) ab.replaceWith(node); else $('streamInner').appendChild(node);
+              scrollToBottom();
+            }).catch(e=>{ toast('画失败：'+(e.message||String(e)),2600); });
+          }
+        });
+        if(vT!==null) fragT.appendChild(voiceMsgNode(vT));
+        if(hasTextT) ab.replaceWith(fragT);
+      }else if(ab.isConnected){ ab.remove(); }   /* 行动后没再说话：三点气泡退场，对话流只剩气泡+行动行 */
+    }
+  }else if(xBuf){
     ab.dataset.raw = xBuf;   /* v34 流式气泡也可长按 */
     bodyEl.innerHTML = md(xBuf);
     if(!err){
@@ -2009,11 +2053,11 @@ async function send(silentUser){
   if(err){ const d = document.createElement('div'); d.className='msg-err'; d.textContent='⚠ '+err; ab.querySelector('.bubble').appendChild(d); }
   if(!xBuf && !tBuf && !err){ bodyEl.innerHTML = '<span style="color:var(--text3)">（没有收到回复）</span>'; }
   /* v36.68 主页速览预览缓存：有回复存回复，否则存刚发的那句 */
-  if(state.convId) stashLastMsg(state.convId, (!err&&xBuf)?'ai':'user', (!err&&xBuf)?xBuf:text);
+  if(state.convId) stashLastMsg(state.convId, (!err&&fullText)?'ai':'user', (!err&&fullText)?fullText:text);
   /* v36.68 消息时间落缓存：用户消息=发送时刻，AI回复=收到时刻；后端不回时间时历史靠它兜底 */
   if(state.convId && !err){
     cacheMsgTime(state.convId, 'user', text, sendAt);
-    if(xBuf) cacheMsgTime(state.convId, 'ai', xBuf, Date.now());
+    if(fullText) cacheMsgTime(state.convId, 'ai', fullText, Date.now());
   }
   }finally{
     finished = true;   /* v36.71 未弹完的定时器段不再弹出，由结束渲染统一补齐 */
