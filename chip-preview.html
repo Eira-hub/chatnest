@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>行动行边框候选</title>
+<style>
+:root{
+  --bg0:#EEF1F7;--text:#16181D;
+  --sans:-apple-system,system-ui,'PingFang SC','HarmonyOS Sans SC',sans-serif;
+}
+body{margin:0;min-height:100vh;background:
+  radial-gradient(120% 90% at 78% -10%,#1A2344 0%,transparent 55%),
+  linear-gradient(180deg,#F3F5FA,var(--bg0));
+  font-family:var(--sans);color:var(--text);display:flex;flex-direction:column;gap:26px;align-items:center;padding:34px 16px}
+h1{font-size:15px;font-weight:600;opacity:.8}
+.row{display:flex;flex-direction:column;gap:8px;align-items:center;width:100%}
+.tag{font-size:12px;opacity:.55;letter-spacing:.5px}
+.chip{display:block;width:fit-content;max-width:78%;padding:3px 12px;border-radius:999px;background:rgba(124,139,201,.11);
+  text-align:center;font-size:11.5px;line-height:1.5;letter-spacing:.2px}
+/* A 现行：蓝描边 */
+.a .chip{border:1px solid rgba(124,139,201,.32)}
+/* B 中性灰线 */
+.b .chip{border:1px solid rgba(30,40,80,.16)}
+/* C 暖金细线 */
+.c .chip{border:1px solid rgba(156,123,70,.38)}
+/* D 深蓝描边 */
+.d .chip{border:1px solid rgba(74,87,165,.55)}
+/* E 无描边 */
+.e .chip{border:1px solid transparent;background:rgba(124,139,201,.16)}
+</style>
+</head>
+<body>
+<h1>行动行边框候选 · 回数字即可</h1>
+<div class="row a"><span class="tag">A · 现行（雾蓝）</span><span class="chip">他看了你的 github</span></div>
+<div class="row b"><span class="tag">B · 中性灰线</span><span class="chip">他看了你的 github</span></div>
+<div class="row c"><span class="tag">C · 暖金细线</span><span class="chip">他看了你的 github</span></div>
+<div class="row d"><span class="tag">D · 深蓝描边</span><span class="chip">他看了你的 github</span></div>
+<div class="row e"><span class="tag">E · 无描边（加深底）</span><span class="chip">他看了你的 github</span></div>
+</body>
+</html>
