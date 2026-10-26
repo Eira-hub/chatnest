@@ -42,20 +42,20 @@ body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 
 /* 列表 */
 .list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--card)}
-.item{position:relative;display:flex;align-items:center;gap:12px;
-  padding:10px 16px 10px 16px;background:var(--card);cursor:pointer;border:none;width:100%;
+.item{position:relative;display:flex;align-items:center;gap:10px;
+  padding:8px 14px 8px 14px;background:var(--card);cursor:pointer;border:none;width:100%;
   text-align:left;font:inherit;color:inherit}
 .item:active{background:rgba(120,130,150,.10)}
-.item+.item::before{content:'';position:absolute;left:66px;right:0;top:0;height:.5px;background:var(--sep)}
-.av{width:42px;height:42px;border-radius:8px;object-fit:cover;flex:none;background:rgba(120,130,160,.14)}
-.av-ph{width:42px;height:42px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(145deg,#7C8BC9,#4A57A5);color:#fff;font-size:17px;font-weight:600;font-family:serif}
+.item+.item::before{content:'';position:absolute;left:60px;right:0;top:0;height:.5px;background:var(--sep)}
+.av{width:36px;height:36px;border-radius:7px;object-fit:cover;flex:none;background:rgba(120,130,160,.14)}
+.av-ph{width:36px;height:36px;border-radius:7px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(145deg,#7C8BC9,#4A57A5);color:#fff;font-size:15px;font-weight:600;font-family:serif}
 .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .row1{display:flex;align-items:baseline;gap:8px}
-.ttl{flex:1;min-width:0;font-size:16px;font-weight:400;color:var(--t1);
+.ttl{flex:1;min-width:0;font-size:14px;font-weight:400;color:var(--t1);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tm{flex:none;font-size:12px;color:var(--t2)}
-.pre{font-size:13px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+.tm{flex:none;font-size:11px;color:var(--t2)}
+.pre{font-size:12px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   min-height:18px}
 .pre.loading{color:var(--t3)}
 .pin{display:inline-block;margin-left:6px;padding:1px 5px;font-size:10px;border-radius:4px;
