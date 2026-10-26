@@ -25,11 +25,10 @@ body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 
 /* 顶栏：渐变，与主应用一致 */
 .nav{flex:none;position:relative;display:flex;align-items:center;justify-content:center;
-  height:calc(44px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);
-  background:linear-gradient(180deg,var(--nav1) 0%,var(--nav2) 60%,var(--nav2) 100%);
-  border-bottom:.5px solid var(--navline);
-  box-shadow:0 1px 0 rgba(255,255,255,.7) inset}
-[data-theme="dark"] .nav{box-shadow:0 1px 0 rgba(255,255,255,.05) inset}
+  height:calc(50px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);
+  background:var(--bg);
+  border-bottom:.5px solid var(--navline)}
+.nav{height:calc(50px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
 .nav-title{font-size:17px;font-weight:600;color:var(--t1)}
 .nav-back{position:absolute;left:2px;top:env(safe-area-inset-top);width:44px;height:44px;
   border:none;background:none;padding:0;color:var(--t1);font-size:30px;line-height:1;
@@ -149,7 +148,10 @@ body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 
       var mid = el('div','mid');
       var r1 = el('div','row1');
-      var ttl = el('div','ttl', s.title || '未命名对话');
+      var pretty = String(s.title || '').replace(/\[\[invite:(\w+):([A-Z0-9]+)\]\]/g, function(_, g){
+        return g === 'monopoly' ? '大富翁邀请' : '游戏邀请';
+      });
+      var ttl = el('div','ttl', pretty || '未命名对话');
       r1.appendChild(ttl);
       if(s.starred) r1.appendChild(el('span','pin','置顶'));
       r1.appendChild(el('div','tm', fmtTime(s.updated_at)));
@@ -184,6 +186,9 @@ body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
           pre.classList.remove('loading');
           if(m && m.text){
             var t = String(m.text).replace(/\s+/g,' ').trim();
+            t = t.replace(/\[\[invite:(\w+):([A-Z0-9]+)\]\]/g, function(_,g){
+              return g === 'monopoly' ? '大富翁邀请' : '游戏邀请';
+            });
             pre.textContent = (m.role === 'user' ? '我：' : '') + t.slice(0, 60);
           } else {
             pre.textContent = '暂无消息';
