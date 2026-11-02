@@ -712,10 +712,12 @@ body.has-wall .stars{opacity:.75}
 #gameFrame.hidden,#teamFrame.hidden{display:none}
 #gameFrame iframe,#teamFrame iframe{width:100%;height:100%;border:none;display:block}
 /* ═══ v40.48 心潮：与主页/探索同层的 flat 视图，dock 照常浮在上面 ═══ */
-#viewXc{flex:1;min-height:0;position:relative;background:#F6F5F2;display:flex;box-sizing:border-box;
+/* v40.48.1 心潮那层不再自带米白底：让底下的壁纸透上来，和聊天/探索同一张底。
+   iframe 也要透明，否则默认白底会把壁纸挡住 */
+#viewXc{flex:1;min-height:0;position:relative;background:transparent;display:flex;box-sizing:border-box;
  padding-top:env(safe-area-inset-top)}
 #viewXc.hidden{display:none}
-#viewXc iframe{flex:1;min-height:0;width:100%;border:0;display:block;background:#F6F5F2}
+#viewXc iframe{flex:1;min-height:0;width:100%;border:0;display:block;background:transparent}
 #xcTip{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 112px);transform:translateX(-50%);
  display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:998px;font-size:12.5px;color:#5B5347;
  background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
