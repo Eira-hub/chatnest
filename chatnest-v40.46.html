@@ -115,7 +115,7 @@ svg{display:block}
 #chatTop{position:absolute;top:0;left:0;right:0;z-index:7;box-sizing:border-box;
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:calc(env(safe-area-inset-top) + 10px) 12px 0;
-  /* v40.45 液态玻璃分段式（照用户参考图）：无通栏大底，三枚独立玻璃浮在消息流上，
+  /* v40.46 液态玻璃分段式（照用户参考图）：无通栏大底，三枚独立玻璃浮在消息流上，
      背后滚动的内容被真磨砂糊掉；渐隐大底方案作废 */
   font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
   pointer-events:none}
@@ -126,15 +126,19 @@ svg{display:block}
 [data-theme="dark"] .ct-btn{color:#FFF}
 .ct-btn:active{background:rgba(0,0,0,.06)}
 [data-theme="dark"] .ct-btn:active{background:rgba(255,255,255,.09)}
-/* v40.45 左右两枚圆玻璃钮（返回 / 更多） */
-#ctBack,#ctMore{border:1px solid rgba(255,255,255,.75);
-  background:linear-gradient(145deg,rgba(255,255,255,.72),rgba(255,255,255,.38) 55%,rgba(255,255,255,.55));
-  box-shadow:0 8px 26px rgba(60,70,110,.16),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.35);
-  backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7)}
-[data-theme="dark"] #ctBack,[data-theme="dark"] #ctMore{border-color:rgba(170,185,235,.30);
-  background:linear-gradient(145deg,rgba(120,132,190,.30),rgba(30,38,70,.42) 55%,rgba(52,62,105,.36));
-  box-shadow:0 8px 26px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(255,255,255,.06)}
-/* v40.45 Token 进度环：⋯ 按钮外套单色圆环，填充比例=上下文 token 用量（后端每轮带回估算值）；
+/* v40.46 左右两枚圆玻璃钮（返回 / 更多）：B+ 液态配方——白雾降一档让背后颜色透进来，
+   磨砂 26px + 饱和 2.1 + 微增亮出折射感，四边内高光 + 斜向反光条（iOS 液态玻璃画法） */
+#ctBack,#ctMore{border:1px solid rgba(255,255,255,.45);
+  background:linear-gradient(115deg,rgba(255,255,255,.34) 0%,rgba(255,255,255,.05) 30%,rgba(255,255,255,.03) 55%,rgba(255,255,255,.20) 100%);
+  box-shadow:0 8px 26px rgba(15,25,70,.26),inset 0 1.5px 0 rgba(255,255,255,.78),inset 0 -1px 0 rgba(255,255,255,.30),
+    inset 1px 0 0 rgba(255,255,255,.26),inset -1px 0 0 rgba(255,255,255,.26);
+  backdrop-filter:blur(26px) saturate(2.1) brightness(1.10);-webkit-backdrop-filter:blur(26px) saturate(2.1) brightness(1.10)}
+[data-theme="dark"] #ctBack,[data-theme="dark"] #ctMore{border-color:rgba(170,185,235,.26);
+  background:linear-gradient(145deg,rgba(120,132,190,.22),rgba(30,38,70,.32) 55%,rgba(52,62,105,.28));
+  box-shadow:0 8px 26px rgba(0,0,0,.42),inset 0 1.5px 0 rgba(255,255,255,.24),inset 0 -1px 0 rgba(255,255,255,.06),
+    inset 1px 0 0 rgba(255,255,255,.12),inset -1px 0 0 rgba(255,255,255,.12);
+  backdrop-filter:blur(26px) saturate(2.1) brightness(1.14);-webkit-backdrop-filter:blur(26px) saturate(2.1) brightness(1.14)}
+/* v40.46 Token 进度环：⋯ 按钮外套单色圆环，填充比例=上下文 token 用量（后端每轮带回估算值）；
    按用户要求不做变色，恒为同一颜色；点击行为不变（进聊天信息页） */
 #ctMore{position:relative;overflow:hidden}
 #ctMore .cr-svg{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);transform:rotate(-90deg)}
@@ -142,16 +146,19 @@ svg{display:block}
 #ctMore .cr-fg{fill:none;stroke:#7f8cf0;stroke-width:2.6;stroke-linecap:round;
   transition:stroke-dashoffset .55s cubic-bezier(.4,0,.2,1)}
 #ctMore .cr-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-/* v40.45 中间胶囊：AI头像 + 颜文字 + 我的头像；颜文字在聊天信息页自定义 */
+/* v40.46 中间胶囊：AI头像 + 颜文字 + 我的头像；颜文字在聊天信息页自定义 */
 #ctPill{display:flex;align-items:center;gap:5px;height:40px;padding:0 12px;border-radius:999px;
   font-size:15px;color:#3c3c46;user-select:none;-webkit-user-select:none;cursor:pointer;
-  border:1px solid rgba(255,255,255,.75);
-  background:linear-gradient(145deg,rgba(255,255,255,.72),rgba(255,255,255,.38) 55%,rgba(255,255,255,.55));
-  box-shadow:0 8px 26px rgba(60,70,110,.16),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.35);
-  backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7)}
-[data-theme="dark"] #ctPill{color:#e8ebf7;border-color:rgba(170,185,235,.30);
-  background:linear-gradient(145deg,rgba(120,132,190,.30),rgba(30,38,70,.42) 55%,rgba(52,62,105,.36));
-  box-shadow:0 8px 26px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(255,255,255,.06)}
+  border:1px solid rgba(255,255,255,.45);
+  background:linear-gradient(115deg,rgba(255,255,255,.34) 0%,rgba(255,255,255,.05) 30%,rgba(255,255,255,.03) 55%,rgba(255,255,255,.20) 100%);
+  box-shadow:0 8px 26px rgba(15,25,70,.26),inset 0 1.5px 0 rgba(255,255,255,.78),inset 0 -1px 0 rgba(255,255,255,.30),
+    inset 1px 0 0 rgba(255,255,255,.26),inset -1px 0 0 rgba(255,255,255,.26);
+  backdrop-filter:blur(26px) saturate(2.1) brightness(1.10);-webkit-backdrop-filter:blur(26px) saturate(2.1) brightness(1.10)}
+[data-theme="dark"] #ctPill{color:#e8ebf7;border-color:rgba(170,185,235,.26);
+  background:linear-gradient(145deg,rgba(120,132,190,.22),rgba(30,38,70,.32) 55%,rgba(52,62,105,.28));
+  box-shadow:0 8px 26px rgba(0,0,0,.42),inset 0 1.5px 0 rgba(255,255,255,.24),inset 0 -1px 0 rgba(255,255,255,.06),
+    inset 1px 0 0 rgba(255,255,255,.12),inset -1px 0 0 rgba(255,255,255,.12);
+  backdrop-filter:blur(26px) saturate(2.1) brightness(1.14);-webkit-backdrop-filter:blur(26px) saturate(2.1) brightness(1.14)}
 #ctPill .ct-av{width:27px;height:27px;border-radius:999px;flex:none;display:flex;align-items:center;
   justify-content:center;font-size:11px;font-weight:700;color:#fff;overflow:hidden;
   border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 6px rgba(0,0,0,.18);
@@ -710,28 +717,6 @@ body.has-wall .stars{opacity:.75}
 #gameFrame,#teamFrame{position:fixed;inset:0;z-index:80;background:var(--bg0);animation:gfin .3s var(--ease)}
 #gameFrame.hidden,#teamFrame.hidden{display:none}
 #gameFrame iframe,#teamFrame iframe{width:100%;height:100%;border:none;display:block}
-/* ═══ v40.46 心潮看板层：dock 第二项从占位换成真页面 ═══ */
-#xcFrame{position:fixed;inset:0;z-index:90;background:#F6F5F2;animation:gfin .3s var(--ease);
- display:flex;flex-direction:column;box-sizing:border-box;
- padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-#xcFrame.hidden{display:none}
-#xcFrame iframe{flex:1;min-height:0;width:100%;border:none;display:block;background:#F6F5F2}
-#xcBack{position:fixed;left:10px;top:calc(10px + env(safe-area-inset-top));z-index:92;width:36px;height:36px;
- display:flex;align-items:center;justify-content:center;padding:0;border-radius:50%;
- border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.5);
- -webkit-backdrop-filter:blur(14px) saturate(1.25);backdrop-filter:blur(14px) saturate(1.25);
- color:#434B58;box-shadow:0 2px 10px rgba(40,50,80,.16);transition:opacity .5s var(--ease),background .2s}
-#xcBack svg{width:18px;height:18px;margin-left:-2px}
-#xcBack.idle{opacity:.5}
-#xcBack.xc-hide{opacity:0;pointer-events:none}
-#xcBack:active{background:rgba(255,255,255,.74)}
-#xcTip{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:92;
- display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:998px;font-size:12.5px;color:#5B5347;
- background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
- border:1px solid rgba(30,40,80,.1);box-shadow:0 6px 22px rgba(40,60,120,.15);white-space:nowrap}
-#xcTip.hidden{display:none}
-#xcTip button{border:0;background:transparent;color:#8A6D3B;font-size:12.5px;text-decoration:underline;
- text-underline-offset:3px;padding:0;font-family:inherit}
 @keyframes gfin{from{opacity:0}to{opacity:1}}
 #viewExplore .ex-row{display:flex;align-items:stretch;overflow:hidden;text-align:left;padding:0;border-radius:var(--r-panel);border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.66);box-shadow:0 6px 22px rgba(0,0,0,.14);cursor:pointer;color:inherit;font:inherit;transition:transform .18s ease,box-shadow .18s ease}
 #viewExplore.hm-light .ex-row{background:rgba(255,255,255,.72);border-color:rgba(0,0,0,.08);box-shadow:0 6px 22px rgba(40,60,120,.12)}
@@ -875,7 +860,7 @@ body.has-wall .stars{opacity:.75}
   <div id="scrim"></div>
 
   <main id="main">
-    <!-- v40.45 顶栏（液态玻璃分段式）：左返回 / 中 双头像+颜文字胶囊 / 右更多，三枚独立玻璃浮在消息流上 -->
+    <!-- v40.46 顶栏（液态玻璃分段式）：左返回 / 中 双头像+颜文字胶囊 / 右更多，三枚独立玻璃浮在消息流上 -->
     <header id="chatTop" class="hidden">
       <button id="ctBack" class="ct-btn" type="button" aria-label="返回消息列表">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1532,7 +1517,7 @@ async function openConv(id, opt){
   opt = opt||{};
   if(window.syncChatView) window.syncChatView();
   state.convId = id;
-  if(window.restoreCtxRing) window.restoreCtxRing(id);   /* v40.45 恢复上次上下文用量读数 */
+  if(window.restoreCtxRing) window.restoreCtxRing(id);   /* v40.46 恢复上次上下文用量读数 */
   localStorage.setItem(LS.conv, id);
   $('splash').classList.add('hidden');
   const inner = $('streamInner');
@@ -1640,13 +1625,13 @@ function makeVoiceBar(text){
   const bars = WAVE_H.map(h=>'<i style="height:'+h+'px"></i>').join('');
   return '<div class="voicebar" data-text="'+esc(text)+'"><span class="vp"></span><span class="waves">'+bars+'</span><span class="vt">听我说</span></div>';
 }
-/* v40.45 语音缓存：文本→{url}，会话级内存缓存，重复播放不再请求后端、不重复扣语音服务积分，刷新后清空 */
+/* v40.46 语音缓存：文本→{url}，会话级内存缓存，重复播放不再请求后端、不重复扣语音服务积分，刷新后清空 */
 const TTS_CACHE=new Map();
 async function playBar(bar, text){
   if(curAudio){ try{curAudio.pause();}catch(e){} if(curBar&&curBar!==bar) curBar.classList.remove('playing'); }
   curBar = bar; bar.classList.add('playing'); bar.querySelector('.vt').textContent='…';  const mySeq = ++curSeq;
   try{
-    /* v40.45 会话内缓存：同一文本点过直接秒播 */
+    /* v40.46 会话内缓存：同一文本点过直接秒播 */
     let c = TTS_CACHE.get(text);
     if(!c){
       const res = await apiFetch('/api/tts', {method:'POST', /* v36.76 自配语音API随请求带给后端 */ body:{text:text, voice_base:localStorage.getItem(LS.voiceBase)||'', voice_key:localStorage.getItem(LS.voiceKey)||'', voice_tid:localStorage.getItem(LS.voiceTid)||''}});
@@ -1769,7 +1754,7 @@ function histImgNode(prompt, mt){  /* 历史消息里的标记：图片不存档
 function splitAiText(raw){
   const t=(raw||'').trim();
   if(!t) return [];
-  /* v40.45 agent 模式（默认）：分不分、分几条由模型自己决定——单独一行 --- 是分条线，
+  /* v40.46 agent 模式（默认）：分不分、分几条由模型自己决定——单独一行 --- 是分条线，
      没有线就整条一个气泡；代码块内不拆，表格分隔行（整行含 |）天然不会命中分条线 */
   if(splitMode()==='agent'){
     if(t.includes('```')) return [t];
@@ -2181,7 +2166,7 @@ async function send(silentUser){
         let obj; try{ obj = JSON.parse(data); }catch(e){ continue; }
         if(ev==='conversation' && obj.conversation_id){
           state.convId = obj.conversation_id; localStorage.setItem(LS.conv, state.convId);
-          if(obj.ctx) setCtxRing(obj.ctx.tokens, obj.ctx.budget);   /* v40.45 进度环吃后端估算 */
+          if(obj.ctx) setCtxRing(obj.ctx.tokens, obj.ctx.budget);   /* v40.46 进度环吃后端估算 */
           /* v40.14 镜像卡补绑会话：发卡瞬间会话还不存在（conv 为空），现在把这张卡认领到本会话 */
           try{
             const mv=String(msgOut||'').match(INVITE_RE);
@@ -2192,7 +2177,7 @@ async function send(silentUser){
               if(dirty) mirrorSave(list);
             }
           }catch(e){}
-        }else if(ev==='ctx'){   /* v40.45 自动整理完成后：环回落到新占用 */
+        }else if(ev==='ctx'){   /* v40.46 自动整理完成后：环回落到新占用 */
           setCtxRing(obj.tokens, obj.budget);
         }else if(ev==='thinking'){
           tBuf += obj.text||'';   /* v36.69 思考中不显示任何东西，思考内容在回复弹出时收进折叠条 */
@@ -3506,7 +3491,7 @@ const dock=document.getElementById('dock');
     const hidden=stream.classList.contains('hidden');
     top.classList.toggle('hidden',hidden);
     if(!hidden){
-      /* v40.45 顶栏：双头像 + 颜文字（聊天信息页可自定义，默认 ^_^） */
+      /* v40.46 顶栏：双头像 + 颜文字（聊天信息页可自定义，默认 ^_^） */
       const ft=document.getElementById('ctFaceTxt');
       if(ft){ try{ ft.textContent=localStorage.getItem(LS.faceTop)||'^_^'; }catch(err){} }
       const fill=(id,av,def)=>{
@@ -3525,8 +3510,8 @@ const dock=document.getElementById('dock');
     }
   };
   sync();
-  window.syncChatTop=sync;   /* v40.45 头像/颜文字变更后即时刷新顶栏 */
-  /* v40.45 Token 进度环：填充=上下文 token 用量；数据来自后端每轮回复带回的估算，
+  window.syncChatTop=sync;   /* v40.46 头像/颜文字变更后即时刷新顶栏 */
+  /* v40.46 Token 进度环：填充=上下文 token 用量；数据来自后端每轮回复带回的估算，
      会话内记忆在 localStorage（cn_ctx_前缀），重开会话先恢复上次读数，等下一轮刷新 */
   const CR_C = 2 * Math.PI * 17;
   const crFg = document.getElementById('crFg');
@@ -3544,12 +3529,12 @@ const dock=document.getElementById('dock');
     try{ p = +localStorage.getItem('cn_ctx_' + convId) || 0; }catch(err){}
     crFg.style.strokeDashoffset = CR_C * (1 - Math.min(100, Math.max(0, p)) / 100);
   };
-  /* v40.45 返回键：回消息列表（与底部 dock「主页」同套切换） */
+  /* v40.46 返回键：回消息列表（与底部 dock「主页」同套切换） */
   const back=document.getElementById('ctBack');
   if(back) back.addEventListener('click',()=>{
     try{ syncDock('home'); showHome(true); showExplore(false); setDock(true); setDockFlat(true); }catch(err){}
   });
-  /* v40.45 点胶囊也能快速进聊天信息页（改颜文字） */
+  /* v40.46 点胶囊也能快速进聊天信息页（改颜文字） */
   const pill=document.getElementById('ctPill');
   if(pill) pill.addEventListener('click',()=>{
     try{ if(typeof openChatInfo==='function') openChatInfo(); }catch(err){}
@@ -3580,7 +3565,7 @@ const dock=document.getElementById('dock');
     if(av){ img.src=av; img.style.display=''; } else { img.removeAttribute('src'); img.style.display='none'; }
     document.getElementById('ciStar').checked=!!(sess&&sess.starred);
     document.getElementById('ciRemark').value=(sess&&sess.title)||'';
-    var fEl=document.getElementById('ciFace');                                    /* v40.45 */
+    var fEl=document.getElementById('ciFace');                                    /* v40.46 */
     if(fEl){ try{ fEl.value=localStorage.getItem(LS.faceTop)||'^_^'; }catch(e){} }
     var mute=false;
     try{ mute=localStorage.getItem('cn_mute_'+state.convId)==='1'; }catch(e){}
@@ -3610,7 +3595,7 @@ const dock=document.getElementById('dock');
       await api('/api/sessions/'+state.convId+'/title',{method:'PATCH',body:{title:v}});
       sess.title=v;
       toast('备注已保存',1400);
-      try{ if(typeof syncChatTop==='function') syncChatTop(); }catch(e2){}   /* v40.45 顶栏即时同步 */
+      try{ if(typeof syncChatTop==='function') syncChatTop(); }catch(e2){}   /* v40.46 顶栏即时同步 */
     }catch(e){
       this.value=sess.title||'';
       toast('保存失败：'+(e.message||'网络错误'),1800);
@@ -3619,7 +3604,7 @@ const dock=document.getElementById('dock');
   document.getElementById('ciRemark').addEventListener('keydown', function(e){
     if(e.key==='Enter'){ e.preventDefault(); this.blur(); }
   });
-  /* v40.45 顶栏颜文字：存本机，保存即时刷新顶栏胶囊 */
+  /* v40.46 顶栏颜文字：存本机，保存即时刷新顶栏胶囊 */
   document.getElementById('ciFace').addEventListener('change', function(){
     var v=this.value.trim()||'^_^';
     try{ localStorage.setItem(LS.faceTop,v); }catch(e){}
@@ -3751,74 +3736,6 @@ document.body.appendChild(gameFrame);
 const gameFrameInner=gameFrame.querySelector('#gameFrameInner');
 function openGameFrame(){ try{ gameFrameInner.src='spicy-monopoly-shell.html?v=14&code='+encodeURIComponent((function(){try{return localStorage.getItem('lastRoomCode')||''}catch(e){return ''}})()); }catch(e){} gameFrame.classList.remove('hidden'); }
 function closeGameFrame(){ gameFrame.classList.add('hidden'); setTimeout(()=>{ try{ gameFrameInner.src='about:blank'; }catch(e){} },400); }
-/* ═══ v40.46 心潮看板层：dock「心潮」直接拉真心潮页面（iframe 盖满，返回键掀掉） ═══ */
-const XC_DEFAULT='https://capable-continue-norman-waiting.trycloudflare.com';
-function xcBase(){
-  let b='';
-  try{ b=localStorage.getItem('cn_xc_base')||''; }catch(e){}
-  return (b||XC_DEFAULT).replace(/\/+$/,'');
-}
-function xcUrl(){   /* 根路径(null)或具体 .html 都能用：有 ? 续 & ，没有就 ? */
-  const b=xcBase();
-  return b+(b.indexOf('?')>=0?'&':'?')+'embed=cn&t='+Date.now();
-}
-const xcFrame=document.createElement('div');
-xcFrame.id='xcFrame'; xcFrame.className='hidden';
-xcFrame.innerHTML='<iframe id="xcFrameInner" title="心潮" src="about:blank" allow="fullscreen; clipboard-write"></iframe>'
- +'<button id="xcBack" type="button" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
- +'stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>'
- +'<div id="xcTip" class="hidden"><span id="xcTipTx">看板没能连上</span><button id="xcFix" type="button">改地址</button></div>';
-document.body.appendChild(xcFrame);
-const xcFrameInner=xcFrame.querySelector('#xcFrameInner');
-const xcBack=xcFrame.querySelector('#xcBack');
-const xcTip=xcFrame.querySelector('#xcTip');
-let xcPrev=null, xcReady=false, xcTimer=0, xcIdle=0, xcPress=0, xcLong=false;
-
-function xcArm(){
-  clearTimeout(xcIdle);
-  xcBack.classList.remove('idle');
-  xcIdle=setTimeout(()=>{ xcBack.classList.add('idle'); },5000);
-}
-function openXc(){
-  try{ const on=dock&&dock.querySelector('.dock-btn.on'); xcPrev=on?on.dataset.view:'chat'; }catch(e){ xcPrev='chat'; }
-  xcReady=false; xcTip.classList.add('hidden');
-  try{ xcFrameInner.src=xcUrl(); }catch(e){}
-  xcFrame.classList.remove('hidden');
-  xcArm();
-  clearTimeout(xcTimer);
-  xcTimer=setTimeout(()=>{ if(!xcReady) xcTip.classList.remove('hidden'); },7000);
-}
-function closeXc(){
-  xcFrame.classList.add('hidden');
-  clearTimeout(xcTimer); clearTimeout(xcIdle);
-  setTimeout(()=>{ try{ xcFrameInner.src='about:blank'; }catch(e){} },400);
-  if(xcPrev) syncDock(xcPrev);
-}
-function xcAskBase(){
-  const v=prompt('心潮看板地址（隧道地址变了就改这里）', xcBase());
-  if(v===null) return;
-  const t=v.trim();
-  try{ if(t) localStorage.setItem('cn_xc_base',t); else localStorage.removeItem('cn_xc_base'); }catch(e){}
-  openXc();
-}
-xcBack.addEventListener('click',()=>{ if(xcLong){ xcLong=false; return; } closeXc(); });
-xcBack.addEventListener('pointerdown',()=>{
-  xcLong=false;
-  xcPress=setTimeout(()=>{ xcLong=true; xcAskBase(); },900);
-});
-['pointerup','pointercancel','pointerleave'].forEach(function(ev){
-  xcBack.addEventListener(ev,()=>{ clearTimeout(xcPress); xcArm(); });
-});
-xcFrame.querySelector('#xcFix').addEventListener('click',xcAskBase);
-window.addEventListener('message',function(e){
-  const d=e.data;
-  const t=(typeof d==='string')?d:(d&&d.t);
-  if(t==='xc:ready'){ xcReady=true; xcTip.classList.add('hidden'); clearTimeout(xcTimer); }
-  else if(t==='xc:sheet'){ xcBack.classList.toggle('xc-hide', !!d.on); }   /* 看板抽屉打开时，返回键让位给抽屉自己的返回 */
-  else if(t==='xc:close'){ closeXc(); }
-});
-window.openXinchao=openXc; window.closeXinchao=closeXc;
-
 /* v39.3 组队层：探索页点大富翁先进组队页，开桌后拉起游戏层 */
 const teamFrame=document.createElement('div');
 teamFrame.id='teamFrame'; teamFrame.className='hidden';
@@ -3914,7 +3831,6 @@ if(dock){
     if(v==='home'){ syncDock('home'); showHome(true); showExplore(false); setDock(true); setDockFlat(true); }
     else if(v==='chat'){ setDockFlat(false); syncDock('chat'); showHome(false); showExplore(false); setDock(false); requestAnimationFrame(()=>requestAnimationFrame(playChatMorph)); }   /* 聊天项=翻回收起态+转场；双 rAF 空过切页渲染高峰再启动，防动画迟到半路被缩（槽开关最先执行） */
     else if(v==='explore'){ syncDock(v); showHome(false); showExplore(true); setDock(true); setDockFlat(true); }
-    else if(v==='mood'){ syncDock('mood'); openXc(); setDock(true); setDockFlat(true); }
     else{ syncDock(v); toast('「'+(names[v]||v)+'」还在装修，先占个位',2200); setDock(true); setDockFlat(true); }
   }));
 }
