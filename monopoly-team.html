@@ -75,6 +75,10 @@ body{
 .title-sub{font-size:12px;color:var(--text3);letter-spacing:.24em;margin-top:-10px}
 /* ── 选择视图：创建 / 加入 ── */
 .pick{display:flex;flex-direction:column;gap:14px;width:min(84vw,320px)}
+.pick-note{width:min(420px,88vw);margin:2px auto 0;border-radius:13px;padding:11px 15px;
+  font-size:12.5px;line-height:1.6;color:#8a5a1e;background:rgba(255,214,140,.22);
+  border:1px solid rgba(212,175,55,.45);text-align:center}
+.pick-note.hidden{display:none}
 .pick-card{
   border:1px solid var(--line);background:var(--panel);border-radius:20px;
   padding:20px 18px;cursor:pointer;text-align:left;
@@ -183,6 +187,7 @@ body{
       <h2><span class="ico">↳</span>加入房间</h2>
       <p>拿到 TA 发来的房间码，输入后直接坐上牌桌。</p>
     </div>
+    <div class="pick-note hidden" id="pickNote"></div>
   </div>
 
   <!-- 加入：输房间码 -->
@@ -431,7 +436,11 @@ $('joinGo').addEventListener('click',async()=>{
     try{ const room2=await dFetch('/api/game/room/'+encodeURIComponent(urlCode)); renderRoom(room2); }catch(e){}
     show('room'); startPoll(urlCode);
   }catch(e){
-    $('sysLine').textContent = e.code==='room_not_found' ? '房间不存在或已过期' : '恢复房间失败，可重新建房';
+    /* v10 房票失效要看得见：回选单 + 选单页提示条（sysLine 在房间视图里，过期时根本看不见） */
+    show('pick');
+    const note=document.getElementById('pickNote');
+    if(note){ note.classList.remove('hidden');
+      note.textContent = e.code==='room_not_found' ? '这张房票对应的房间已过期，让 TA 再开一局，或自己开一桌' : '恢复房间失败，稍等再点一次卡片试试'; }
   }
 })();
 
