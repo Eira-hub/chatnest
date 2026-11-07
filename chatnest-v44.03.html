@@ -4298,6 +4298,15 @@ function hdHisWords(){
       const t=String(o.t).replace(/\s+/g,' ').trim();
       if(t&&out.indexOf(t)<0)out.push(t);
     }
+    /* 正在聊的那个会话排最前：localStorage 的遍历顺序是"先建的在前"，
+       不摆正的话会拿到最早那个会话的话，看着像翻旧账 */
+    const cid=(window.state&&state.convId)||'';
+    const cur=cid?JSON.parse(localStorage.getItem('cn_lastmsg_'+cid)||'null'):null;
+    if(cur&&cur.r==='ai'&&cur.t){
+      const t=String(cur.t).replace(/\s+/g,' ').trim();
+      const i=out.indexOf(t); if(i>=0)out.splice(i,1);
+      if(t)out.unshift(t);
+    }
   }catch(e){}
   return out;
 }
