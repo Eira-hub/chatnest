@@ -5806,7 +5806,7 @@ void main(){
   vec2 nd = normalize(rel / max(half_, vec2(1.0)));
   float wTL = pow(max(dot(nd, vec2(-0.7071, -0.7071)), 0.0), 14.0);
   float wBR = pow(max(dot(nd, vec2( 0.7071,  0.7071)), 0.0), 14.0);
-  float corner = max(wTL, wBR * 0.80);
+  float corner = max(wTL, wBR * 0.95);
 
   float rim = exp(-inside * inside / (0.55 * u_dpr * u_dpr));
   c += vec3(0.95, 0.975, 1.0) * rim * (0.014 + 0.98 * corner) * u_shine;
