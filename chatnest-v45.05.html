@@ -1296,9 +1296,12 @@ html.hm-on #viewHome .hd-days{
 #viewHome .hd-days>.hd-gl{position:absolute;inset:0;display:block;width:100%;height:100%;
   z-index:0;pointer-events:none;opacity:0;transition:opacity .5s var(--ease)}
 html.hd-gl-on #viewHome .hd-days>.hd-gl{opacity:1}
-html.hd-gl-on #viewHome .hd-days{background:none !important;
-  -webkit-backdrop-filter:blur(16px) !important;backdrop-filter:blur(16px) !important;
+html.hd-gl-on #viewHome .hd-days{background:rgba(14,20,34,.30) !important;
   box-shadow:0 20px 44px -14px rgba(0,0,0,.60),0 4px 12px -2px rgba(0,0,0,.24) !important}
+@supports ((-webkit-backdrop-filter:blur(4px)) or (backdrop-filter:blur(4px))){
+  html.hd-gl-on #viewHome .hd-days{background:none !important;
+    -webkit-backdrop-filter:blur(16px) !important;backdrop-filter:blur(16px) !important}
+}
 html.hd-gl-on #viewHome .hd-days::before,
 html.hd-gl-on #viewHome .hd-days::after{display:none !important}
 
