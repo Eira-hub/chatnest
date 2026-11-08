@@ -1350,9 +1350,9 @@ html.hd-gl-on #viewHome .hd-days::after{display:none !important}
    没走到的地方什么也没有（连淡线都没有），所以"下一拍怎么跳"是白线
    自己走到那儿才决定的 —— 跟真的心电图机一样，先一条平线，然后才起搏。
    d 由 JS 每帧重写成"已经写过的部分"，这里不要写 animation。 */
-#viewHome .hd-ecg .ecg-ghost{fill:none;stroke:rgba(255,255,255,.29);stroke-width:1.0;
+#viewHome .hd-ecg .ecg-ghost{fill:none;stroke:rgba(255,255,255,.50);stroke-width:1.0;
   stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-#viewHome.hm-light .hd-ecg .ecg-ghost{stroke:rgba(24,34,64,.29)}
+#viewHome.hm-light .hd-ecg .ecg-ghost{stroke:rgba(24,34,64,.46)}
 #viewHome .hd-ecg .ecg-base{fill:none;stroke:rgba(255,255,255,.62);stroke-width:1.05;
   stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;
   filter:drop-shadow(0 0 1.4px rgba(255,255,255,.30))}
@@ -5740,8 +5740,8 @@ if(dock){
       if(paused||!seg)return;
 
       /* 笔速自己会飘：慢下来写细节，快起来留平线 */
-      if(Math.abs(speed-aim)<0.6)aim=rnd(285,395);
-      speed+=(aim-speed)*Math.min(1,dt*1.1);
+      if(Math.abs(speed-aim)<0.6)aim=rnd(268,408);
+      speed+=(aim-speed)*Math.min(1,dt*1.6);
 
       const spd=speed*(seg.shape==='flat'?1.20:0.84);
       let move=spd*dt, guard=0;
@@ -5766,7 +5766,7 @@ if(dock){
       fading=true;
       prevPts=pts; prevI=0;
       begin(false);
-      speed=rnd(300,380); aim=speed;
+      speed=rnd(290,390); aim=speed;
       last=0;
       fading=false;
     }
