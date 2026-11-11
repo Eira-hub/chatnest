@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>ChatNest</title>
-<meta http-equiv="refresh" content="0;url=chatnest-v45.16.html?v=240">
+<meta http-equiv="refresh" content="3;url=chatnest-v45.17.html?v=241">
 <style>
   html,body{margin:0;height:100%;background:#0b1020;color:#8b93ad;
     font-family:-apple-system,"PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center}
@@ -12,6 +14,27 @@
 </head>
 <body>
 <span>进入星夜小筑…</span>
-<script>try{location.replace('chatnest-v45.16.html?v=240')}catch(e){}</script>
+<script>
+/* v45.17 入口不再写死版本：先问 version.json 现在最新是哪个文件，再跳过去。
+   GitHub Pages 的 HTML 固定缓存 10 分钟，只靠 meta refresh 写死文件名的话，
+   改版后用户要等缓存过期才看得到；这里每次带上时间戳取一次（小文件），
+   即使本页是旧缓存，也能被带到最新那一版。失败就退回写死的地址。 */
+(function(){
+  var FB='chatnest-v45.17.html?v=241';
+  function go(u){ try{ location.replace(u); }catch(e){ location.href=u; } }
+  var done=false;
+  function once(u){ if(done) return; done=true; go(u); }
+  setTimeout(function(){ once(FB); }, 2500);           /* 兜底：网络慢也不干等 */
+  try{
+    fetch('version.json?_='+Date.now(),{cache:'no-store'})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(j && j.file) once(j.file+'?v='+(j.v||Date.now()));
+        else once(FB);
+      })
+      .catch(function(){ once(FB); });
+  }catch(e){ once(FB); }
+})();
+</script>
 </body>
 </html>
