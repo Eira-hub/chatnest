@@ -5286,7 +5286,13 @@ function ssMenuOpen(s){
           localStorage.removeItem('cn_rename_'+s.conv_id);
         }catch(e){}
         state.sessions=(state.sessions||[]).filter(x=>x.conv_id!==s.conv_id);
-        if(state.convId===s.conv_id){ try{ newConv(); }catch(e){} }
+        /* 删掉的正好是当前会话：只把指针清掉，别调 newConv —— 那会把界面拽去聊天页，
+           用户还站在列表上，会莫名其妙跳一下 */
+        if(state.convId===s.conv_id){
+          state.convId='';
+          try{ localStorage.removeItem(LS.conv); }catch(e){}
+          try{ document.getElementById('streamInner').innerHTML=''; }catch(e){}
+        }
         ssRender();
       }
     });
