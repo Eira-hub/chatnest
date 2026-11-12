@@ -2775,8 +2775,9 @@ async function boot(){
     const [m, av, ag] = await Promise.all([
       api('/api/models'),
       api('/api/avatars').catch(()=>({me:{url:''},ai:{url:''}})),
-      api('/api/agents').catch(()=>({agents:[]}))
+      api('/api/agents').catch(()=>({agents:[],__down:true}))
     ]);
+    state.agentsReady = !(ag && ag.__down);
     state.models = m.models || [];
     state.avatars = av || {me:{url:''}, ai:{url:''}};
     state.agents = ag.agents || [];
@@ -5749,7 +5750,15 @@ function renderAgentList(){
     box.innerHTML='<div class="ag-hint" style="padding:16px 6px">还没有角色</div>';
   }
 }
+function agentsGuard(){
+  if(state.agentsReady===false){
+    toast('后端还是旧版：先把 chatnest-fc-r13 传上去，角色功能才生效',3400);
+    return false;
+  }
+  return true;
+}
 function openAgentList(){
+  if(!agentsGuard()) return;
   renderAgentList();
   agOpen('agentListSheet');
 }
@@ -5793,6 +5802,7 @@ function agSyncFull(force){
   ta.value=agPersonaAuto();
 }
 function openAgentEditor(id){
+  if(!agentsGuard()) return;
   agEditing=id||'';
   const a=id?agentById(id):null;
   const isNew=!a;
