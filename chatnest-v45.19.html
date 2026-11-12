@@ -2181,6 +2181,7 @@ html.hd-gl-on #viewHome .hd-days::after{display:none !important}
 
   <div class="set-group">
     <div class="set-sec">角色卡</div>
+    <div class="ag-hint hidden" id="agLegacy" style="margin:-2px 0 8px;line-height:1.7">这个人设是从旧版设置页搬过来的一整段，已经放在下面的「看全文」里。想改成结构化的话，清空全文再填上面几栏。</div>
     <div class="ag-field"><label>身份</label><textarea id="agIdentity" maxlength="600" placeholder="TA 是谁：年纪、做什么的、住在哪"></textarea></div>
     <div class="ag-field"><label>性格</label><textarea id="agPersonality" maxlength="600" placeholder="外冷内热、嘴硬、心软，写你感觉得到的"></textarea></div>
     <div class="ag-field"><label>说话方式</label><textarea id="agSpeech" maxlength="600" placeholder="短句、口语、偶尔损你两句"></textarea></div>
@@ -5827,6 +5828,9 @@ function openAgentEditor(id){
   if(face) face.innerHTML=window.agAvatarData?'<img src="'+String(window.agAvatarData).replace(/"/g,'&quot;')+'" alt="">':'<span>＋</span>';
   const del=document.getElementById('agDanger');
   if(del) del.classList.toggle('hidden', isNew || id==='ji');
+  const hasCard=Object.keys(c).some(k=>String(c[k]||'').trim());
+  const leg=document.getElementById('agLegacy');
+  if(leg) leg.classList.toggle('hidden', !(a && String(a.persona||'').trim() && !hasCard));
   agClose('agentListSheet');
   agOpen('agentSheet');
   const sheet=document.getElementById('agentSheet');
