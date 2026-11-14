@@ -630,7 +630,11 @@ html.hm-on .dock .ball .drop{border-color:rgba(200,216,250,.30);
   /* 保留一点描边厚度 + 落影，让转折处更明显 */
   filter:drop-shadow(0 0 .45px currentColor) drop-shadow(0 1px .9px rgba(28,38,70,.28));
   transition:opacity .2s,transform .2s,filter .25s}
-.dock-btn.on img{filter:drop-shadow(0 0 .45px currentColor) drop-shadow(0 0 5px var(--ball-on)) drop-shadow(0 1px .9px rgba(28,38,70,.22))}
+.dock-btn.on img{filter:drop-shadow(0 0 .45px currentColor) drop-shadow(0 0 5px var(--ball-on)) drop-shadow(0 1px .9px rgba(28,38,70,.22));
+  /* 选中项常驻顶起 12%：静止时也能看出"这一格被按住了"，拖动时再叠 --z 到 28% */
+  transform:scale(calc(1.12 + var(--z,0) * .16))}
+.dock.dragging .dock-btn.on img{transform:scale(calc(1 + var(--z,0) * .26))}
+.dock-btn.near img{transform:scale(calc(1.12 + var(--z,0) * .16))}
 .dock-btn span{line-height:1;transition:opacity .2s;transform:scale(calc(1 + var(--z,0) * .07))}
 .dock-btn:active{transform:scale(.93)}
 /* ───────── v36 水珠悬浮球（iOS18 液态玻璃 Dock）───────── */
