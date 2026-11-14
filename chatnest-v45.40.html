@@ -624,7 +624,10 @@ html.hm-on .dock .ball .drop{border-color:rgba(200,216,250,.30);
      一档之内完全不动，所以拖动时没有任何逐帧样式写入。 */
   transition:opacity .18s ease,transform .26s cubic-bezier(.34,1.42,.64,1)}
 .dock-btn img{width:19px;height:19px;display:block;background:currentColor;
-  transform-origin:50% 68%;transform:scale(1);will-change:transform;
+  transform-origin:50% 68%;transform:scale(1);
+  /* 不用 will-change：图标是 -webkit-mask 裁的，一旦被提升成独立合成层，
+     部分安卓 WebView 上 mask 会整块失效（图标变方块）。档位切换时
+     浏览器本来就会为 transform 过渡临时提升，够顺，不需要提前提升。 */
   /* v40.28 金属光泽：竖向三段渐变 —— 顶部近白（受光）、中段本色、底部压暗（背光），
      用强对比在 19px 描边上做出明暗转折，取代原来 broken-image 占位图提供的"假光泽"。 */
   background-image:linear-gradient(180deg,
