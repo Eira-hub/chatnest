@@ -830,7 +830,9 @@ function xcSkin(card,letter,alpha,bgLum){
   var cardA=Math.min(.97,.66*XC_K);
   var eff=xcLum(c);
   if(XC_BGL!==null) eff=eff*cardA+XC_BGL*(1-cardA);
-  var dark=eff<0.52, ldark=xcLum(l)<0.56;
+  /* 0.56 而不是 0.52：白卡片拉到七成透时，合成亮度约 0.52，
+     深褐字压在中灰上刚好卡在"看着还在、其实糊了"的边缘，往上抬一档才稳。 */
+  var dark=eff<0.56, ldark=xcLum(l)<0.56;
   var hexOf=function(v){return '#'+v.map(function(n){return ('0'+n.toString(16)).slice(-2)}).join('').toUpperCase()};
   XC_SKIN={card:hexOf(c),letter:hexOf(l),alpha:av};
   var set=function(k,v){ S.setProperty(k,v); };
