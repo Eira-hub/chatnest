@@ -6298,7 +6298,14 @@ function xcAskBase(){
 window.addEventListener('message',function(e){
   const d=e.data;
   const t=(typeof d==='string')?d:(d&&d.t);
-  if(t==='xc:ready'){ xcReady=true; tipShow(false); clearTimeout(xcTimer); try{ window.xcPushSkin&&window.xcPushSkin(); }catch(e){} }
+  if(t==='xc:ready'){
+    xcReady=true; tipShow(false); clearTimeout(xcTimer);
+    try{ window.xcPushSkin&&window.xcPushSkin(); }catch(e){}
+    /* v45.34 兜底：iframe 从 Pages 加载时 ready 可能比 xcPushSkin 赋值还早，
+       那一次会静默丢掉，之后就没有第二次机会。延迟补推一次壁纸亮度。 */
+    setTimeout(function(){ try{ xcReady&&window.xcPushSkin&&window.xcPushSkin(); }catch(e){} }, 1000);
+    setTimeout(function(){ try{ xcReady&&window.xcPushSkin&&window.xcPushSkin(); }catch(e){} }, 2600);
+  }
 });
 
 /* ═══ v45.19 主页切角色：一个房间固定一个角色，点右边头像换人 ═══ */
