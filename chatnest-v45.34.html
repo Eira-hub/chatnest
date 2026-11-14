@@ -6270,6 +6270,10 @@ function xcBoot(){
   if(!el) return;
   if(!xcLoaded){                       /* 第一次进来才加载，之后切走只是 display:none，回来秒开 */
     xcLoaded=true; xcReady=false;
+    /* v45.34 看板要等 three.min.js（约 600KB）加载完才会发 xc:ready，
+       网络慢时 ready 可能十几秒都不来，字色就一直停在旧配色。
+       父页面这边的 load 先到就先推一次，两边任一触发都不亏。 */
+    el.onload=function(){ setTimeout(function(){ try{ window.xcPushSkin&&window.xcPushSkin(); }catch(e){} }, 300); };
     try{ el.src=xcUrl(); }catch(e){}
   }else{                               /* 复用同一个 iframe：让看板重排一次，防止 display:none 期间尺寸归零 */
     try{ el.contentWindow.postMessage({t:'xc:show'},'*'); }catch(e){}
