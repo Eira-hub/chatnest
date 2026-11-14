@@ -654,6 +654,9 @@ color:#a99c86;width:94px;margin-left:auto;padding:0}
 html.embed-cn{
  background:transparent;
  --dim:var(--g-dim);
+  /* v45.35 --fg 原来固定 #37342F：深色玻璃上磁贴标题、数值全是深褐，
+     直接糊进卡里（截图里"情绪日历/足迹"发灰就是这个）。接到墨色变量上。 */
+  --fg:var(--g-ink);
   /* 墨色 */
   --g-title:#4A4237;
   --g-ink:#37342F;
@@ -748,15 +751,15 @@ html.embed-cn .sea-wrap{border-radius:22px;
 html.embed-cn .desk{background:linear-gradient(158deg,var(--g-card-a) 0%,var(--g-card-b) 52%,var(--g-card-c) 100%);
  border:1px solid var(--g-card-bd);border-radius:22px;
  -webkit-backdrop-filter:blur(calc(24px*var(--g-bk,1))) saturate(1.5);backdrop-filter:blur(calc(24px*var(--g-bk,1))) saturate(1.5);
- box-shadow:0 10px 30px rgba(var(--g-sh),.10),inset 0 1px 0 var(--g-hl)}
+ box-shadow:0 10px 30px rgba(var(--g-sh),.10),inset 0 .7px 0 var(--g-hl)}
 html.embed-cn .inner{background:var(--g-inner);border-color:var(--g-inner-bd);border-radius:17px;
- box-shadow:inset 0 1px 0 var(--g-hl-soft)}
+ box-shadow:inset 0 .7px 0 var(--g-hl-soft)}
 html.embed-cn .tile{background:linear-gradient(152deg,var(--g-tile-a) 0%,var(--g-tile-b) 100%);
- border-color:var(--g-tile-bd);box-shadow:0 2px 8px rgba(var(--g-sh),.06),inset 0 1px 0 var(--g-tile-hl)}
+ border-color:var(--g-tile-bd);box-shadow:0 2px 8px rgba(var(--g-sh),.06),inset 0 .7px 0 var(--g-tile-hl)}
 html.embed-cn .tile:active{background:var(--g-tile-on)}
 html.embed-cn .tabs{background:var(--g-tabs);border:1px solid var(--g-tabs-bd);border-radius:14px;
  -webkit-backdrop-filter:blur(calc(18px*var(--g-bk,1))) saturate(1.4);backdrop-filter:blur(calc(18px*var(--g-bk,1))) saturate(1.4);
- box-shadow:inset 0 1px 0 var(--g-hl-soft)}
+ box-shadow:inset 0 .7px 0 var(--g-hl-soft)}
 html.embed-cn .tabs button.on{background:var(--g-tabs-on);box-shadow:0 1px 3px rgba(var(--g-sh),.10),inset 0 1px 0 #fff}
 html.embed-cn .tabs button:not(.on){color:var(--g-ink2)}
 html.embed-cn .seg{background:var(--g-seg);border:1px solid var(--g-seg-bd);
@@ -768,7 +771,7 @@ html.embed-cn .card,html.embed-cn .tr-card,html.embed-cn .fm-card{
  background:linear-gradient(158deg,var(--g-big-a) 0%,var(--g-big-b) 52%,var(--g-big-c) 100%);
  border-color:var(--g-big-bd);
  -webkit-backdrop-filter:blur(calc(22px*var(--g-bk,1))) saturate(1.45);backdrop-filter:blur(calc(22px*var(--g-bk,1))) saturate(1.45);
- box-shadow:0 8px 26px rgba(var(--g-sh),.08),inset 0 1px 0 var(--g-hl)}
+ box-shadow:0 8px 26px rgba(var(--g-sh),.08),inset 0 .7px 0 var(--g-hl)}
 html.embed-cn .tr-nums div,html.embed-cn .tr-ev .kl,html.embed-cn .tr-ev .xn,html.embed-cn .tr-ev i{
  background:var(--g-soft);border-color:var(--g-soft-bd)}
 html.embed-cn .cd.h1,html.embed-cn .cd.h2,html.embed-cn .cd.h3{background:var(--g-cd)}
@@ -779,16 +782,29 @@ html.embed-cn .dv-num{color:var(--g-dim)}
 html.embed-cn .compose{background:linear-gradient(160deg,var(--l-paper-a) 0%,var(--l-paper-b) 100%);
  border:1px solid var(--l-paper-bd);
  -webkit-backdrop-filter:blur(calc(18px*var(--g-bk,1))) saturate(1.35);backdrop-filter:blur(calc(18px*var(--g-bk,1))) saturate(1.35);
- box-shadow:0 8px 22px rgba(var(--g-sh),.10),inset 0 1px 0 var(--l-hl)}
+ box-shadow:0 8px 22px rgba(var(--g-sh),.10),inset 0 .7px 0 var(--l-hl)}
 html.embed-cn .note{background:var(--l-note);border-color:var(--l-note-bd);
  -webkit-backdrop-filter:blur(calc(14px*var(--g-bk,1)));backdrop-filter:blur(calc(14px*var(--g-bk,1)));
- box-shadow:inset 0 1px 0 var(--l-hl),0 2px 8px rgba(var(--g-sh),.06)}
+ box-shadow:inset 0 .7px 0 var(--l-hl),0 2px 8px rgba(var(--g-sh),.06)}
 html.embed-cn .wchip{background:var(--l-chip);border-color:var(--l-chip-bd);
  -webkit-backdrop-filter:blur(calc(12px*var(--g-bk,1)));backdrop-filter:blur(calc(12px*var(--g-bk,1)))}
 html.embed-cn .compose textarea{color:var(--l-ink)}
 html.embed-cn .compose textarea::placeholder{color:var(--l-dim)}
 html.embed-cn .act{background:var(--l-btn);color:var(--l-btn-ink);border:1px solid var(--l-btn-bd);
  box-shadow:0 1px 3px rgba(var(--g-sh),.10),inset 0 1px 0 #fff}
+
+/* v45.35 描边收细 / 收淡
+   1px 的实白边在 3x 屏上是一条 3 物理像素的硬线，圆角处还会发毛，
+   深色玻璃上尤其像"贴了圈胶带"。统一压到 0.5px，配合已经减半的上缘高光，
+   边只剩一层呼吸感的亮痕，玻璃的厚度靠透光和模糊表达，不靠描边。 */
+html.embed-cn .desk,html.embed-cn .card,html.embed-cn .tr-card,html.embed-cn .fm-card,
+html.embed-cn .inner,html.embed-cn .tile,html.embed-cn .tabs,html.embed-cn .seg,
+html.embed-cn .tbar,html.embed-cn .compose,html.embed-cn .note,html.embed-cn .wchip{
+ border-width:.5px;border-style:solid}
+/* 卡片外投影也收一档：原来那圈灰雾会把玻璃压成"塑料片" */
+html.embed-cn .desk{box-shadow:0 8px 26px rgba(var(--g-sh),.09),inset 0 .7px 0 var(--g-hl)}
+html.embed-cn .card,html.embed-cn .tr-card,html.embed-cn .fm-card{
+ box-shadow:0 6px 20px rgba(var(--g-sh),.07),inset 0 .7px 0 var(--g-hl)}
 
 </style></head><body>
 <script>try{
@@ -831,8 +847,11 @@ function xcSkin(card,letter,alpha,bgLum){
   var eff=xcLum(c);
   if(XC_BGL!==null) eff=eff*cardA+XC_BGL*(1-cardA);
   /* 0.56 而不是 0.52：白卡片拉到七成透时，合成亮度约 0.52，
-     深褐字压在中灰上刚好卡在"看着还在、其实糊了"的边缘，往上抬一档才稳。 */
-  var dark=eff<0.56, ldark=xcLum(l)<0.56;
+     深褐字压在中灰上刚好卡在"看着还在、其实糊了"的边缘，往上抬一档才稳。
+     v45.35：再补一条「卡片本色就深」→ 直接走浅字。原来只按合成亮度判，
+     深色卡叠在浅壁纸上合成亮度约 0.65，被判成浅底 → 深褐字压深灰卡、
+     再配一圈 .74 的白边，正是用户说的"白边生硬 + 廉价"。 */
+  var dark=eff<0.56||xcLum(c)<0.34, ldark=xcLum(l)<0.56;
   var hexOf=function(v){return '#'+v.map(function(n){return ('0'+n.toString(16)).slice(-2)}).join('').toUpperCase()};
   XC_SKIN={card:hexOf(c),letter:hexOf(l),alpha:av};
   var set=function(k,v){ S.setProperty(k,v); };
@@ -841,17 +860,24 @@ function xcSkin(card,letter,alpha,bgLum){
   set('--g-veil-a',xcRGBV(vb,.42)); set('--g-veil-b',xcRGBV(vb,.22)); set('--g-veil-c',xcRGBV(vb,.06));
   set('--g-glow-a',xcRGBV(vb,.40)); set('--g-glow-b',xcRGBV(vb,.20));
 
+  /* v45.35 描边收淡：深色玻璃上原来 .24~.30 的白线看着像贴了一圈胶带，
+     压到 .12~.15 只留「有这么一层玻璃」的暗示；上缘高光同步减半。 */
   set('--g-card-a',xcRGB(c,.66)); set('--g-card-b',xcRGB(c,.44)); set('--g-card-c',xcRGB(c,.58));
-  set('--g-card-bd',xcRGB(xcUp(c,.55),dark?.30:.74));
-  set('--g-inner',xcRGB(c,.42)); set('--g-inner-bd',xcRGB(xcUp(c,.50),dark?.24:.58));
-  set('--g-tile-a',xcRGB(c,.80)); set('--g-tile-b',xcRGB(c,.56)); set('--g-tile-bd',xcRGB(xcUp(c,.50),dark?.28:.80));
+  set('--g-card-bd',xcRGB(xcUp(c,.55),dark?.11:.55));
+  set('--g-inner',xcRGB(c,.42)); set('--g-inner-bd',xcRGB(xcUp(c,.50),dark?.09:.42));
+  set('--g-tile-a',xcRGB(c,.80)); set('--g-tile-b',xcRGB(c,.56)); set('--g-tile-bd',xcRGB(xcUp(c,.50),dark?.09:.60));
   set('--g-tile-on',xcRGB(c,.94));
-  set('--g-tabs',xcRGB(c,.50)); set('--g-tabs-bd',xcRGB(xcUp(c,.50),dark?.26:.62)); set('--g-tabs-on',xcRGB(c,.92));
-  set('--g-seg',xcRGB(c,.46)); set('--g-seg-bd',xcRGB(xcUp(c,.50),dark?.24:.56)); set('--g-seg-on',xcRGB(c,.90));
+  set('--g-tabs',xcRGB(c,.50)); set('--g-tabs-bd',xcRGB(xcUp(c,.50),dark?.09:.48)); set('--g-tabs-on',xcRGB(c,.92));
+  set('--g-seg',xcRGB(c,.46)); set('--g-seg-bd',xcRGB(xcUp(c,.50),dark?.08:.44)); set('--g-seg-on',xcRGB(c,.90));
   set('--g-big-a',xcRGB(c,.82)); set('--g-big-b',xcRGB(c,.70)); set('--g-big-c',xcRGB(c,.78));
-  set('--g-big-bd',xcRGB(xcUp(c,.50),dark?.28:.72));
-  set('--g-soft',xcRGB(c,.54)); set('--g-soft-bd',xcRGB(xcUp(c,.50),dark?.24:.60));
-  set('--g-cd',xcRGB(c,.58)); set('--g-chip',xcRGB(c,.60)); set('--g-chip-bd',xcRGB(xcUp(c,.50),dark?.26:.62));
+  set('--g-big-bd',xcRGB(xcUp(c,.50),dark?.11:.54));
+  set('--g-soft',xcRGB(c,.54)); set('--g-soft-bd',xcRGB(xcUp(c,.50),dark?.08:.46));
+  set('--g-cd',xcRGB(c,.58)); set('--g-chip',xcRGB(c,.60)); set('--g-chip-bd',xcRGB(xcUp(c,.50),dark?.09:.48));
+  /* 上缘那道 1px 纯白高光是「生硬」的主因：深底上反差太大，压成一层薄雾 */
+  if(dark){ set('--g-hl','rgba(255,255,255,.30)'); set('--g-hl-soft','rgba(255,255,255,.20)');
+    set('--g-tile-hl','rgba(255,255,255,.26)'); set('--l-hl','rgba(255,255,255,.20)'); }
+  else{ set('--g-hl','rgba(255,255,255,.92)'); set('--g-hl-soft','rgba(255,255,255,.74)');
+    set('--g-tile-hl','rgba(255,255,255,.95)'); set('--l-hl','rgba(255,255,255,.85)'); }
   /* 玻璃自身的模糊跟着收：不收，背后的纹理永远是一团雾，透出来也认不出是壁纸 */
   set('--g-bk', String(Math.max(.16,1-av/100*0.84)));
   /* 光晕必须跟字色反着来：深底浅字配暗影，浅底深字配白光。
@@ -871,7 +897,7 @@ function xcSkin(card,letter,alpha,bgLum){
     if(av>70){ set('--g-dim','#2B2721'); set('--g-ink2','#332E26'); } }
 
   set('--l-paper-a',xcRGB(l,.88)); set('--l-paper-b',xcRGB(l,.76));
-  set('--l-paper-bd',xcRGB(xcUp(l,.50),ldark?.30:.78));
+  set('--l-paper-bd',xcRGB(xcUp(l,.50),ldark?.12:.58));
   set('--l-note',xcRGB(l,.78)); set('--l-note-bd',xcRGB(xcUp(l,.45),ldark?.26:.66));
   set('--l-chip',xcRGB(l,.80)); set('--l-chip-bd',xcRGB(xcUp(l,.45),ldark?.26:.68));
   set('--l-btn',xcRGB(xcUp(l,ldark?.16:.55),.94));
