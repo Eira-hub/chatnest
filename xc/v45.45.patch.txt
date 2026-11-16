@@ -1,0 +1,161 @@
+--- a/index.html
++++ b/index.html
+@@ -1,10 +1,30 @@
+ <!doctype html>
++<!--
++  v45.45（2026-11-16）心潮页视觉修复，一次上齐
++  基线：线上 183069 字节那版（v45.33）。只动排版与配色变量，不动布局/数据结构。
++
++  1) 英文标题（Inner Weather / What Pulls Me / Soft Yearning）
++     .ct/.cs/.dt/.ds 一律 font-weight:400 + font-synthesis:none。Didot 只有 Regular，
++     任何 >=500 都会被合成假粗，1px 的衬线横画撑成两倍宽的毛边。
++     字距 .11→.085em、.09→.075em、.24→.20em、.2→.17em。
++  2) 光晕退役
++     原来 0 1px 10px rgba(255,255,255,.6) 两层白光，浅字在深卡上被糊成一团白雾。
++     现在深色模式 --g-tso=0，浅色模式只留 1px、上限 .30。
++  3) 标题字色接变量
++     .ct/.dt → var(--g-title)，并补上原先漏掉的 html.embed-cn .desk .dt。
++     深玻璃上原来的硬编码 #655b4d 等于看不见。
++  4) 描边收细（原 v45.35 内容，一并带上）
++     .desk/.card/.tile 等 border-width:.5px，上缘高光 1px→.7px，卡片外投影收一档。
++     另把 --fg 从 #37342F 接到 --g-ink —— 磁贴里「情绪日历/足迹」在深卡上发灰就是它。
++
++  回滚：备份原文件即可（cp index.bak.* index.html），dash 每次请求重读文件，不用重启。
++-->
+ <html lang="zh"><head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+ <meta name="theme-color" content="#F6F5F2">
+ <title>Heartide</title>
+ <style>
+-:root{--bg:#F6F5F2;--card:#FFFEFC;--fg:#37342F;--dim:#8C877E;--line:#EAE7E1;
++:root{--bg:#F6F5F2;--card:#FFFEFC;--fg:var(--g-ink);--dim:#8C877E;--line:#EAE7E1;
+ --sea:#4e93a8;--sand:#e6e0d4;--warm:#cf8a4e;--cool:#5f9bab}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ body{margin:0 auto;max-width:560px;background:var(--bg);color:var(--fg);
+@@ -45,10 +65,15 @@
+ .desk{margin-top:10px;padding:10px 10px 11px;border-radius:23px;background:#F3F1ED;
+ border:1px solid #efe3d0;box-shadow:0 3px 18px rgba(150,130,95,.07)}
+ .desk-h{display:flex;align-items:baseline;justify-content:space-between;padding:0 5px 9px}
++/* v45.45 英文标题三件事：不加假粗、不收太宽的字距、不裹光晕。
++   Didot 在 iOS 上只有 Regular 一档，任何 font-weight>=500 都会被浏览器合成，
++   1px 的衬线横画一合成就是两倍宽的毛边；再叠上白色光晕，就成了截图里那种"白泥"。 */
+ .dt{font-family:"Didot","Bodoni 72","Playfair Display",Georgia,"Times New Roman",serif;
+-font-style:italic;font-size:18px;letter-spacing:.11em;color:#655b4d;line-height:1}
++font-style:italic;font-weight:400;font-size:18px;letter-spacing:.085em;color:#655b4d;line-height:1;
++font-synthesis:none;font-synthesis-weight:none;font-synthesis-style:none}
+ .ds{font-family:"Didot","Bodoni 72","Playfair Display",Georgia,"Times New Roman",serif;
+-font-style:italic;font-size:9px;letter-spacing:.24em;color:#c0b4a2;line-height:1}
++font-style:italic;font-weight:400;font-size:9px;letter-spacing:.20em;color:#c0b4a2;line-height:1;
++font-synthesis:none;font-synthesis-weight:none;font-synthesis-style:none}
+ 
+ .inner{padding:6px;background:#FFFEFC;border:1px solid #f3ebdc;border-radius:15px}
+ .tiles{position:relative;width:100%;aspect-ratio:100/66;container-type:inline-size}
+@@ -491,9 +516,11 @@
+ /* ── 卡片英文标题 ── */
+ .cap-en{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+ .cap-en .ct{font-family:"Didot","Bodoni 72","Playfair Display",Georgia,"Times New Roman",serif;
+-font-style:italic;font-size:13.5px;letter-spacing:.09em;color:#6a6053;line-height:1}
++font-style:italic;font-weight:400;font-size:13.5px;letter-spacing:.075em;color:#6a6053;line-height:1;
++font-synthesis:none;font-synthesis-weight:none;font-synthesis-style:none}
+ .cap-en .cs{font-family:"Didot","Bodoni 72","Playfair Display",Georgia,"Times New Roman",serif;
+-font-style:italic;font-size:8px;letter-spacing:.2em;color:#bdb1a0;line-height:1}
++font-style:italic;font-weight:400;font-size:8px;letter-spacing:.17em;color:#bdb1a0;line-height:1;
++font-synthesis:none;font-synthesis-weight:none;font-synthesis-style:none}
+ .cap{font-size:11px;color:var(--dim);letter-spacing:.1em;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+ .intent{font-size:13px;color:#4a4438;margin:0 0 4px}
+ .intent em{font-style:normal;color:var(--warm)}
+@@ -722,12 +749,18 @@
+ html.embed-cn .sub{font-size:10.5px;color:var(--g-dim)}
+ html.embed-cn .rev{color:var(--g-dim)}
+ /* 卡片小标题原本是硬编码的棕/米色，壁纸透出来后会糊，接到变量上跟着走 */
+-html.embed-cn .cap-en .ct{color:var(--g-ink2)}
++/* v45.45 英文标题用最深/最亮那一档。它们是 8~18px 的细衬线，本来就靠笔画说话，
++   喂次级灰等于自带一层雾；原来 .dt 还漏在外面是硬编码的 #655b4d，深玻璃上直接看不见。 */
++html.embed-cn .cap-en .ct{color:var(--g-title)}
++html.embed-cn .desk .dt{color:var(--g-title)}
++html.embed-cn .desk .ds{color:var(--g-dim)}
+ html.embed-cn .cap-en .cs{color:var(--g-dim)}
+-/* 玻璃拉薄后深字会糊进壁纸：标题加一圈柔白光晕，越透越强，可读性保住又不显脏 */
++/* v45.45 光晕退役：它原来是给"深字压在浅壁纸"准备的补丁，
++   可在深色卡片上，浅字 + 白光晕 = 一圈白雾，10px 的模糊把 1px 的横画整个吃掉。
++   现在只剩 1px、上限 .30 的一层薄提，作用从"把字糊出来"变回"让字和底分开一点"。 */
+ html.embed-cn h1,html.embed-cn .cap-en .ct,html.embed-cn .cap-en .cs,html.embed-cn .cap,
+ html.embed-cn .rev,html.embed-cn .sub,html.embed-cn .cd.h1,html.embed-cn .cd.h2,html.embed-cn .cd.h3{
+- text-shadow:0 1px 10px rgba(255,255,255,var(--g-tso,0)),0 0 3px rgba(255,255,255,var(--g-tso,0))}
++ text-shadow:0 1px 1px rgba(255,255,255,var(--g-tso,0))}
+ 
+ /* 「闪过/念头」这行原本坐在纸上，玻璃化后必须有自己的小玻璃 */
+ html.embed-cn .tbar{background:var(--g-chip);border:1px solid var(--g-chip-bd);border-radius:14px;
+@@ -743,15 +776,15 @@
+ html.embed-cn .desk{background:linear-gradient(158deg,var(--g-card-a) 0%,var(--g-card-b) 52%,var(--g-card-c) 100%);
+  border:1px solid var(--g-card-bd);border-radius:22px;
+  -webkit-backdrop-filter:blur(calc(24px*var(--g-bk,1))) saturate(1.5);backdrop-filter:blur(calc(24px*var(--g-bk,1))) saturate(1.5);
+- box-shadow:0 10px 30px rgba(var(--g-sh),.10),inset 0 1px 0 var(--g-hl)}
++ box-shadow:0 10px 30px rgba(var(--g-sh),.10),inset 0 .7px 0 var(--g-hl)}
+ html.embed-cn .inner{background:var(--g-inner);border-color:var(--g-inner-bd);border-radius:17px;
+- box-shadow:inset 0 1px 0 var(--g-hl-soft)}
++ box-shadow:inset 0 .7px 0 var(--g-hl-soft)}
+ html.embed-cn .tile{background:linear-gradient(152deg,var(--g-tile-a) 0%,var(--g-tile-b) 100%);
+- border-color:var(--g-tile-bd);box-shadow:0 2px 8px rgba(var(--g-sh),.06),inset 0 1px 0 var(--g-tile-hl)}
++ border-color:var(--g-tile-bd);box-shadow:0 2px 8px rgba(var(--g-sh),.06),inset 0 .7px 0 var(--g-tile-hl)}
+ html.embed-cn .tile:active{background:var(--g-tile-on)}
+ html.embed-cn .tabs{background:var(--g-tabs);border:1px solid var(--g-tabs-bd);border-radius:14px;
+  -webkit-backdrop-filter:blur(calc(18px*var(--g-bk,1))) saturate(1.4);backdrop-filter:blur(calc(18px*var(--g-bk,1))) saturate(1.4);
+- box-shadow:inset 0 1px 0 var(--g-hl-soft)}
++ box-shadow:inset 0 .7px 0 var(--g-hl-soft)}
+ html.embed-cn .tabs button.on{background:var(--g-tabs-on);box-shadow:0 1px 3px rgba(var(--g-sh),.10),inset 0 1px 0 #fff}
+ html.embed-cn .tabs button:not(.on){color:var(--g-ink2)}
+ html.embed-cn .seg{background:var(--g-seg);border:1px solid var(--g-seg-bd);
+@@ -763,7 +796,7 @@
+  background:linear-gradient(158deg,var(--g-big-a) 0%,var(--g-big-b) 52%,var(--g-big-c) 100%);
+  border-color:var(--g-big-bd);
+  -webkit-backdrop-filter:blur(calc(22px*var(--g-bk,1))) saturate(1.45);backdrop-filter:blur(calc(22px*var(--g-bk,1))) saturate(1.45);
+- box-shadow:0 8px 26px rgba(var(--g-sh),.08),inset 0 1px 0 var(--g-hl)}
++ box-shadow:0 8px 26px rgba(var(--g-sh),.08),inset 0 .7px 0 var(--g-hl)}
+ html.embed-cn .tr-nums div,html.embed-cn .tr-ev .kl,html.embed-cn .tr-ev .xn,html.embed-cn .tr-ev i{
+  background:var(--g-soft);border-color:var(--g-soft-bd)}
+ html.embed-cn .cd.h1,html.embed-cn .cd.h2,html.embed-cn .cd.h3{background:var(--g-cd)}
+@@ -774,10 +807,10 @@
+ html.embed-cn .compose{background:linear-gradient(160deg,var(--l-paper-a) 0%,var(--l-paper-b) 100%);
+  border:1px solid var(--l-paper-bd);
+  -webkit-backdrop-filter:blur(calc(18px*var(--g-bk,1))) saturate(1.35);backdrop-filter:blur(calc(18px*var(--g-bk,1))) saturate(1.35);
+- box-shadow:0 8px 22px rgba(var(--g-sh),.10),inset 0 1px 0 var(--l-hl)}
++ box-shadow:0 8px 22px rgba(var(--g-sh),.10),inset 0 .7px 0 var(--l-hl)}
+ html.embed-cn .note{background:var(--l-note);border-color:var(--l-note-bd);
+  -webkit-backdrop-filter:blur(calc(14px*var(--g-bk,1)));backdrop-filter:blur(calc(14px*var(--g-bk,1)));
+- box-shadow:inset 0 1px 0 var(--l-hl),0 2px 8px rgba(var(--g-sh),.06)}
++ box-shadow:inset 0 .7px 0 var(--l-hl),0 2px 8px rgba(var(--g-sh),.06)}
+ html.embed-cn .wchip{background:var(--l-chip);border-color:var(--l-chip-bd);
+  -webkit-backdrop-filter:blur(calc(12px*var(--g-bk,1)));backdrop-filter:blur(calc(12px*var(--g-bk,1)))}
+ html.embed-cn .compose textarea{color:var(--l-ink)}
+@@ -785,6 +818,19 @@
+ html.embed-cn .act{background:var(--l-btn);color:var(--l-btn-ink);border:1px solid var(--l-btn-bd);
+  box-shadow:0 1px 3px rgba(var(--g-sh),.10),inset 0 1px 0 #fff}
+ 
++/* v45.35 描边收细 / 收淡
++   1px 的实白边在 3x 屏上是一条 3 物理像素的硬线，圆角处还会发毛，
++   深色玻璃上尤其像"贴了圈胶带"。统一压到 0.5px，配合已经减半的上缘高光，
++   边只剩一层呼吸感的亮痕，玻璃的厚度靠透光和模糊表达，不靠描边。 */
++html.embed-cn .desk,html.embed-cn .card,html.embed-cn .tr-card,html.embed-cn .fm-card,
++html.embed-cn .inner,html.embed-cn .tile,html.embed-cn .tabs,html.embed-cn .seg,
++html.embed-cn .tbar,html.embed-cn .compose,html.embed-cn .note,html.embed-cn .wchip{
++ border-width:.5px;border-style:solid}
++/* 卡片外投影也收一档：原来那圈灰雾会把玻璃压成"塑料片" */
++html.embed-cn .desk{box-shadow:0 8px 26px rgba(var(--g-sh),.09),inset 0 .7px 0 var(--g-hl)}
++html.embed-cn .card,html.embed-cn .tr-card,html.embed-cn .fm-card{
++ box-shadow:0 6px 20px rgba(var(--g-sh),.07),inset 0 .7px 0 var(--g-hl)}
++
+ </style></head><body>
+ <script>try{
+ var XC_DEF={card:'#FFFFFF',letter:'#FDFAF2',alpha:25};
+@@ -838,7 +884,9 @@
+   set('--g-cd',xcRGB(c,.58)); set('--g-chip',xcRGB(c,.60)); set('--g-chip-bd',xcRGB(xcUp(c,.50),dark?.26:.62));
+   /* 玻璃自身的模糊跟着收：不收，背后的纹理永远是一团雾，透出来也认不出是壁纸 */
+   set('--g-bk', String(Math.max(.16,1-av/100*0.84)));
+-  set('--g-tso', String(Math.min(.92,Math.max(0,(av-20)/100*1.15))));
++  /* v45.45 深底浅字不打光晕：白光只会沿着笔画糊出一圈雾，越透越脏。
++     浅底深字仍留一层 1px 的薄提，但上限从 .92 收到 .30。 */
++  set('--g-tso', dark? '0' : String(Math.min(.30,Math.max(0,(av-40)/100*.45))));
+ 
+   if(dark){ set('--g-title','#F3F4F7'); set('--g-ink','#EDEFF4'); set('--g-ink2','rgba(240,242,248,.86)'); set('--g-dim','rgba(232,236,244,.72)'); }
+   else{ set('--g-title','#4A4237'); set('--g-ink','#37342F'); set('--g-ink2','#5F594E');
