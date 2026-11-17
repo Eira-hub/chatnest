@@ -104,3 +104,5 @@ PUT /repos/Eira-hub/chatnest/contents/<path>
 | 时间 | 谁 | 动了什么 | 为什么 |
 |---|---|---|---|
 | 2026-11-16 | kern | 建立本文件 | 双人并行 UI 协作 |
+| 2026-11-17 | dsh | v45.50：设置页/聊天信息页按背景模式分浅色档；`#settingsSheet` 等 sheet 作用域内重定义 --text/--panel-fg 等 A 级变量（非 :root） | 渐变模式下深玻璃压在浅底上，与探索页/会话列表两个世界；局部重定义经仓库主确认 |
+| 2026-11-17 | dsh | 代发 v45.50：新增 chatnest-v45.50.html、version.json 抬到 v277、index.html 兜底指向 v45.50 | 仓库主提供临时凭据直接发布；这两个入口文件按约定属 kern，请 kern 复核 |
