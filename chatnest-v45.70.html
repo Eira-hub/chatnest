@@ -418,7 +418,7 @@ html.bub-glass.ub-lt .pv-bubble.me,html.bub-glass.ab-lt .pv-bubble.peer{
    ★ 要换颜色只改下面这三行变量，别去动 .toolchip 本体：
      浅色 --tc-bg 底 / --tc-bd 外框 / --tc-sep 展开分隔线 / --tc-fg 字色，
      深色一律 `-d` 结尾（--tc-bg-d / --tc-bd-d / --tc-sep-d / --tc-fg-d）。 */
-:root{--tc-bg:rgba(232,236,244,.56);--tc-bd:rgba(255,255,255,.46);--tc-sep:rgba(40,52,80,.10);--tc-fg:#2E3548;
+:root{--tc-bg:rgba(222,228,240,.50);--tc-bd:rgba(255,255,255,.40);--tc-sep:rgba(40,52,80,.10);--tc-fg:#2E3548;
       --tc-bg-d:rgba(30,33,42,.42);--tc-bd-d:rgba(255,255,255,.13);--tc-sep-d:rgba(255,255,255,.09);--tc-fg-d:#DDE2EC}
 /* v45.64 深色 = 实色不透明，但压到几乎和壁纸同层（#1C1F26）。
    走过的弯路：v45.55 白卡 → 太亮；v45.61 冷灰 #ECEEF4 只在浅色用；
@@ -441,12 +441,12 @@ html.dark .stream-inner .toolchip{
   box-shadow:inset 0 1px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(255,255,255,.04),0 6px 18px -12px rgba(0,0,0,.72)!important}
 .toolchip{display:block;width:fit-content;max-width:78%;margin:5px auto 4px;
   border:1px solid var(--tc-bd);border-radius:14px;
-  /* v45.69 液态玻璃：上缘一道漫射光收在 42% 处，底是 56% 冷灰，透出壁纸但不糊字。
+  /* v45.69 液态玻璃：上缘一道漫射光收在 42% 处，底是 50% 冷灰，透出壁纸但不糊字。
      深色由上面 html[data-theme="dark"] .toolchip 那条 !important 覆盖。 */
-  background:linear-gradient(180deg,rgba(255,255,255,.34) 0,rgba(255,255,255,.10) 4px,rgba(255,255,255,0) 40%,rgba(255,255,255,.05) 100%),rgba(232,236,244,.56);
+  background:linear-gradient(180deg,rgba(255,255,255,.28) 0,rgba(255,255,255,.09) 4px,rgba(255,255,255,0) 38%,rgba(255,255,255,.04) 100%),rgba(222,228,240,.50);
   -webkit-backdrop-filter:blur(18px) brightness(1.10) saturate(.90);
   backdrop-filter:blur(18px) brightness(1.10) saturate(.90);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.48),inset 0 -1px 0 rgba(255,255,255,.10),0 6px 16px -10px rgba(30,45,80,.34);overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(255,255,255,.09),0 6px 16px -10px rgba(30,45,80,.30);overflow:hidden;
   font-size:11px;color:var(--tc-fg);line-height:1.45;animation:tcIn .25s ease}
 /* v45.63 深色的背景/边框/字色统一在上面 html[data-theme="dark"] .toolchip 里一次性写死 */
 .toolchip .tc-head{display:flex;align-items:center;gap:5px;width:100%;padding:3px 9px;
@@ -4753,13 +4753,13 @@ function tcSubjectName(){
 /* v45.69 行动泡改液态玻璃（用户要求）。v45.63 曾明确否掉「半透明+模糊」，
    原因不是透明本身，而是那版只有一层 rgba 底 + 大白 blur，看起来像一块脏塑料。
    这次按液态玻璃四原则重做：低 tint、低 blur、边缘亮线只在上缘、底色压在壁纸同层。
-   浅色 56% 冷灰 + 4px 上缘漫射光；深色 42% 的 #1E212A（比 v45.63 的 #1C1F26 略亮一档，
+   浅色 50% 冷灰 + 4px 上缘漫射光；深色 42% 的 #1E212A（比 v45.63 的 #1C1F26 略亮一档，
    免得在深壁纸上糊成一块脏黑）。两档都不加满屏白雾。 */
 const TC_SKIN={
   light:{
-    bg:'linear-gradient(180deg,rgba(255,255,255,.34) 0,rgba(255,255,255,.10) 4px,rgba(255,255,255,0) 40%,rgba(255,255,255,.05) 100%),rgba(232,236,244,.56)',
+    bg:'linear-gradient(180deg,rgba(255,255,255,.28) 0,rgba(255,255,255,.09) 4px,rgba(255,255,255,0) 38%,rgba(255,255,255,.04) 100%),rgba(222,228,240,.50)',
     bd:'rgba(255,255,255,.58)', sep:'rgba(40,52,80,.11)', fg:'#2E3548',
-    sh:'inset 0 1px 0 rgba(255,255,255,.48),inset 0 -1px 0 rgba(255,255,255,.10),0 6px 16px -10px rgba(30,45,80,.34)',
+    sh:'inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(255,255,255,.09),0 6px 16px -10px rgba(30,45,80,.30)',
     bf:'blur(18px) brightness(1.10) saturate(.90)'
   },
   dark: {
